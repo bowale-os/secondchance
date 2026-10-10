@@ -1,0 +1,425 @@
+"""
+models.py — SQLAlchemy 2.0 models (phase 1)
+Scope: case worker accounts, client accounts, assignments, document upload.
+
+Install:  pip install sqlalchemy psycopg[binary]
+"""
+
+import enum
+import uuid
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+# ============================================================
+# Enums
+# ============================================================
+
+class StaffRole(enum.Enum):
+    CASE_WORKER = "case_worker"
+
+
+class AssignmentRole(enum.Enum):
+    CASE_WORKER = "case_worker"
+
+
+class DataSource(enum.Enum):
+    CASE_WORKER = "case_worker"   # case worker scanned/uploaded it
+    CLIENT = "client"             # client sent it (web or text photo)
+
+
+class DocumentType(enum.Enum):
+    # Most common + highest stakes (deadlines that can cause a violation)
+    SUPERVISION_PAPERS = "supervision_papers"    # parole certificate/agreement, probation order,
+                                                 # conditions, reporting instructions
+    COURT_NOTICE = "court_notice"                # hearing dates, summons, court orders
+    PAYMENT_NOTICE = "payment_notice"            # supervision fees, restitution, fines,
+                                                 # payment plans, child support orders
+    MONTHLY_REPORT = "monthly_report"            # recurring form the AI can pre-fill
+
+    # Received by almost everyone at release
+    RELEASE_PAPERS = "release_papers"            # release/discharge packet, pre-release plan
+
+    # Health (hidden unless the client shares the HEALTH category)
+    MEDICAL_DISCHARGE = "medical_discharge"      # medication release, refills, follow-up
+                                                 # appointments, treatment referrals
+
+    # Rebuilding life
+    BENEFITS_LETTER = "benefits_letter"          # Medicaid, SNAP, Lifeline approvals/renewals
+    ID_DOCUMENT = "id_document"                  # birth certificate, SSN card, state ID
+    HOUSING_AGREEMENT = "housing_agreement"      # halfway house rules, shelter intake, lease
+    PROGRAM_CERTIFICATE = "program_certificate"  # GED, classes, job training (helps job search)
+
+    OTHER = "other"
+
+
+class DocumentStatus(enum.Enum):
+    UPLOADED = "uploaded"       # file saved
+    PROCESSING = "processing"   # AI reading it
+    READ = "read"               # AI done, waiting for case worker review
+    CONFIRMED = "confirmed"     # case worker reviewed it
+    FAILED = "failed"
+
+
+class ContactMethod(enum.Enum):
+    SMS = "sms"
+    CALL = "call"
+    WEB = "web"
+
+
+class HousingStatus(enum.Enum):
+    HOUSED = "housed"
+    SHELTER = "shelter"
+    TRANSITIONAL = "transitional"
+    WITH_FAMILY = "with_family"
+    UNSTABLE = "unstable"
+    HOMELESS = "homeless"
+
+
+class EmploymentStatus(enum.Enum):
+    EMPLOYED = "employed"
+    SEEKING = "seeking"
+    NOT_WORKING = "not_working"
+    DISABLED = "disabled"
+    STUDENT = "student"
+
+
+class IdType(enum.Enum):
+    STATE_ID = "state_id"
+    SSN_CARD = "ssn_card"
+    BIRTH_CERTIFICATE = "birth_certificate"
+    OTHER = "other"
+
+
+class IdStatus(enum.Enum):
+    HELD = "held"
+    LOST = "lost"
+    EXPIRED = "expired"
+    APPLIED = "applied"
+
+
+class BenefitType(enum.Enum):
+    SNAP = "snap"
+    MEDICAID = "medicaid"
+    SSI = "ssi"
+    OTHER = "other"
+
+
+class BenefitStatus(enum.Enum):
+    ACTIVE = "active"
+    PENDING = "pending"
+    DENIED = "denied"
+    EXPIRED = "expired"
+    NOT_APPLIED = "not_applied"
+
+
+class ObligationType(enum.Enum):
+    FEE = "fee"
+    COURT_DATE = "court_date"
+    CHECK_IN = "check_in"
+    REPORT = "report"
+
+
+class ObligationStatus(enum.Enum):
+    OPEN = "open"
+    DONE = "done"
+    OVERDUE = "overdue"
+
+
+class ContactType(enum.Enum):
+    PAROLE_OFFICER = "parole_officer"
+    DOCTOR = "doctor"
+    LANDLORD = "landlord"
+    EMPLOYER = "employer"
+    OTHER = "other"
+
+
+# ============================================================
+# Base + mixins
+# ============================================================
+
+class Base(DeclarativeBase):
+    pass
+
+
+class IdMixin:
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+# ============================================================
+# Case worker account
+# ============================================================
+
+class Staff(IdMixin, TimestampMixin, Base):
+    __tablename__ = "staff"
+
+    auth0_id: Mapped[str] = mapped_column(String(128), unique=True)  # from Auth0 login
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    full_name: Mapped[str] = mapped_column(String(200))
+    role: Mapped[StaffRole] = mapped_column(default=StaffRole.CASE_WORKER)
+    organization_name: Mapped[Optional[str]] = mapped_column(String(200))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    assignments: Mapped[list["Assignment"]] = relationship(back_populates="staff")
+    uploaded_documents: Mapped[list["Document"]] = relationship(
+        back_populates="uploaded_by", foreign_keys="Document.uploaded_by_staff_id"
+    )
+
+
+# ============================================================
+# Client account
+# ============================================================
+
+class Client(IdMixin, TimestampMixin, Base):
+    """
+    Created by a case worker. Deliberately NO criminal history or charge fields.
+    """
+    __tablename__ = "clients"
+
+    first_name: Mapped[str] = mapped_column(String(100))
+    last_name: Mapped[str] = mapped_column(String(100))
+    preferred_name: Mapped[Optional[str]] = mapped_column(String(100))
+
+    # Login for web, text and call: name + PIN (hash only, never the raw PIN)
+    pin_hash: Mapped[str] = mapped_column(String(255))
+    pin_failed_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    pin_locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    phone: Mapped[Optional[str]] = mapped_column(String(20), unique=True)
+    language: Mapped[str] = mapped_column(String(10), default="en")
+    state: Mapped[str] = mapped_column(String(2), default="GA")
+    release_date: Mapped[Optional[date]] = mapped_column(Date)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Profile: single-valued facts the AI agent needs to answer questions
+    date_of_birth: Mapped[Optional[date]] = mapped_column(Date)
+    email: Mapped[Optional[str]] = mapped_column(String(255))
+    preferred_contact_method: Mapped[Optional[ContactMethod]] = mapped_column()
+    address_line: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(100))
+    zip_code: Mapped[Optional[str]] = mapped_column(String(10))
+    housing_status: Mapped[Optional[HousingStatus]] = mapped_column()
+    employment_status: Mapped[Optional[EmploymentStatus]] = mapped_column()
+    monthly_income: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2))
+    has_transportation: Mapped[Optional[bool]] = mapped_column(Boolean)
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(200))
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    notes: Mapped[Optional[str]] = mapped_column(Text)  # case worker context for the agent
+
+    created_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+
+    assignments: Mapped[list["Assignment"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    documents: Mapped[list["Document"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    ids: Mapped[list["ClientId"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    benefits: Mapped[list["ClientBenefit"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    medications: Mapped[list["ClientMedication"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    obligations: Mapped[list["ClientObligation"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+    contacts: Mapped[list["ClientContact"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
+
+    @property
+    def display_name(self) -> str:
+        return self.preferred_name or self.first_name
+
+
+# ============================================================
+# Link: one case worker -> many clients
+# ============================================================
+
+class Assignment(IdMixin, TimestampMixin, Base):
+    __tablename__ = "assignments"
+    __table_args__ = (
+        UniqueConstraint("client_id", "staff_id", "role", name="uq_assignment"),
+    )
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    staff_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[AssignmentRole] = mapped_column(default=AssignmentRole.CASE_WORKER)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    started_on: Mapped[date] = mapped_column(Date, server_default=func.current_date())
+    ended_on: Mapped[Optional[date]] = mapped_column(Date)
+
+    client: Mapped["Client"] = relationship(back_populates="assignments")
+    staff: Mapped["Staff"] = relationship(back_populates="assignments")
+
+
+# ============================================================
+# Document upload
+# ============================================================
+
+class Document(IdMixin, TimestampMixin, Base):
+    __tablename__ = "documents"
+
+    # NULL while a case worker is still reviewing the draft: documents are uploaded
+    # and read before the client exists, then attached when the client is created.
+    client_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    source: Mapped[DataSource] = mapped_column(default=DataSource.CASE_WORKER)
+    uploaded_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+
+    doc_type: Mapped[DocumentType] = mapped_column(default=DocumentType.OTHER)
+    status: Mapped[DocumentStatus] = mapped_column(default=DocumentStatus.UPLOADED)
+
+    # File bytes live in Postgres (deferred: only loaded when explicitly requested).
+    # storage_key stays for a future move to object storage.
+    content: Mapped[Optional[bytes]] = mapped_column(LargeBinary, deferred=True)
+    storage_key: Mapped[Optional[str]] = mapped_column(String(500))
+    original_filename: Mapped[Optional[str]] = mapped_column(String(255))
+    mime_type: Mapped[Optional[str]] = mapped_column(String(100))
+    size_bytes: Mapped[Optional[int]] = mapped_column(Integer)
+
+    # AI reading results (filled in after upload)
+    ai_summary: Mapped[Optional[str]] = mapped_column(Text)      # plain-language summary
+    ai_warnings: Mapped[Optional[list]] = mapped_column(JSON)    # e.g. ["$250 due Nov 3"]
+    ai_raw: Mapped[Optional[dict]] = mapped_column(JSON)         # full structured extraction
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    # Case worker review
+    reviewed_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    client: Mapped[Optional["Client"]] = relationship(back_populates="documents")
+    uploaded_by: Mapped[Optional["Staff"]] = relationship(
+        back_populates="uploaded_documents", foreign_keys=[uploaded_by_staff_id]
+    )
+
+# ============================================================
+# Client profile child tables (filled by AI from documents,
+# then verified by the case worker)
+# ============================================================
+
+class ProvenanceMixin:
+    """Where a row came from and whether a case worker has confirmed it."""
+
+    source_document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), index=True
+    )
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    verified_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class ClientId(IdMixin, TimestampMixin, ProvenanceMixin, Base):
+    """Which identity documents the client holds."""
+    __tablename__ = "client_ids"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    id_type: Mapped[IdType] = mapped_column()
+    status: Mapped[IdStatus] = mapped_column(default=IdStatus.HELD)
+    expires_on: Mapped[Optional[date]] = mapped_column(Date)
+
+    client: Mapped["Client"] = relationship(back_populates="ids")
+
+
+class ClientBenefit(IdMixin, TimestampMixin, ProvenanceMixin, Base):
+    __tablename__ = "client_benefits"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    benefit_type: Mapped[BenefitType] = mapped_column()
+    status: Mapped[BenefitStatus] = mapped_column(default=BenefitStatus.PENDING)
+    case_number: Mapped[Optional[str]] = mapped_column(String(100))
+
+    client: Mapped["Client"] = relationship(back_populates="benefits")
+
+
+class ClientMedication(IdMixin, TimestampMixin, ProvenanceMixin, Base):
+    __tablename__ = "client_medications"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(200))
+    dose: Mapped[Optional[str]] = mapped_column(String(100))
+    prescriber: Mapped[Optional[str]] = mapped_column(String(200))
+    pharmacy: Mapped[Optional[str]] = mapped_column(String(200))
+    next_refill_on: Mapped[Optional[date]] = mapped_column(Date)
+
+    client: Mapped["Client"] = relationship(back_populates="medications")
+
+
+class ClientObligation(IdMixin, TimestampMixin, ProvenanceMixin, Base):
+    """Fees, court dates, check-ins, reports: things the client must do or pay."""
+    __tablename__ = "client_obligations"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    obligation_type: Mapped[ObligationType] = mapped_column()
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2))
+    due_date: Mapped[Optional[date]] = mapped_column(Date)
+    status: Mapped[ObligationStatus] = mapped_column(default=ObligationStatus.OPEN)
+
+    client: Mapped["Client"] = relationship(back_populates="obligations")
+
+
+class ClientContact(IdMixin, TimestampMixin, ProvenanceMixin, Base):
+    """Parole officer, doctor, landlord, employer, etc."""
+    __tablename__ = "client_contacts"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    contact_type: Mapped[ContactType] = mapped_column()
+    name: Mapped[str] = mapped_column(String(200))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    email: Mapped[Optional[str]] = mapped_column(String(255))
+
+    client: Mapped["Client"] = relationship(back_populates="contacts")

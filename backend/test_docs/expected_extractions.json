@@ -1,0 +1,216 @@
+{
+  "_about": "Answer key for the fictional test documents. Client: Marcus D. Reed (fictional). Use it to check what your extractor proposes. 'must_not_extract' lists things that appear on the page but should be ignored.",
+  "client": {
+    "first_name": "Marcus",
+    "last_name": "Reed",
+    "phone": "+14045550137",
+    "state": "PT (fictional State of Peachtree)"
+  },
+  "documents": {
+    "01_release_papers.pdf": {
+      "doc_type": "RELEASE_PAPERS",
+      "document_date": "2026-10-06",
+      "issuing_agency": "Department of Corrections, Harmon State Correctional Facility",
+      "profile": {
+        "release_date": "2026-10-06",
+        "identity.corrections_id": "TST-448210",
+        "identity.date_of_birth": "1988-04-17",
+        "residence.address": "120 Oak Avenue, Unit 4, Riverton, PT 39901",
+        "supervision.type": "parole",
+        "identity.has_birth_certificate": true,
+        "identity.has_ssn_card": false,
+        "identity.has_state_id": false
+      },
+      "events": [
+        {"event_type": "PAROLE_CHECKIN", "starts_at": "2026-10-08T09:00", "location": "Riverton District Office, 55 Main Street, Suite 200, Riverton, PT 39901", "note": "First report, in person"}
+      ],
+      "warnings_should_include": ["Report in person Oct 8, 2026 at 9:00 AM", "Medication supply is 30 days"]
+    },
+    "02_supervision_papers.pdf": {
+      "doc_type": "SUPERVISION_PAPERS",
+      "document_date": "2026-10-06",
+      "issuing_agency": "Department of Community Supervision",
+      "profile": {
+        "supervision.type": "parole",
+        "supervision.start_date": "2026-10-06",
+        "supervision.end_date": "2028-10-06",
+        "supervision.agency": "Department of Community Supervision",
+        "supervision.officer.name": "Angela Lee",
+        "supervision.officer.phone": "+14045550182",
+        "supervision.officer.email": "alee@dcs.peachtree.example",
+        "supervision.reporting_office_address": "55 Main Street, Suite 200, Riverton, PT 39901",
+        "supervision.reporting_frequency": "every 2 weeks",
+        "supervision.monthly_report_due_day": 5,
+        "supervision.curfew.start": "22:00",
+        "supervision.curfew.end": "06:00",
+        "residence.address": "120 Oak Avenue, Unit 4, Riverton, PT 39901",
+        "residence.approved": true
+      },
+      "events": [
+        {"event_type": "PAROLE_CHECKIN", "starts_at": "2026-10-22T10:00", "location": "Riverton District Office, Suite 200"},
+        {"event_type": "PAROLE_CHECKIN", "starts_at": "2026-11-05T10:00", "location": "Riverton District Office, Suite 200"},
+        {"event_type": "DRUG_TEST", "recurrence": "daily call-in 5:00-9:00 AM", "location": "Call (800) 555-0144"}
+      ],
+      "conditions": [
+        {"category": "reporting", "plain_text": "Report to your officer when told and answer questions truthfully."},
+        {"category": "residence", "plain_text": "Get permission from your officer before you move."},
+        {"category": "travel", "plain_text": "Don't leave the state without written permission. Ask at least 14 days ahead."},
+        {"category": "curfew", "plain_text": "Be home from 10 PM to 6 AM every day, unless your officer approves work hours in writing."},
+        {"category": "testing", "plain_text": "Call (800) 555-0144 every day between 5 and 9 AM to find out if you need a drug test."},
+        {"category": "other", "plain_text": "Don't have or be around guns, ammunition, or weapons."},
+        {"category": "other", "plain_text": "Pay a $30 supervision fee by the 1st of each month, plus any court-ordered amounts."},
+        {"category": "employment", "plain_text": "Try to find and keep a job, and tell your officer about any job change within 72 hours."},
+        {"category": "treatment", "plain_text": "Attend and complete an outpatient treatment program."},
+        {"category": "reporting", "plain_text": "Tell your officer within 72 hours if you have any contact with police."}
+      ],
+      "obligations": [
+        {"obligation_type": "SUPERVISION_FEE", "monthly_amount": 30.00, "due_day_of_month": 1}
+      ],
+      "must_not_extract": ["Offense of record: Possession of a controlled substance"]
+    },
+    "02_supervision_papers_PHOTO.jpg": {
+      "same_as": "02_supervision_papers.pdf",
+      "note": "Phone-photo version of page 1 only (tilted, uneven lighting, slightly blurry). Conditions 1-10 and both check-ins are visible; signature page is not."
+    },
+    "03_court_notice.pdf": {
+      "doc_type": "COURT_NOTICE",
+      "document_date": "2026-10-07",
+      "issuing_agency": "Superior Court of Harmon County",
+      "events": [
+        {"event_type": "COURT_DATE", "starts_at": "2026-11-12T09:00", "court_name": "Superior Court of Harmon County", "courtroom": "4B", "address": "136 Pryor Street, Riverton, PT 39903", "purpose_plain": "Status review hearing", "must_appear": true, "reference_number": "2024-CR-01873"}
+      ],
+      "obligations": [
+        {"obligation_type": "COURT_COST", "total_amount": 180.00, "balance": 180.00, "next_due_date": "2026-12-01", "how_to_pay": "Clerk's Office, Room 110, Mon-Fri 8:30 AM-4:30 PM"}
+      ],
+      "warnings_should_include": ["Must appear in person Nov 12, 2026 at 9:00 AM", "$180 due by Dec 1, 2026"]
+    },
+    "03_court_notice_PHOTO.jpg": {
+      "same_as": "03_court_notice.pdf",
+      "note": "Phone-photo version (tilted, uneven lighting)."
+    },
+    "04_payment_notice.pdf": {
+      "doc_type": "PAYMENT_NOTICE",
+      "document_date": "2026-10-09",
+      "issuing_agency": "Department of Community Supervision",
+      "obligations": [
+        {"obligation_type": "SUPERVISION_FEE", "payee": "Department of Community Supervision", "balance": 60.00, "monthly_amount": 30.00, "due_day_of_month": 1, "waiver_mentioned": true},
+        {"obligation_type": "RESTITUTION", "payee": "Harmon County Victim Fund", "total_amount": 1200.00, "balance": 1200.00, "monthly_amount": 50.00, "due_day_of_month": 15},
+        {"obligation_type": "LAB_FEE", "payee": "Department of Community Supervision", "balance": 0.00, "amount_per_test": 15.00}
+      ],
+      "events": [
+        {"event_type": "PAYMENT_DUE", "starts_at": "2026-11-01", "note": "$30 supervision fee"},
+        {"event_type": "PAYMENT_DUE", "starts_at": "2026-11-15", "note": "$50 restitution"}
+      ],
+      "warnings_should_include": ["Missing payments can lead to a violation, collections, or license suspension", "Fee waiver: Form DCS-12"]
+    },
+    "05_monthly_report.pdf": {
+      "doc_type": "MONTHLY_REPORT",
+      "profile": {
+        "supervision.monthly_report_due_day": 5,
+        "residence.address": "120 Oak Avenue, Unit 4, Riverton, PT 39901",
+        "work.employer_name": "Greenline Landscaping"
+      },
+      "events": [
+        {"event_type": "MONTHLY_REPORT_DUE", "starts_at": "2026-11-05", "note": "October 2026 report"}
+      ],
+      "document_only": {
+        "form_questions": ["Residence / moved this month", "Employer, hours, pay, supervisor", "Monthly income, expenses, payments", "Law enforcement contact", "Travel outside district", "Job change", "Drug or alcohol use"]
+      }
+    },
+    "06_medical_discharge.pdf": {
+      "doc_type": "MEDICAL_DISCHARGE",
+      "sensitive": true,
+      "profile": {
+        "health.medication_supply_end_date": "2026-11-05",
+        "health.medications": ["Lisinopril", "Sertraline"],
+        "health.has_followup_care": true
+      },
+      "events": [
+        {"event_type": "APPOINTMENT", "starts_at": "2026-10-20T13:30", "provider_name": "Riverton Community Health Clinic", "address": "200 Elm Street", "phone": "+14045550199", "is_sensitive": true},
+        {"event_type": "APPOINTMENT", "starts_at": "2026-10-15T11:00", "provider_name": "New Path Recovery Services", "address": "18 Bell Street", "phone": "+14045550177", "is_sensitive": true},
+        {"event_type": "MEDICATION_END", "starts_at": "2026-11-05", "is_sensitive": true}
+      ],
+      "checklist": [
+        {"kind": "OTHER", "title": "Get prescriptions refilled before Nov 5, 2026"}
+      ],
+      "must_not_extract": ["Diagnoses (hypertension, depression)", "Dosages (10 mg, 50 mg) per spec: names only"]
+    },
+    "07_benefits_letter.pdf": {
+      "doc_type": "BENEFITS_LETTER",
+      "document_date": "2026-10-09",
+      "issuing_agency": "Department of Human Services",
+      "profile": {
+        "benefits.snap.status": "pending_info"
+      },
+      "events": [
+        {"event_type": "OTHER", "starts_at": "2026-11-03", "note": "Send proof of income and proof of address for SNAP"},
+        {"event_type": "APPOINTMENT", "starts_at": "2026-10-28T14:00", "note": "SNAP phone interview; caseworker calls (404) 555-0137"}
+      ],
+      "warnings_should_include": ["Application may be denied if info not received by Nov 3, 2026"]
+    },
+    "08_id_document.pdf": {
+      "doc_type": "ID_DOCUMENT",
+      "profile": {
+        "identity.has_state_id": true,
+        "identity.state_id_expires": "2034-04-17",
+        "identity.date_of_birth": "1988-04-17"
+      },
+      "checklist": [
+        {"kind": "ID", "title": "Get state ID", "item_status": "DONE"}
+      ],
+      "must_not_extract": ["ID number"],
+      "conflict_test": "Release papers said has_state_id = false. This newer document should PROPOSE true, not overwrite silently."
+    },
+    "09_housing_agreement.pdf": {
+      "doc_type": "HOUSING_AGREEMENT",
+      "document_date": "2026-10-06",
+      "profile": {
+        "residence.address": "120 Oak Avenue, Unit 4, Riverton, PT 39901",
+        "residence.type": "halfway_house",
+        "residence.contact.name": "James Brown",
+        "residence.contact.phone": "+14045550100",
+        "residence.stay_ends": "2027-01-04"
+      },
+      "conditions": [
+        {"category": "curfew", "plain_text": "House curfew: be home from 9 PM to 6 AM every day."},
+        {"category": "residence", "plain_text": "Go to the house meeting every Monday at 7 PM."},
+        {"category": "residence", "plain_text": "No alcohol, drugs, or weapons at the house. Random testing may happen."},
+        {"category": "residence", "plain_text": "No overnight guests. Visitors only in the common room, noon to 8 PM."},
+        {"category": "residence", "plain_text": "Do your assigned chore each week."},
+        {"category": "residence", "plain_text": "Tell the house manager at least 7 days before you move out."}
+      ],
+      "obligations": [
+        {"obligation_type": "OTHER", "description": "Hope House program fee", "monthly_amount": 300.00, "due_day_of_month": 1, "note": "first month waived"}
+      ],
+      "events": [
+        {"event_type": "OTHER", "recurrence": "weekly Monday 19:00", "note": "House meeting"},
+        {"event_type": "OTHER", "starts_at": "2027-01-04", "note": "Hope House program ends"}
+      ],
+      "conflict_test": "House curfew starts 9:00 PM, stricter than parole curfew 10:00 PM. Should be flagged so the client follows the stricter one."
+    },
+    "10_program_certificate.pdf": {
+      "doc_type": "PROGRAM_CERTIFICATE",
+      "profile": {
+        "work.has_ged": true,
+        "work.certificates": [
+          {"name": "High School Equivalency Diploma (GED)", "issuer": "State Board of Adult Education", "completed_date": "2025-11-14"}
+        ]
+      }
+    },
+    "11_other_interview_letter.pdf": {
+      "doc_type": "OTHER",
+      "document_date": "2026-10-09",
+      "events": [
+        {"event_type": "OTHER", "starts_at": "2026-10-16T10:30", "location": "Greenline Landscaping, 740 Industrial Blvd", "note": "Job interview; bring photo ID and work boots"}
+      ],
+      "note": "Employer later appears on the monthly report as Greenline Landscaping."
+    }
+  },
+  "cross_document_tests": [
+    "Curfew conflict: parole 10 PM vs. house 9 PM (docs 02 and 09).",
+    "ID status change: no state ID at release (01) vs. state ID issued 10/14/2026 (08).",
+    "Medication runs out 11/05/2026 — same day as a parole check-in and the monthly report deadline (02, 05, 06). Good test for the 'busy day' alert.",
+    "Treatment intake 10/15 (06) is required by parole special condition 9 (02).",
+    "The same address appears on 01, 02, 05, 07, 08, 09 and should not create duplicate proposals once confirmed."
+  ]
+}
