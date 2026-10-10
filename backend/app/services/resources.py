@@ -399,8 +399,14 @@ async def profile_query(db: AsyncSession, client: Client) -> tuple[ResourceQuery
     if ids.get(IdType.STATE_ID) != "have":
         q.no_id_required = True
         keys.add("no_id_required")
-    # Origin: needs server-side geocoding of the client's address (phase 4). Until then
-    # the caller can pass origin_lat/origin_lng.
+    # Origin: the client's address, geocoded server-side (None without MAPS_API_KEY).
+    from app.services import maps  # local import keeps this module free of HTTP deps in tests
+
+    address = maps.client_address(client)
+    point = await maps.geocode(address) if address else None
+    if point:
+        q.origin_lat, q.origin_lng = point
+        keys.add("origin")
     return q, keys
 
 

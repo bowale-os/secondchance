@@ -113,7 +113,7 @@ async def test_detail_without_list_and_out_of_range(db):
 @pytest.mark.asyncio
 async def test_unknown_place(db):
     reply = await say(db, "food near my cousin's")
-    assert "don't know" in reply and "Food:" in reply.splitlines()[0]
+    assert "couldn't find" in reply and "Food:" in reply.splitlines()[0]
 
 
 @pytest.mark.asyncio

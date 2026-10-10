@@ -1,4 +1,4 @@
-import type { Message, Space } from "spectrum-ts";
+import { attachment, type Message, type Space } from "spectrum-ts";
 import { postInbound, type InboundResult } from "./backend";
 import type { Config } from "./config";
 import { extract } from "./extract";
@@ -71,7 +71,15 @@ export async function deliver(
     await last.space.responding(async () => {
       for (const reply of result.replies) {
         // Plain text so SMS/RCS read the same; markdown is opt-in later.
-        await last.space.send(toPlainText(reply.text));
+        if (reply.text) await last.space.send(toPlainText(reply.text));
+        if (reply.image) {
+          await last.space.send(
+            attachment(Buffer.from(reply.image.data_base64, "base64"), {
+              name: reply.image.name,
+              mimeType: reply.image.mime_type,
+            }),
+          );
+        }
       }
     });
   }

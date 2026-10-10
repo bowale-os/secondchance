@@ -9,7 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.db import get_session
-from app.schemas import BotInbound, BotInboundResult, BotReply
+import base64
+
+from app.schemas import BotImageOut, BotInbound, BotInboundResult, BotReply
+from app.services.bot_types import BotImage
 from app.services.bot_conversation import Inbound, handle_inbound
 
 router = APIRouter(prefix="/bot", tags=["bot"], include_in_schema=False)
@@ -37,7 +40,17 @@ async def inbound(
             attachment_count=payload.attachment_count,
         ),
     )
+    replies: list[BotReply] = []
+    for item in outcome.replies:
+        if isinstance(item, BotImage):
+            image = BotImageOut(base64.b64encode(item.data).decode(), item.name, item.mime_type)
+            if replies and replies[-1].image is None:
+                replies[-1].image = image
+            else:
+                replies.append(BotReply(image=image))
+        else:
+            replies.append(BotReply(text=item))
     return BotInboundResult(
-        replies=[BotReply(text=t) for t in outcome.replies],
+        replies=replies,
         session_active=outcome.client_id is not None,
     )

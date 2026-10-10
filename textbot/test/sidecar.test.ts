@@ -13,10 +13,10 @@ const config: Config = {
 };
 
 function fakeSpace(type = "dm") {
-  const sent: string[] = [];
+  const sent: any[] = [];
   const space = {
     type,
-    send: async (t: string) => { sent.push(t); },
+    send: async (t: unknown) => { sent.push(t); },
     responding: async (fn: () => Promise<void>) => fn(),
   } as unknown as Space;
   return { space, sent };
@@ -53,6 +53,17 @@ describe("prepare + deliver", () => {
     expect(prep(fakeSpace().space, { type: "text", text: "x" }, { direction: "outbound" })).toBeNull();
     expect(prep(fakeSpace("group").space, { type: "text", text: "x" })).toBeNull();
     expect(prep(fakeSpace().space, { type: "reaction", emoji: "x" })).toBeNull();
+  });
+
+  test("sends the map image after its text", async () => {
+    const { space, sent } = fakeSpace();
+    const png = Buffer.from("\x89PNGfake");
+    await deliver([prep(space, { type: "text", text: "MAP" })!], config, async () => ({
+      replies: [{ text: "Map: Food", image: { data_base64: png.toString("base64"), name: "map.png", mime_type: "image/png" } }],
+    }));
+    expect(sent[0]).toBe("Map: Food");
+    expect(sent.length).toBe(2);
+    expect(typeof sent[1]).toBe("object"); // attachment content, built by spectrum-ts
   });
 
   test("backend down -> generic reply with no data", async () => {

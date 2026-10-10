@@ -12,7 +12,9 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services import maps
 from app.services import resources as svc
+from app.services.bot_types import BotImage
 from app.services.places import lookup
 from app.services.timeutil import aware, local_tz
 from app.tables import BotSession, Client
@@ -86,10 +88,9 @@ async def search_reply(
     if client.has_transportation is False:
         q.near_transit = True  # same as the profile mapping; unknown still passes
     place_label = None
-    if ask.place:
-        found = lookup(ask.place)
-        if found:
-            place_label, (q.origin_lat, q.origin_lng) = found
+    origin = await resolve_origin(ask.place, client)
+    if origin:
+        place_label, (q.origin_lat, q.origin_lng) = origin
     if ask.category in svc.EVENT_CATEGORIES:
         q.starts_within_days = 14
 
@@ -105,12 +106,31 @@ async def search_reply(
         "query": _store(q), "next_cursor": res["next_cursor"],
     }
     lines = [f"{title}:"] + [_line(n, i) for n, i in enumerate(res["items"], 1)]
-    if ask.place and not place_label:
-        lines.append(f"(I don't know \"{ask.place[:40]}\" yet, so these aren't sorted by distance. Try a MARTA station name.)")
+    if ask.place and (not place_label or place_label == "you"):
+        lines.append(f"(I couldn't find \"{ask.place[:40]}\", so these aren't sorted from there. Try a MARTA station name.)")
     elif not place_label:
         lines.append("Add \"near\" and a MARTA station to sort by distance, like FOOD near West End.")
-    lines.append(_footer(len(ids), res["next_cursor"]))
+    lines.append(_footer(len(ids), res["next_cursor"]) + (" MAP for a map." if maps.configured() else ""))
     return "\n".join(lines)
+
+
+async def resolve_origin(place: Optional[str], client: Client) -> Optional[tuple[str, tuple[float, float]]]:
+    """(label, (lat, lng)) to measure from: a named place (built-in list, then Google),
+    else the client's home address. The home is used for sorting only; its label is
+    "you" and it never appears in a map or link."""
+    if place:
+        found = lookup(place)
+        if found:
+            return found
+        point = await maps.geocode(f"{place}, Atlanta, GA")
+        if point:
+            return place.strip()[:40], point
+    address = maps.client_address(client)
+    if address:
+        point = await maps.geocode(address)
+        if point:
+            return "you", point
+    return None
 
 
 def _footer(count: int, more: Optional[str]) -> str:
@@ -224,6 +244,8 @@ async def detail_reply(db: AsyncSession, client: Client, s: BotSession, n: int, 
             parts.append(name)
         lines.append("Bring: " + "; ".join(parts))
 
+    if d["location"]:
+        lines.append("Directions: " + maps.directions_url(d["location"]["lat"], d["location"]["lng"]))
     if d["nearest_stops"]:
         stop = d["nearest_stops"][0]
         lines.append(f"Nearest stop: {stop['stop_name']} ({_miles(stop['distance_m'])})")
@@ -237,3 +259,31 @@ async def detail_reply(db: AsyncSession, client: Client, s: BotSession, n: int, 
     else:
         lines.append("Not verified yet: call before you go.")
     return "\n".join(lines)
+
+
+async def map_reply(db: AsyncSession, s: BotSession) -> list:
+    """Map of the current list (numbered like the list) plus a directions link each."""
+    last = s.last_results or {}
+    ids = (last.get("ids") or [])[: maps.MAX_MARKERS]
+    if last.get("kind") != "resources" or not ids:
+        return ["Send FOOD, SHELTER or JOBS first, then MAP."]
+    points, stops, lines, no_address = [], [], [f"Map: {last['title']}"], []
+    for n, rid in enumerate(ids, 1):
+        r = await svc.get_resource(db, uuid.UUID(rid))
+        if r is None or r.lat is None or r.lng is None:
+            no_address.append(str(n))
+            continue
+        points.append(maps.MapPoint(str(n), r.lat, r.lng))
+        stops += [(st["lat"], st["lng"]) for st in (r.nearest_stops or [])[:1]]
+        lines.append(f"{n}. {r.name}: {maps.directions_url(r.lat, r.lng)}")
+    if not points:
+        return ["None of these places have an address to map. Reply a number for details."]
+    if no_address:
+        lines.append(f"No address for {', '.join(no_address)} (call instead).")
+    if len(last.get("ids") or []) > maps.MAX_MARKERS:
+        lines.append(f"Showing the first {maps.MAX_MARKERS}.")
+    png = await maps.static_map_png(points, list(dict.fromkeys(stops)))
+    if png is None:
+        lines.insert(1, "(Map picture unavailable right now; links below.)")
+        return ["\n".join(lines)]
+    return ["\n".join(lines), BotImage(png)]

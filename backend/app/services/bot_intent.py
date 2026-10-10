@@ -23,7 +23,7 @@ TIMEOUT_S = 8
 
 class Intent(BaseModel):
     tool: Literal[
-        "get_schedule", "search_resources", "resource_detail", "more_results", "menu", "unknown"
+        "get_schedule", "search_resources", "resource_detail", "more_results", "send_map", "menu", "unknown"
     ]
     schedule_range: Optional[Literal["day", "tomorrow", "week"]] = None
     category: Optional[Literal["food", "shelter", "jobs", "addiction", "classes", "events"]] = None
@@ -47,6 +47,7 @@ Tools:
   keywords: extra words that narrow the search, else null.
 - resource_detail: the user asks about item N of a list they just got ("tell me about 2").
 - more_results: the user wants more of the same list.
+- send_map: the user wants a map or directions for the list they just got.
 - menu: the user asks what you can do, or for help using the service.
 - unknown: anything else, including questions about their case, legal advice,
   medical questions, or chit-chat.

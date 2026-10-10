@@ -42,7 +42,8 @@ Before going live:
   The backend still honors STOP on any line of a merged burst.
 - Group chats, reactions, edits, read receipts and typing events are ignored.
 - Attachments are counted and forwarded as `attachment_count` only; bytes are handled in phase 5.
-- Replies are sent as plain text so they read the same on SMS.
+- Replies are sent as plain text so they read the same on SMS. A reply may carry an image
+  (the resource map, base64 from the backend); it's sent right after its text.
 - If the backend is down, the client gets a generic "try again" reply with no data.
 
 ## Test

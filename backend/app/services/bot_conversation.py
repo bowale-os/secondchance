@@ -62,7 +62,8 @@ class Inbound:
 
 @dataclass
 class Outcome:
-    replies: list[str] = field(default_factory=list)
+    # Text replies, optionally followed by a BotImage (sent after the text before it).
+    replies: list = field(default_factory=list)
     # Only set once the sender is signed in; later phases use it to call
     # client-scoped services. Never sent back to the sidecar.
     client_id: Optional[str] = None
@@ -287,6 +288,9 @@ async def handle_active(
         return [msg.MENU]
     if kw in SCHEDULE_WORDS:
         return [await _schedule(db, client, s, SCHEDULE_WORDS[kw], now)]
+    if kw in ("MAP", "MAPS"):
+        _audit(db, s.enrollment, "resources.map", "sent")
+        return await bot_resources.map_reply(db, s)
     if kw == "MORE":
         _audit(db, s.enrollment, "resources.more", "sent")
         return [await bot_resources.more_reply(db, s, now)]
@@ -314,6 +318,9 @@ async def handle_active(
     if intent.tool == "resource_detail" and intent.item_number:
         _audit(db, s.enrollment, "resources.detail", "router")
         return [await bot_resources.detail_reply(db, client, s, intent.item_number, now)]
+    if intent.tool == "send_map":
+        _audit(db, s.enrollment, "resources.map", "router")
+        return await bot_resources.map_reply(db, s)
     if intent.tool == "more_results":
         return [await bot_resources.more_reply(db, s, now)]
     if intent.tool == "menu":

@@ -9,8 +9,15 @@ export interface InboundPayload {
   message_id?: string;
 }
 
+export interface ReplyImage {
+  data_base64: string;
+  name: string;
+  mime_type: string;
+}
+
 export interface InboundResult {
-  replies: { text: string }[];
+  /** Text, optionally followed by an image (e.g. the resource map). */
+  replies: { text: string; image?: ReplyImage | null }[];
   session_active?: boolean;
 }
 

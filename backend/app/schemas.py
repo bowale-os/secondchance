@@ -466,8 +466,16 @@ class BotInbound:
 
 
 @dataclass
+class BotImageOut:
+    data_base64: str
+    name: str
+    mime_type: str
+
+
+@dataclass
 class BotReply:
-    text: str
+    text: str = ""
+    image: Optional[BotImageOut] = None  # sent after `text` when both are set
 
 
 @dataclass
