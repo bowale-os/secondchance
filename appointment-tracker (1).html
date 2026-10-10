@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Appointment Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: single agenda column — date header, type filter, grouped rows (Today / Tomorrow / This week / Later); details open in a bottom sheet */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#15202b; --muted:#566473; --line:#d5dce3;
+  --accent:#1f5f8b; --accent-ink:#ffffff;
+  --parole:#3b4fb8; --drug:#b06a00; --doctor:#1d7a4f; --court:#7a2f6a; --other:#566473;
+  --warn:#b42318; --ok:#1d7a4f;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#18212a; --ink:#e8eef3; --muted:#9aa8b5; --line:#2b3743;
+  --accent:#6fb3e0; --accent-ink:#0f151b;
+  --parole:#8f9cff; --drug:#f0a73a; --doctor:#5cc796; --court:#d78bc6; --other:#9aa8b5;
+  --warn:#ff7b6e; --ok:#5cc796; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#18212a; --ink:#e8eef3; --muted:#9aa8b5; --line:#2b3743;
+  --accent:#6fb3e0; --accent-ink:#0f151b;
+  --parole:#8f9cff; --drug:#f0a73a; --doctor:#5cc796; --court:#d78bc6; --other:#9aa8b5;
+  --warn:#ff7b6e; --ok:#5cc796; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.45;padding-inline:16px;padding-block:20px 120px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:20px}
+/* Agenda first; tools in a side column on wide screens, below the agenda on phones */
+.layout{display:grid;gap:24px;align-items:start}
+.layout main{min-width:0;display:grid;gap:16px}
+.side{display:grid;gap:14px;min-width:0}
+.side .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.side-h{margin:0;font-family:var(--display);font-stretch:85%;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.side .filters{flex-wrap:wrap;overflow:visible}
+.side #welcome{border-color:var(--accent)}
+.side #welcome strong{font-size:19px}
+.big{font-size:19px;min-height:56px;border-radius:14px}
+#side-add{display:none}
+@media (min-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr) 320px}
+  .side{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+  #side-add{display:block}
+  .fab{display:none}
+  body{padding-block:28px 40px}
+}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px;min-height:48px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.today-label{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+h1{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:34px;line-height:1.05;margin:2px 0 0;text-wrap:balance}
+.summary{margin:6px 0 0;color:var(--muted)}
+.summary b{color:var(--ink)}
+.lang{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;flex:none}
+.lang button{border:0;border-radius:0;min-width:52px}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+
+/* Filter */
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:16px;padding:8px 16px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ico{width:26px;height:26px;border-radius:8px;background:var(--tc);color:#fff;display:inline-grid;place-items:center;flex:none}
+.ico svg{width:16px;height:16px}
+.filters .ico{width:20px;height:20px;border-radius:6px}
+.filters .ico svg{width:13px;height:13px}
+
+/* Agenda */
+.group{display:grid;gap:8px}
+.group h2{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:.08em;margin:0;display:flex;justify-content:space-between;align-items:baseline;color:var(--gc,var(--muted))}
+.group h2 span{font-family:var(--body);font-weight:400;text-transform:none;letter-spacing:0;font-size:15px;color:var(--muted)}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:76px}
+.row:hover{border-color:var(--tc)}
+.row .ico{width:44px;height:44px;border-radius:12px}
+.row .ico svg{width:24px;height:24px}
+.row .mid{min-width:0;display:grid;gap:2px}
+.row .name{font-weight:700;font-size:19px}
+.row .sub{color:var(--muted);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .time{text-align:right;font-family:var(--display);font-stretch:80%;font-weight:800;font-size:21px;font-variant-numeric:tabular-nums;line-height:1.1}
+.row .time small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--muted)}
+.row.first{border:2px solid var(--tc)}
+.row.done{opacity:.6}.row.done .name{text-decoration:line-through}
+.tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tc)}
+.tag.missed{color:var(--warn)}
+.empty{background:var(--surface);border-radius:16px;padding:18px;color:var(--muted)}
+.more{background:none;border:0;color:var(--accent);font-weight:700;padding:6px 0;min-height:40px;justify-self:start}
+.note{font-size:14px;color:var(--muted)}
+
+/* Bottom sheets */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;font-weight:700;font-size:18px;padding:14px 28px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:5}
+.sheet{position:fixed;inset:0;background:rgba(10,15,20,.55);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.panel{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:16px}
+.d-head{display:flex;gap:14px;align-items:center}
+.d-head .ico{width:52px;height:52px;border-radius:14px}
+.d-head .ico svg{width:28px;height:28px}
+.d-head h3{margin:0;font-size:23px;line-height:1.2}
+.facts{display:grid;gap:10px;margin:0}
+.facts div{display:grid;grid-template-columns:96px 1fr;gap:10px}
+.facts dt{color:var(--muted);font-size:15px}
+.facts dd{margin:0;font-weight:700;overflow-wrap:anywhere}
+.bring{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.bring label{display:flex;gap:12px;align-items:center;min-height:40px}
+.bring input{width:24px;height:24px;accent-color:var(--accent)}
+.sub-h{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns .wide{grid-column:1/-1}
+.btns a{display:flex;align-items:center;justify-content:center;min-height:48px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:var(--surface);padding:10px 14px;text-align:center}
+.primary{background:var(--accent)!important;color:var(--accent-ink)!important;border-color:var(--accent)!important;font-weight:700}
+.danger{color:var(--warn)}
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.types button{border:2px solid var(--line);font-weight:700;display:flex;gap:10px;align-items:center;text-align:left}
+.types button[aria-pressed="true"]{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 14%,var(--surface))}
+.field{display:grid;gap:4px}
+.field label{font-weight:700;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select,textarea{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:48px;width:100%}
+.err{color:var(--warn);font-weight:700;margin:0}
+/* View switch */
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.mgrid .dw{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;padding:2px 0 4px}
+.mcell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;min-height:52px;border-radius:10px;border:1px solid transparent;background:none;font-variant-numeric:tabular-nums;font-weight:700}
+.mcell.out{opacity:.35;font-weight:400}
+.mcell.today{border-color:var(--accent)}
+.mcell[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mcell .dots i{width:6px;height:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;border-radius:0;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+/* Week planner */
+.week{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:grid;gap:10px}
+.week-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.week-h strong{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:19px;text-align:center}
+.week-h button{min-height:44px;min-width:48px;padding:4px 10px;font-size:22px;line-height:1}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dayb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;min-height:76px;border-radius:12px;border:1px solid transparent;background:none}
+.dayb .dw{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.dayb .dn{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.dayb.today{border-color:var(--accent)}
+.dayb[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.dayb[aria-pressed="true"] .dw{color:var(--bg)}
+.dots{display:flex;gap:3px;justify-content:center;min-height:7px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--tc)}
+.slot{display:grid;gap:8px}
+.slot h3{margin:0;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+/* What to bring in the form */
+.sugg{display:grid;gap:2px;background:var(--bg);border-radius:12px;padding:8px 12px}
+.sugg label{display:flex;gap:12px;align-items:center;min-height:42px;font-weight:400}
+.sugg input{width:24px;height:24px;min-height:0;accent-color:var(--accent);flex:none}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.tip{background:color-mix(in srgb,var(--tc) 12%,var(--surface));border-radius:12px;padding:12px 14px;font-size:16px}
+.tip b{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--tc);margin-bottom:2px}
+/* Fill from a scanned letter */
+.scan{border:2px dashed var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:10px}
+.scan summary{cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;gap:10px;min-height:40px}
+.scan summary::-webkit-details-marker{display:none}
+.scan[open]{border-style:solid;border-color:var(--accent)}
+.scan-msg{margin:0;font-size:15px;font-weight:700;color:var(--ok)}
+.scan-msg.none{color:var(--warn)}
+.found{background:color-mix(in srgb,var(--accent) 14%,var(--bg))!important;border-color:var(--accent)!important}
+.toast{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:20}
+@media (prefers-reduced-motion:no-preference){.panel{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="today-label" id="today-label">Today</div>
+      <h1 id="today-date">Saturday, October 10</h1>
+      <p class="summary" id="summary"></p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="seg" id="views" role="group" aria-label="View">
+        <button id="v-list" aria-pressed="false">List</button>
+        <button id="v-week" aria-pressed="true">Week</button>
+        <button id="v-month" aria-pressed="false">Month</button>
+      </div>
+      <div id="agenda" style="display:grid;gap:22px"></div>
+    </main>
+
+    <aside class="side" aria-label="Tools">
+      <div class="card" id="welcome" hidden>
+        <strong id="welcome-h">Welcome. Let's keep track of your appointments.</strong>
+        <span id="welcome-p"></span>
+        <button class="more" id="load-ex">Show me an example first</button>
+      </div>
+
+      <button class="primary big" id="side-add">+ Add appointment</button>
+
+      <div class="card">
+        <h2 class="side-h" id="side-scan-h">From a letter</h2>
+        <p class="hint" id="side-scan-hint">Paste the words from your scanned letter and we'll make the appointment.</p>
+        <textarea id="side-scan" rows="3" aria-labelledby="side-scan-h"></textarea>
+        <button id="side-scan-btn">Make appointment from letter</button>
+      </div>
+
+      <div class="card">
+        <h2 class="side-h" id="show-h">Show</h2>
+        <div class="filters" id="filters" role="group" aria-labelledby="show-h"></div>
+      </div>
+
+      <button id="export-all">Add all to my phone calendar</button>
+      <p class="note" id="privacy"></p>
+    </aside>
+  </div>
+</div>
+
+<button class="fab" id="add-btn">+ Add appointment</button>
+
+<!-- Details -->
+<div class="sheet" id="detail" hidden><div class="panel" id="detail-panel" role="dialog" aria-modal="true"></div></div>
+
+<!-- Add form -->
+<div class="sheet" id="sheet" hidden>
+  <form class="panel" id="form" novalidate>
+    <h3 id="f-title" style="margin:0;font-size:22px">New appointment</h3>
+    <details class="scan" id="scan-box">
+      <summary><span aria-hidden="true">📄</span><span id="l-scan">Fill in from a letter</span></summary>
+      <p class="hint" id="l-scan-hint">Paste the words from a scanned letter. We'll find the date, time, place and phone number for you.</p>
+      <textarea id="f-scan" rows="4" aria-labelledby="l-scan"></textarea>
+      <button type="button" class="primary" id="f-scan-btn">Fill in for me</button>
+      <p class="scan-msg" id="f-scan-msg" hidden></p>
+    </details>
+    <div class="types" id="type-pick"></div>
+    <div class="field"><label for="f-name" id="l-name">What is it?</label><input id="f-name" placeholder="Monthly check-in"></div>
+    <div class="two">
+      <div class="field"><label for="f-date" id="l-date">Date</label><input id="f-date" type="date"></div>
+      <div class="field"><label for="f-time" id="l-time">Time</label><input id="f-time" type="time"></div>
+    </div>
+    <div class="field"><label for="f-place" id="l-place">Where</label><input id="f-place" placeholder="Name and address"></div>
+    <div class="field"><label for="f-phone" id="l-phone">Phone number</label><input id="f-phone" type="tel" placeholder="(404) 555-0100"></div>
+    <div class="field"><label for="f-who" id="l-who">Who you're seeing</label><input id="f-who" placeholder="Officer Davis"></div>
+    <div class="field">
+      <label id="l-bring">What to bring</label>
+      <p class="hint" id="l-bring-hint">We checked what people usually need. Uncheck anything that doesn't apply.</p>
+      <div class="sugg" id="sugg"></div>
+    </div>
+    <div class="field"><label for="f-bring" id="l-extra">Anything else to bring? (one per line)</label><textarea id="f-bring" rows="2"></textarea></div>
+    <div class="field"><label for="f-repeat" id="l-repeat">Repeats</label>
+      <select id="f-repeat"><option value="none">Does not repeat</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></div>
+    <p class="err" id="f-err" hidden></p>
+    <div class="btns">
+      <button type="submit" class="primary" id="f-save">Save</button>
+      <button type="button" id="f-cancel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Words (English / Spanish) ---------- */
+const T={
+ en:{today:"Today",summaryN:n=>n===0?"Nothing today.":n===1?"You have <b>1 appointment</b> today.":`You have <b>${n} appointments</b> today.`,
+  all:"All",types:{parole:"Parole",drug:"Drug test",doctor:"Doctor",court:"Court",other:"Other"},
+  groups:{late:"Past due",today:"Today",tomorrow:"Tomorrow",week:"This week",later:"Later",done:"Finished"},
+  showDone:n=>`Show ${n} finished`,hideDone:"Hide finished",
+  add:"+ Add appointment",exportAll:"Add all to my phone calendar",
+  privacy:"Saved only on this phone. Nothing is sent to your parole officer or anyone else. Always confirm dates with your officer.",
+  empty:"Nothing here yet. Tap “Add appointment” to add one.",emptyType:"No appointments of this type.",
+  when:"When",where:"Where",who:"With",phone:"Phone",bring:"Bring with you",
+  read:"Read aloud",done:"I went",missed:"I missed it",undo:"Undo",del:"Delete",copy:"Copy number",close:"Close",
+  google:"Google Calendar",apple:"Apple / Outlook calendar",calH:"Add to my calendar",
+  missedTag:"Missed — call your officer",doneTag:"Done",example:"Example",
+  fTitle:"New appointment",name:"What is it?",date:"Date",time:"Time",place:"Where",phoneL:"Phone number",whoL:"Who you're seeing",
+  bringL:"What to bring (one per line)",repeat:"Repeats",none:"Does not repeat",weekly:"Every week",monthly:"Every month",save:"Save",cancel:"Cancel",
+  errName:"Add a name and a date so we can remind you.",saved:"Saved",copied:"Number copied",removed:"Deleted",icsDone:"Calendar file ready. Open it to add.",
+  sayAt:"at",with:"with",
+  welcomeH:"Welcome. Let's keep track of your appointments.",welcome:"Add your parole check-ins, drug tests, doctor visits and court dates. We'll show you what's coming up and what to bring.",
+  firstAdd:"+ Add your first appointment",loadEx:"Show me an example first",
+  list:"List",cal:"Week",monthV:"Month",todayBtn:"Today",morning:"Morning",afternoon:"Afternoon",evening:"Evening",nothingDay:"Nothing this day. Tap “Add appointment” to add one.",
+  bringHint:"We checked what people usually need. Uncheck anything that doesn't apply.",extra:"Anything else to bring? (one per line)",
+  usually:"Usually needed",tipH:"Tip",
+  sideScanH:"From a letter",sideScanHint:"Paste the words from your scanned letter and we'll make the appointment.",
+  sideScanBtn:"Make appointment from letter",showH:"Show",
+  scan:"Fill in from a letter",scanHint:"Paste the words from a scanned letter. We'll find the date, time, place and phone number for you.",
+  scanBtn:"Fill in for me",scanFound:list=>`Found: ${list}. Check everything, then tap Save.`,scanNone:"We couldn't find a date in this letter. Please type it in.",
+  fieldNames:{date:"date",time:"time",place:"place",phone:"phone",who:"who",type:"type"},
+  defaultNames:{parole:"Parole check-in",drug:"Drug test",doctor:"Doctor visit",court:"Court hearing",other:"Appointment"},
+  bringDefaults:{
+   parole:["Photo ID (state ID or release ID)","Proof of address (lease, letter, or bill)","Proof of work or job search (pay stub or job log)","Supervision fee payment or receipt","List of your medicines","Any papers your officer asked for"],
+   drug:["Photo ID","Test paperwork or case number","List of your prescriptions","Money for the test fee, if you pay one"],
+   doctor:["Photo ID","Medicaid or insurance card","Your medicines or a list of them","Release or discharge papers with medical info","Questions you want to ask"],
+   court:["Court notice or papers","Photo ID","Your lawyer's name and phone number","Proof of work, classes, or treatment","Pen and paper"],
+   other:["Photo ID","Appointment letter or papers"]},
+  tips:{parole:"Arrive 10–15 minutes early. If you can't make it, call your officer before the appointment, not after.",
+   drug:"Tell the tester about every prescription you take. Call your testing line every day if you're on color code testing.",
+   doctor:"Ask for a copy of anything you need to show your officer, like proof you went.",
+   court:"Arrive 30 minutes early for security. Dress neatly and turn off your phone.",
+   other:"Write down the name of the person you talk to."}},
+ es:{today:"Hoy",summaryN:n=>n===0?"Nada hoy.":n===1?"Tiene <b>1 cita</b> hoy.":`Tiene <b>${n} citas</b> hoy.`,
+  all:"Todas",types:{parole:"Libertad cond.",drug:"Prueba de drogas",doctor:"Médico",court:"Corte",other:"Otro"},
+  groups:{late:"Vencidas",today:"Hoy",tomorrow:"Mañana",week:"Esta semana",later:"Más adelante",done:"Terminadas"},
+  showDone:n=>`Ver ${n} terminadas`,hideDone:"Ocultar terminadas",
+  add:"+ Agregar cita",exportAll:"Agregar todo al calendario del teléfono",
+  privacy:"Se guarda solo en este teléfono. No se envía nada a su oficial ni a nadie más. Siempre confirme las fechas con su oficial.",
+  empty:"Todavía no hay nada. Toque “Agregar cita”.",emptyType:"No hay citas de este tipo.",
+  when:"Cuándo",where:"Dónde",who:"Con",phone:"Teléfono",bring:"Lleve con usted",
+  read:"Leer en voz alta",done:"Ya fui",missed:"No fui",undo:"Deshacer",del:"Borrar",copy:"Copiar número",close:"Cerrar",
+  google:"Google Calendar",apple:"Calendario Apple / Outlook",calH:"Agregar a mi calendario",
+  missedTag:"No fue — llame a su oficial",doneTag:"Hecho",example:"Ejemplo",
+  fTitle:"Nueva cita",name:"¿Qué es?",date:"Fecha",time:"Hora",place:"Dónde",phoneL:"Teléfono",whoL:"Con quién",
+  bringL:"Qué llevar (uno por línea)",repeat:"Se repite",none:"No se repite",weekly:"Cada semana",monthly:"Cada mes",save:"Guardar",cancel:"Cancelar",
+  errName:"Agregue un nombre y una fecha para poder recordarle.",saved:"Guardado",copied:"Número copiado",removed:"Borrado",icsDone:"Archivo listo. Ábralo para agregar.",
+  sayAt:"a las",with:"con",
+  welcomeH:"Bienvenido. Vamos a organizar sus citas.",welcome:"Agregue sus citas con su oficial, pruebas de drogas, visitas al médico y fechas de corte. Le mostraremos lo que viene y qué llevar.",
+  firstAdd:"+ Agregar su primera cita",loadEx:"Ver un ejemplo primero",
+  list:"Lista",cal:"Semana",monthV:"Mes",todayBtn:"Hoy",morning:"Mañana",afternoon:"Tarde",evening:"Noche",nothingDay:"Nada este día. Toque “Agregar cita” para agregar una.",
+  bringHint:"Marcamos lo que la gente suele necesitar. Quite lo que no aplique.",extra:"¿Algo más que llevar? (uno por línea)",
+  usually:"Lo que suele necesitar",tipH:"Consejo",
+  sideScanH:"Desde una carta",sideScanHint:"Pegue el texto de su carta escaneada y haremos la cita.",
+  sideScanBtn:"Hacer cita desde la carta",showH:"Mostrar",
+  scan:"Llenar desde una carta",scanHint:"Pegue el texto de una carta escaneada. Buscaremos la fecha, la hora, el lugar y el teléfono.",
+  scanBtn:"Llenar por mí",scanFound:list=>`Encontramos: ${list}. Revise todo y toque Guardar.`,scanNone:"No encontramos una fecha en esta carta. Escríbala usted.",
+  fieldNames:{date:"fecha",time:"hora",place:"lugar",phone:"teléfono",who:"con quién",type:"tipo"},
+  defaultNames:{parole:"Cita con mi oficial",drug:"Prueba de drogas",doctor:"Visita al médico",court:"Audiencia en la corte",other:"Cita"},
+  bringDefaults:{
+   parole:["Identificación con foto (estatal o de salida)","Comprobante de domicilio (contrato, carta o factura)","Prueba de trabajo o búsqueda de empleo","Pago o recibo de la cuota de supervisión","Lista de sus medicinas","Papeles que pidió su oficial"],
+   drug:["Identificación con foto","Papeles de la prueba o número de caso","Lista de sus recetas","Dinero para la cuota de la prueba, si paga una"],
+   doctor:["Identificación con foto","Tarjeta de Medicaid o seguro","Sus medicinas o una lista","Papeles de salida con información médica","Preguntas que quiere hacer"],
+   court:["Aviso o papeles de la corte","Identificación con foto","Nombre y teléfono de su abogado","Prueba de trabajo, clases o tratamiento","Pluma y papel"],
+   other:["Identificación con foto","Carta o papeles de la cita"]},
+  tips:{parole:"Llegue 10–15 minutos antes. Si no puede ir, llame a su oficial antes de la cita, no después.",
+   drug:"Dígale al técnico todas las recetas que toma. Llame a la línea de pruebas todos los días si tiene pruebas por color.",
+   doctor:"Pida una copia de lo que necesite mostrar a su oficial, como prueba de que fue.",
+   court:"Llegue 30 minutos antes por la seguridad. Vístase bien y apague el teléfono.",
+   other:"Anote el nombre de la persona con quien habla."}}
+};
+const TYPES=["parole","drug","doctor","court","other"];
+/* Simple icons so people who don't read well can still tell types apart */
+const ICONS={
+ parole:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>',
+ drug:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 14h9"/></svg>',
+ doctor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ court:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></svg>',
+ other:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>'};
+const ico=type=>`<span class="ico" style="--tc:var(--${type})" aria-hidden="true">${ICONS[type]}</span>`;
+
+const KEY="checkin-tracker-v2";
+let lang="en",pickType="parole",filter="all",showDone=false,openId=null,view="week",selDay=null,weekStart=null,monthCursor=null;
+
+/* ---------- Dates ---------- */
+const pad=n=>String(n).padStart(2,"0");
+function iso(d){return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return iso(d)}
+const when=it=>new Date(`${it.date}T${it.time||"09:00"}`);
+const loc=()=>lang==="es"?"es-US":"en-US";
+const fmtTime=it=>it.time?when(it).toLocaleTimeString(loc(),{hour:"numeric",minute:"2-digit"}):"—";
+const fmtDay=d=>d.toLocaleDateString(loc(),{weekday:"long",month:"long",day:"numeric"});
+const fmtShort=d=>d.toLocaleDateString(loc(),{weekday:"short",month:"short",day:"numeric"});
+function daysAway(it){const a=new Date();a.setHours(0,0,0,0);return Math.round((new Date(it.date+"T00:00")-a)/864e5)}
+function groupOf(it){if(it.status)return"done";const d=daysAway(it);
+ if(d<0)return"late";if(d===0)return"today";if(d===1)return"tomorrow";if(d<=7)return"week";return"later"}
+
+/* ---------- Data ---------- */
+function sample(){return[
+ {id:"s1",type:"parole",name:"Monthly check-in",date:addDays(0),time:"15:30",place:"Community Supervision Office, 2 Peachtree St",phone:"(404) 555-0142",who:"Officer Davis",bring:["State ID","Pay stub or job letter","Fee receipt"],repeat:"monthly",status:"",ex:true},
+ {id:"s2",type:"drug",name:"Random drug test",date:addDays(1),time:"07:45",place:"Testing Center, 1100 Spring St",phone:"(404) 555-0177",who:"",bring:["State ID"],repeat:"none",status:"",ex:true},
+ {id:"s3",type:"doctor",name:"Blood pressure follow-up",date:addDays(4),time:"14:00",place:"Neighborhood Clinic",phone:"(404) 555-0199",who:"Dr. Reyes",bring:["Medicaid card","List of medicines"],repeat:"none",status:"",ex:true},
+ {id:"s4",type:"court",name:"Court date",date:addDays(12),time:"10:00",place:"County Courthouse, Room 4B",phone:"(404) 555-0110",who:"Judge Lee",bring:["Court papers","Proof of address"],repeat:"none",status:"",ex:true}
+]}
+let items;
+try{const raw=localStorage.getItem(KEY);items=raw?JSON.parse(raw):[]}catch(e){items=[]}
+// No language switch: the app follows the phone's own language (Spanish phones get Spanish, everything else English)
+try{lang=(navigator.language||"en").toLowerCase().startsWith("es")?"es":"en"}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(items));localStorage.setItem(KEY+"-lang",lang)}catch(e){}}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(msg){const el=$("toast");el.textContent=msg;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,1800)}
+
+/* ---------- Agenda ---------- */
+function rowHTML(it,first){const t=T[lang];const g=groupOf(it);
+ const dayLine=(g==="today"||g==="tomorrow")?"":`<small>${fmtShort(new Date(it.date+"T12:00"))}</small>`;
+ const tag=it.status==="missed"?`<span class="tag missed">${t.missedTag}</span>`:`<span class="tag">${t.types[it.type]}${it.ex?` · ${t.example}`:""}</span>`;
+ return`<button class="row ${first?"first":""} ${it.status==="done"?"done":""}" style="--tc:var(--${it.type})" data-open="${it.id}">
+  ${ico(it.type)}
+  <span class="mid">${tag}<span class="name">${esc(it.name)}</span>${it.place?`<span class="sub">${esc(it.place)}</span>`:""}</span>
+  <span class="time">${fmtTime(it)}${dayLine}</span></button>`}
+
+function render(){
+ const t=T[lang];document.documentElement.lang=lang;
+ $("today-label").textContent=t.today;$("today-date").textContent=fmtDay(new Date());
+ $("add-btn").textContent=t.add;$("export-all").textContent=t.exportAll;$("privacy").textContent=t.privacy;
+ const todayCount=items.filter(i=>!i.status&&daysAway(i)===0).length;
+ $("summary").innerHTML=t.summaryN(todayCount);
+
+ $("filters").innerHTML=`<button data-filter="all" aria-pressed="${filter==="all"}">${t.all}</button>`+
+  TYPES.filter(k=>k!=="other"||items.some(i=>i.type==="other")).map(k=>`<button data-filter="${k}" aria-pressed="${filter===k}">${ico(k)}${t.types[k]}</button>`).join("");
+
+ const list=items.filter(i=>filter==="all"||i.type===filter).sort((a,b)=>when(a)-when(b));
+ $("welcome").hidden=!!items.length;
+ $("welcome-h").textContent=t.welcomeH;$("welcome-p").textContent=t.welcome;$("load-ex").textContent=t.loadEx;
+ $("side-add").textContent=t.add;$("side-scan-h").textContent=t.sideScanH;$("side-scan-hint").textContent=t.sideScanHint;
+ $("side-scan-btn").textContent=t.sideScanBtn;$("show-h").textContent=t.showH;
+ $("v-list").textContent=t.list;$("v-week").textContent=t.cal;$("v-month").textContent=t.monthV;
+ $("v-list").setAttribute("aria-pressed",view==="list");$("v-week").setAttribute("aria-pressed",view==="week");$("v-month").setAttribute("aria-pressed",view==="month");
+ if(!items.length&&view==="list"){$("agenda").innerHTML=`<div class="empty">${t.empty}</div>`;$("export-all").hidden=true;return}
+ if(view==="week"||view==="month"){$("agenda").innerHTML=view==="week"?weekHTML(list):monthHTML(list);$("export-all").hidden=!list.some(i=>!i.status&&when(i)>=new Date());return}
+ if(!list.length){$("agenda").innerHTML=`<div class="empty">${t.emptyType}</div>`;$("export-all").hidden=true;return}
+ const order=["late","today","tomorrow","week","later"];
+ const by={};list.forEach(i=>{(by[groupOf(i)]=by[groupOf(i)]||[]).push(i)});
+ let firstShown=false;
+ let html=order.filter(g=>by[g]).map(g=>{
+  const color=g==="late"?"var(--warn)":(g==="today"?"var(--ink)":"");
+  const count=by[g].length;
+  return`<section class="group" style="${color?`--gc:${color}`:""}"><h2>${t.groups[g]}<span>${count}</span></h2>
+   ${by[g].map(i=>{const f=!firstShown&&g!=="late";if(f)firstShown=true;return rowHTML(i,f)}).join("")}</section>`}).join("");
+ const done=(by.done||[]).reverse();
+ if(done.length){html+=`<section class="group"><button class="more" id="toggle-done">${showDone?t.hideDone:t.showDone(done.length)}</button>
+  ${showDone?done.map(i=>rowHTML(i,false)).join(""):""}</section>`}
+ $("agenda").innerHTML=html;
+ $("export-all").hidden=!list.some(i=>!i.status&&when(i)>=new Date());
+}
+
+/* ---------- Calendar (week planner) ---------- */
+function weekHTML(list){const t=T[lang];
+ const todayIso=iso(new Date());
+ if(!selDay)selDay=todayIso;
+ if(!weekStart){const d=new Date(selDay+"T12:00");d.setDate(d.getDate()-d.getDay());weekStart=d}
+ const by={};list.forEach(i=>{(by[i.date]=by[i.date]||[]).push(i)});
+ let days="";for(let k=0;k<7;k++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+k);const key=iso(d);const its=by[key]||[];
+  days+=`<button class="dayb ${key===todayIso?"today":""}" data-day="${key}" aria-pressed="${key===selDay}" aria-label="${fmtDay(d)}: ${its.length}">
+   <span class="dw">${d.toLocaleDateString(loc(),{weekday:"short"})}</span><span class="dn">${d.getDate()}</span>
+   <span class="dots">${its.slice(0,4).map(i=>`<i style="--tc:var(--${i.type})"></i>`).join("")}</span></button>`}
+ const end=new Date(weekStart);end.setDate(end.getDate()+6);
+ const range=weekStart.getMonth()===end.getMonth()
+  ?weekStart.toLocaleDateString(loc(),{month:"long",year:"numeric"})
+  :`${weekStart.toLocaleDateString(loc(),{month:"short"})} – ${end.toLocaleDateString(loc(),{month:"short",year:"numeric"})}`;
+ return`<div class="week"><div class="week-h"><button data-week="-1" aria-label="Previous week">‹</button><strong>${range}</strong><button data-week="1" aria-label="Next week">›</button></div>
+  <div class="days">${days}</div></div>${dayBody(by[selDay]||[])}`}
+
+// The selected day's schedule, split into morning / afternoon / evening
+function dayBody(dayItems){const t=T[lang];
+ const slots={morning:[],afternoon:[],evening:[]};
+ dayItems.forEach(i=>{const h=Number((i.time||"09:00").slice(0,2));slots[h<12?"morning":h<17?"afternoon":"evening"].push(i)});
+ const body=dayItems.length
+  ?Object.keys(slots).filter(s=>slots[s].length).map(s=>`<div class="slot"><h3>${t[s]}</h3>${slots[s].map(i=>rowHTML(i,false)).join("")}</div>`).join("")
+  :`<div class="empty">${t.nothingDay}</div>`;
+ return`<section class="group" style="--gc:var(--ink)"><h2>${fmtDay(new Date(selDay+"T12:00"))}<span>${dayItems.length}</span></h2>${body}</section>`}
+
+/* ---------- Full month calendar ---------- */
+function monthHTML(list){const t=T[lang];const todayIso=iso(new Date());
+ if(!selDay)selDay=todayIso;
+ if(!monthCursor){const d=new Date(selDay+"T12:00");d.setDate(1);monthCursor=d}
+ const y=monthCursor.getFullYear(),m=monthCursor.getMonth();
+ const start=new Date(y,m,1,12);start.setDate(1-start.getDay());
+ const by={};list.forEach(i=>{(by[i.date]=by[i.date]||[]).push(i)});
+ const dows=[...Array(7)].map((_,k)=>{const d=new Date(start);d.setDate(start.getDate()+k);return`<div class="dw">${d.toLocaleDateString(loc(),{weekday:"narrow"})}</div>`}).join("");
+ let cells="";for(let k=0;k<42;k++){const d=new Date(start);d.setDate(start.getDate()+k);const key=iso(d);const its=by[key]||[];
+  if(k===35&&d.getMonth()!==m)break; // skip an empty last row
+  cells+=`<button class="mcell ${d.getMonth()!==m?"out":""} ${key===todayIso?"today":""}" data-day="${key}" aria-pressed="${key===selDay}" aria-label="${fmtDay(d)}: ${its.length}">
+   ${d.getDate()}<span class="dots">${its.slice(0,3).map(i=>`<i style="--tc:var(--${i.type})"></i>`).join("")}</span></button>`}
+ const label=monthCursor.toLocaleDateString(loc(),{month:"long",year:"numeric"});
+ return`<div class="week"><div class="week-h"><button data-month="-1" aria-label="Previous month">‹</button><strong>${label}</strong><button data-month="1" aria-label="Next month">›</button></div>
+  <div class="mgrid">${dows}${cells}</div>
+  <button class="more" data-gotoday style="justify-self:center">${t.todayBtn}</button></div>${dayBody(by[selDay]||[])}`}
+
+/* ---------- Details sheet ---------- */
+function renderDetail(){const it=items.find(i=>i.id===openId);if(!it){closeDetail();return}const t=T[lang];
+ $("detail-panel").innerHTML=`
+  <div class="d-head" style="--tc:var(--${it.type})">${ico(it.type)}<div><span class="tag" style="--tc:var(--${it.type})">${t.types[it.type]}</span><h3>${esc(it.name)}</h3></div></div>
+  ${it.status==="missed"?`<p class="err">${t.missedTag}</p>`:""}
+  <dl class="facts">
+   <div><dt>${t.when}</dt><dd>${fmtDay(when(it))}<br>${fmtTime(it)}</dd></div>
+   ${it.place?`<div><dt>${t.where}</dt><dd>${esc(it.place)}</dd></div>`:""}
+   ${it.who?`<div><dt>${t.who}</dt><dd>${esc(it.who)}</dd></div>`:""}
+   ${it.phone?`<div><dt>${t.phone}</dt><dd style="user-select:all">${esc(it.phone)}</dd></div>`:""}
+  </dl>
+  ${(()=>{const own=it.bring&&it.bring.length;const list=own?it.bring:t.bringDefaults[it.type];
+    return`<div style="display:grid;gap:6px"><p class="sub-h">${own?t.bring:t.usually}</p><ul class="bring">${list.map((b,i)=>`<li><label><input type="checkbox" id="b-${it.id}-${i}">${esc(b)}</label></li>`).join("")}</ul></div>`})()}
+  <div class="tip" style="--tc:var(--${it.type})"><b>${t.tipH}</b>${t.tips[it.type]}</div>
+  <div class="btns">
+   <button class="primary wide" data-act="speak">🔊 ${t.read}</button>
+   ${it.status?`<button class="wide" data-act="undo">${t.undo}</button>`:`<button data-act="done">✓ ${t.done}</button><button data-act="missed">${t.missed}</button>`}
+   ${it.phone?`<button class="wide" data-act="copy">${t.copy}</button>`:""}
+  </div>
+  ${it.status?"":`<div style="display:grid;gap:8px"><p class="sub-h">${t.calH}</p><div class="btns">
+   <a href="${googleUrl(it)}" target="_blank" rel="noopener">${t.google}</a>
+   <button data-act="ics">${t.apple}</button></div></div>`}
+  <div class="btns"><button class="danger" data-act="del">${t.del}</button><button data-act="close">${t.close}</button></div>`;
+ $("detail").hidden=false}
+function closeDetail(){openId=null;$("detail").hidden=true}
+
+/* ---------- Calendar export ---------- */
+// Floating times (no time zone) so the event shows at the same clock time on the phone.
+function stamp(d){return`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`}
+function details(it){const t=T[lang];const l=[];
+ if(it.who)l.push(`${t.who}: ${it.who}`);if(it.phone)l.push(`${t.phone}: ${it.phone}`);
+ if(it.bring&&it.bring.length)l.push(`${t.bring}: ${it.bring.join(", ")}`);return l.join("\n")}
+function googleUrl(it){const s=when(it),e=new Date(s.getTime()+36e5);
+ return"https://calendar.google.com/calendar/render?"+new URLSearchParams({action:"TEMPLATE",text:`${T[lang].types[it.type]}: ${it.name}`,dates:`${stamp(s)}/${stamp(e)}`,details:details(it),location:it.place||""})}
+const icsEsc=s=>String(s||"").replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/,/g,"\\,").replace(/;/g,"\\;");
+function icsEvent(it){const s=when(it),e=new Date(s.getTime()+36e5);
+ const rule=it.repeat==="weekly"?"RRULE:FREQ=WEEKLY\r\n":it.repeat==="monthly"?"RRULE:FREQ=MONTHLY\r\n":"";
+ const alarm=tr=>`BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:${tr}\r\nDESCRIPTION:${icsEsc(it.name)}\r\nEND:VALARM\r\n`;
+ return`BEGIN:VEVENT\r\nUID:${it.id}-${it.date}@checkin-tracker\r\nDTSTAMP:${stamp(new Date())}\r\nDTSTART:${stamp(s)}\r\nDTEND:${stamp(e)}\r\n${rule}`+
+  `SUMMARY:${icsEsc(T[lang].types[it.type]+": "+it.name)}\r\nLOCATION:${icsEsc(it.place)}\r\nDESCRIPTION:${icsEsc(details(it))}\r\n`+
+  alarm("-P1D")+alarm("-PT2H")+"END:VEVENT\r\n"}   // reminders: day before + 2 hours before
+function downloadIcs(list,filename){
+ const body="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Check-In Tracker//EN\r\n"+list.map(icsEvent).join("")+"END:VCALENDAR\r\n";
+ const url=URL.createObjectURL(new Blob([body],{type:"text/calendar"}));
+ const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),5000);toast(T[lang].icsDone)}
+
+/* ---------- Actions ---------- */
+function speak(it){const t=T[lang];
+ const text=`${t.types[it.type]}. ${it.name}. ${fmtDay(when(it))} ${t.sayAt} ${fmtTime(it)}. ${it.place||""}. ${it.who?t.with+" "+it.who+".":""} ${it.bring&&it.bring.length?t.bring+": "+it.bring.join(", ")+".":""}`;
+ try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=loc();u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+function nextRepeat(it){if(!it.repeat||it.repeat==="none")return;const d=new Date(it.date+"T12:00");
+ if(it.repeat==="weekly")d.setDate(d.getDate()+7);else d.setMonth(d.getMonth()+1);
+ items.push({...it,id:"a"+Date.now(),date:iso(d),status:""})}
+
+$("agenda").addEventListener("click",e=>{
+ const r=e.target.closest("[data-open]");if(r){openId=r.dataset.open;renderDetail();return}
+ if(e.target.closest("#toggle-done")){showDone=!showDone;render()}
+ const wk=e.target.closest("[data-week]");if(wk){weekStart.setDate(weekStart.getDate()+7*Number(wk.dataset.week));
+  const d=new Date(weekStart);selDay=iso(d);render();return}
+ const mo=e.target.closest("[data-month]");if(mo){monthCursor.setMonth(monthCursor.getMonth()+Number(mo.dataset.month));render();return}
+ if(e.target.closest("[data-gotoday]")){goTo(iso(new Date()));render();return}
+ const dy=e.target.closest("[data-day]");if(dy){goTo(dy.dataset.day);render()}});
+// Keep week and month views pointed at the same selected day
+function goTo(day){selDay=day;const d=new Date(day+"T12:00");
+ const w=new Date(d);w.setDate(d.getDate()-d.getDay());weekStart=w;
+ const m=new Date(d);m.setDate(1);monthCursor=m}
+$("v-list").onclick=()=>{view="list";render()};
+$("v-week").onclick=()=>{view="week";if(selDay)goTo(selDay);render()};
+$("v-month").onclick=()=>{view="month";if(selDay)goTo(selDay);render()};
+$("filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(b){filter=b.dataset.filter;render()}});
+$("detail").addEventListener("click",e=>{
+ if(e.target.id==="detail"){closeDetail();return}
+ const b=e.target.closest("[data-act]");if(!b)return;const it=items.find(i=>i.id===openId);if(!it)return;const t=T[lang];
+ switch(b.dataset.act){
+  case"speak":speak(it);return;
+  case"copy":navigator.clipboard.writeText(it.phone).then(()=>toast(t.copied)).catch(()=>{});return;
+  case"ics":downloadIcs([it],"appointment.ics");return;
+  case"close":closeDetail();return;
+  case"done":it.status="done";nextRepeat(it);closeDetail();toast(t.doneTag);break;
+  case"missed":it.status="missed";nextRepeat(it);break;
+  case"undo":it.status="";break;
+  case"del":items=items.filter(i=>i!==it);closeDetail();toast(t.removed);break;
+ }
+ save();render();if(openId)renderDetail()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDetail();$("sheet").hidden=true}});
+$("export-all").onclick=()=>{const l=items.filter(i=>!i.status&&when(i)>=new Date());if(l.length)downloadIcs(l,"my-check-ins.ics")};
+
+/* ---------- Add form ---------- */
+function drawTypes(){const t=T[lang];$("type-pick").innerHTML=TYPES.map(k=>`<button type="button" data-type="${k}" style="--tc:var(--${k})" aria-pressed="${k===pickType}">${ico(k)}${t.types[k]}</button>`).join("")}
+// Pre-checked "what to bring" list that changes with the appointment type
+function drawSuggestions(){const t=T[lang];
+ $("sugg").innerHTML=t.bringDefaults[pickType].map((b,i)=>`<label><input type="checkbox" id="sg-${i}" value="${esc(b)}" checked>${esc(b)}</label>`).join("")}
+function openSheet(){const t=T[lang];
+ $("l-scan").textContent=t.scan;$("l-scan-hint").textContent=t.scanHint;$("f-scan-btn").textContent=t.scanBtn;
+ $("f-scan").value="";$("f-scan-msg").hidden=true;$("scan-box").open=false;
+ document.querySelectorAll(".found").forEach(el=>el.classList.remove("found"));
+ const L={"f-title":t.fTitle,"l-name":t.name,"l-date":t.date,"l-time":t.time,"l-place":t.place,"l-phone":t.phoneL,"l-who":t.whoL,"l-bring":t.bring,"l-bring-hint":t.bringHint,"l-extra":t.extra,"l-repeat":t.repeat,"f-save":t.save,"f-cancel":t.cancel};
+ for(const k in L)$(k).textContent=L[k];
+ const o=$("f-repeat").options;o[0].text=t.none;o[1].text=t.weekly;o[2].text=t.monthly;
+ $("form").reset();$("f-err").hidden=true;
+ $("f-date").value=(view!=="list"&&selDay&&selDay>=iso(new Date()))?selDay:addDays(1);$("f-time").value="09:00";
+ if(filter!=="all")pickType=filter;drawTypes();drawSuggestions();$("sheet").hidden=false;$("f-name").focus()}
+$("type-pick").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b){pickType=b.dataset.type;drawTypes();drawSuggestions()}});
+$("add-btn").onclick=openSheet;
+$("side-add").onclick=openSheet;
+$("load-ex").onclick=()=>{items=sample();goTo(iso(new Date()));render()};
+$("f-cancel").onclick=()=>$("sheet").hidden=true;
+$("sheet").addEventListener("click",e=>{if(e.target.id==="sheet")$("sheet").hidden=true});
+$("form").addEventListener("submit",e=>{e.preventDefault();const t=T[lang];
+ const name=$("f-name").value.trim(),date=$("f-date").value;
+ if(!name||!date){$("f-err").textContent=t.errName;$("f-err").hidden=false;return}
+ items.push({id:"a"+Date.now(),type:pickType,name,date,time:$("f-time").value,place:$("f-place").value.trim(),
+  phone:$("f-phone").value.trim(),who:$("f-who").value.trim(),
+  bring:[...[...$("sugg").querySelectorAll("input:checked")].map(c=>c.value),
+         ...$("f-bring").value.split("\n").map(s=>s.trim()).filter(Boolean)],
+  repeat:$("f-repeat").value,status:""});
+ if(view!=="list")goTo(date);
+ save();$("sheet").hidden=true;render();toast(t.saved)});
+
+/* ---------- Connect to the document scanner ----------
+   The scanner hands over the text it read from a letter.
+   parseLetter() finds the date, time, place, phone, person and type,
+   and the add form opens filled in so the person can check it and tap Save. */
+const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,
+ enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
+function makeDate(y,m,d){if(m<0||m>11||d<1||d>31)return null;
+ const now=new Date();now.setHours(0,0,0,0);
+ if(y==null){y=now.getFullYear();const c=new Date(y,m,d);if(c<now-30*864e5)y++}
+ else if(y<100)y+=2000;
+ const dt=new Date(y,m,d,12);return dt.getMonth()===m?dt:null}
+function findDates(text){const out=[];let r;
+ const en=/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?/gi;
+ while((r=en.exec(text))){const d=makeDate(r[3]?+r[3]:null,MONTHS[r[1].slice(0,3).toLowerCase()],+r[2]);if(d)out.push({i:r.index,d})}
+ const es=/\b(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|se?ptiembre|octubre|noviembre|diciembre)(?:\s+(?:de|del)\s+(\d{4}))?/gi;
+ while((r=es.exec(text))){const d=makeDate(r[3]?+r[3]:null,MONTHS[r[2].toLowerCase()],+r[1]);if(d)out.push({i:r.index,d})}
+ const num=/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/g;
+ while((r=num.exec(text))){const d=makeDate(r[3]?+r[3]:null,+r[1]-1,+r[2]);if(d)out.push({i:r.index,d})}
+ return out.sort((a,b)=>a.i-b.i)}
+function findTime(text){let r=/\b(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s?m\b\.?/i.exec(text);
+ if(r){let h=+r[1]%12;if(r[3].toLowerCase()==="p")h+=12;return`${pad(h)}:${r[2]||"00"}`}
+ r=/\b([01]?\d|2[0-3]):([0-5]\d)\b/.exec(text);return r?`${pad(+r[1])}:${r[2]}`:""}
+function findType(text){const s=text.toLowerCase();
+ const score={
+  parole:(s.match(/parole|probation|supervision|officer|check-?in|reporting|community supervision|libertad condicional|oficial/g)||[]).length,
+  drug:(s.match(/drug|urinalysis|\bua\b|screen(ing)?|test(ing)?|color code|prueba/g)||[]).length,
+  doctor:(s.match(/clinic|doctor|\bdr\.?\s|medical|health|appointment with dr|médico|clínica|salud/g)||[]).length*1.2,
+  court:(s.match(/court|hearing|judge|docket|courtroom|arraignment|corte|juez|audiencia/g)||[]).length*1.5};
+ let best="other",top=0;for(const k in score)if(score[k]>top){top=score[k];best=k}return best}
+function parseLetter(text){const p={};
+ const today=new Date();today.setHours(0,0,0,0);
+ const dates=findDates(text);const fut=dates.find(x=>x.d>=today)||dates[0];if(fut)p.date=iso(fut.d);
+ p.time=findTime(text);
+ const ph=/\(?\b\d{3}\)?[\s.-]?\d{3}[\s.-]\d{4}\b/.exec(text);if(ph)p.phone=ph[0].trim();
+ const who=/\b(Officer|Agent|PO|Dr\.?|Doctor|Judge|Oficial|Juez)\s+[A-Z][a-zA-Z'-]+/.exec(text);if(who)p.who=who[0];
+ const pl=/(?<![:\d])\b\d{1,5}\s+[A-Za-z0-9 .'-]{2,40}?\b(St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Pkwy|Parkway|Way|Ln|Lane|Ct|Court|Pl|Place|Hwy|Highway|Cir|Circle)\b\.?(?:\s+(?:NW|NE|SW|SE|N|S|E|W)\b)?(?:[ ,]+(?:Suite|Ste\.?|Room|Rm\.?|Floor|Apt\.?|#)\s*[\w-]+)?/i.exec(text);
+ if(pl)p.place=pl[0].replace(/\s+/g," ").trim();
+ p.type=findType(text);return p}
+
+function applyParsed(p){const t=T[lang];const found=[];
+ const set=(id,val,key)=>{if(!val)return;$(id).value=val;$(id).classList.add("found");found.push(t.fieldNames[key])};
+ if(p.type){pickType=p.type;drawTypes();drawSuggestions();if(p.type!=="other")found.push(t.fieldNames.type)}
+ if(!$("f-name").value)$("f-name").value=t.defaultNames[pickType];
+ set("f-date",p.date,"date");set("f-time",p.time,"time");set("f-place",p.place,"place");set("f-phone",p.phone,"phone");set("f-who",p.who,"who");
+ const msg=$("f-scan-msg");msg.hidden=false;
+ if(p.date){msg.className="scan-msg";msg.textContent=t.scanFound(found.join(", "))}
+ else{msg.className="scan-msg none";msg.textContent=t.scanNone}}
+$("f-scan-btn").onclick=()=>{const txt=$("f-scan").value.trim();if(txt)applyParsed(parseLetter(txt))};
+$("side-scan-btn").onclick=()=>{const txt=$("side-scan").value.trim();if(!txt){$("side-scan").focus();return}
+ window.addAppointmentFromText(txt);$("side-scan").value=""};
+
+// Call this from your scanner when it's on the same page:
+//   window.addAppointmentFromText(scannedText)
+window.addAppointmentFromText=function(text){
+ openSheet();$("scan-box").open=true;$("f-scan").value=text;applyParsed(parseLetter(text))};
+
+render();
+setInterval(render,60000);
+
+// When the scanner is a separate page in the same folder, it saves the text
+// under "scan-to-tracker" and opens this page; we pick it up here.
+try{const handoff=localStorage.getItem("scan-to-tracker");
+ if(handoff){localStorage.removeItem("scan-to-tracker");window.addAppointmentFromText(handoff)}}catch(e){}
+</script>
+</body>
+</html>
