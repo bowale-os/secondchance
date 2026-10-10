@@ -3,13 +3,14 @@ import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import { daysUntil } from "../../lib/format";
 import type { ClientRead, StaffRead } from "../../types";
-import AppBar from "../layout/AppBar";
+import AppBar, { type AppNav } from "../layout/AppBar";
 import ClientRows from "./ClientRows";
 import StatTile from "./StatTile";
 import "./dashboard.css";
 
 interface Props {
   staff: StaffRead;
+  nav: AppNav;
   onNewClient: () => void;
   onSelectClient: (id: string) => void;
   onLogout: () => void;
@@ -22,7 +23,7 @@ function greeting(): string {
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
-export default function Dashboard({ staff, onNewClient, onSelectClient, onLogout }: Props) {
+export default function Dashboard({ staff, nav, onNewClient, onSelectClient, onLogout }: Props) {
   const api = useApi();
   const [clients, setClients] = useState<ClientRead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export default function Dashboard({ staff, onNewClient, onSelectClient, onLogout
   return (
     <div className="dash">
       <a className="skip-link" href="#dash-main">Skip to main content</a>
-      <AppBar staff={staff} onLogout={onLogout} />
+      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
 
       <main id="dash-main" className="dash-main">
         <div className="dash-title">

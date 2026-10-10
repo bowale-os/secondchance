@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import type { ClientDraft, ClientRead, StaffRead } from "../../types";
-import AppBar from "../layout/AppBar";
+import AppBar, { type AppNav } from "../layout/AppBar";
 import "../dashboard/dashboard.css";
 import "./new-client.css";
 import ReadingStep from "./ReadingStep";
@@ -13,6 +13,7 @@ type Step = { name: "upload" } | { name: "reading" } | { name: "review"; draft: 
 
 interface Props {
   staff: StaffRead;
+  nav: AppNav;
   onLogout: () => void;
   onCreated: (client: ClientRead) => void;
   onCancel: () => void;
@@ -22,7 +23,7 @@ interface Props {
  * Create-a-client flow: upload documents -> Gemini reads them -> case worker reviews
  * the filled-in profile and creates the client.
  */
-export default function NewClientFlow({ staff, onLogout, onCreated, onCancel }: Props) {
+export default function NewClientFlow({ staff, nav, onLogout, onCreated, onCancel }: Props) {
   const api = useApi();
   const [step, setStep] = useState<Step>({ name: "upload" });
   const [files, setFiles] = useState<File[]>([]);
@@ -66,7 +67,7 @@ export default function NewClientFlow({ staff, onLogout, onCreated, onCancel }: 
   return (
     <div className="dash">
       <a className="skip-link" href="#nc-main">Skip to main content</a>
-      <AppBar staff={staff} onLogout={onLogout} />
+      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
       <main id="nc-main" className="dash-main nc-main">
         <div>
           <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ My clients</button>

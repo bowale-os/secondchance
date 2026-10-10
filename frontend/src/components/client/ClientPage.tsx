@@ -4,7 +4,8 @@ import { errorText } from "../../lib/errors";
 import type { ClientDetail, StaffRead } from "../../types";
 import { initials } from "../dashboard/ClientRows";
 import ReleaseBadge from "../dashboard/ReleaseBadge";
-import AppBar from "../layout/AppBar";
+import AppBar, { type AppNav } from "../layout/AppBar";
+import ClientResourcesTab from "../resources/ClientResourcesTab";
 import DocumentsTab from "./DocumentsTab";
 import OverviewTab from "./OverviewTab";
 import RecordsTab from "./RecordsTab";
@@ -12,16 +13,17 @@ import { recordGroups } from "./recordGroups";
 import "../dashboard/dashboard.css";
 import "./client.css";
 
-type Tab = "overview" | "records" | "documents";
+type Tab = "overview" | "records" | "documents" | "resources";
 
 interface Props {
   clientId: string;
   staff: StaffRead;
+  nav: AppNav;
   onBack: () => void;
   onLogout: () => void;
 }
 
-export default function ClientPage({ clientId, staff, onBack, onLogout }: Props) {
+export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: Props) {
   const api = useApi();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,11 +56,12 @@ export default function ClientPage({ clientId, staff, onBack, onLogout }: Props)
     { id: "overview", label: "Overview" },
     { id: "records", label: `Records (${rows.length})` },
     { id: "documents", label: `Documents (${client?.documents.length ?? 0})` },
+    { id: "resources", label: "Resources" },
   ];
 
   return (
     <div className="dash">
-      <AppBar staff={staff} onLogout={onLogout} />
+      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
       <main className="dash-main">
         <div>
           <button type="button" className="dash-btn dash-btn-quiet" onClick={onBack}>‹ My clients</button>
@@ -128,6 +131,7 @@ export default function ClientPage({ clientId, staff, onBack, onLogout }: Props)
                     onDownload={(id, name) => run(() => api.documents.download(id, name))}
                   />
                 )}
+                {tab === "resources" && <ClientResourcesTab client={client} />}
               </div>
             </section>
           </>

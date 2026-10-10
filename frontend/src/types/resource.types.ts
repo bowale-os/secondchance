@@ -15,6 +15,7 @@ type ValueOf<T> = T[keyof T];
 export const ResourceCategory = {
   SHELTER: "shelter",
   FOOD: "food",
+  JOBS: "jobs", // fair-chance employers; kept by the frontend, see docs/resources-tab-notes.md
   ADDICTION: "addiction",
   CLASSES: "classes",
   EVENTS: "events",
@@ -120,6 +121,8 @@ export interface OpeningHours {
 
 export interface TransitStop {
   stop_name: string;
+  lat: number; // for the map's transit layer
+  lng: number;
   distance_m: number; // straight-line
   routes: string[];
 }
@@ -148,6 +151,20 @@ export interface ShelterDetails {
 export interface FoodDetails {
   kind: FoodKind[];
   visit_limit: string | null; // e.g. "Once per week"
+}
+
+export interface JobStep {
+  title: string; // e.g. "Gather documents"
+  detail: string; // plain-language instructions
+  documents?: RequiredDocument[]; // matched against document_checks
+}
+
+export interface JobDetails {
+  employer: string;
+  pay_note: string | null; // e.g. "$15-17/hr"
+  shift_note: string | null; // e.g. "Early mornings"
+  apply_url: string | null;
+  steps: JobStep[]; // drives the walkthrough stepper; empty = frontend default steps
 }
 
 export interface AddictionDetails {
@@ -211,6 +228,7 @@ interface ResourceBase {
 export type Resource =
   | (ResourceBase & { category: typeof ResourceCategory.SHELTER; details: ShelterDetails })
   | (ResourceBase & { category: typeof ResourceCategory.FOOD; details: FoodDetails })
+  | (ResourceBase & { category: typeof ResourceCategory.JOBS; details: JobDetails })
   | (ResourceBase & { category: typeof ResourceCategory.ADDICTION; details: AddictionDetails })
   | (ResourceBase & { category: typeof ResourceCategory.CLASSES; details: ClassEventDetails })
   | (ResourceBase & { category: typeof ResourceCategory.EVENTS; details: ClassEventDetails });
@@ -244,6 +262,7 @@ export interface ResourceQuery {
   language?: string;
   origin?: LatLng; // client address or office
   radius_m?: number;
+  starts_within_days?: number; // classes/events starting in the next N days ("This week" = 7)
   cursor?: string;
 }
 
