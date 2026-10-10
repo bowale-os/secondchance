@@ -25,33 +25,37 @@ export default function UploadStep({ files, onFilesChange, onRead, onCancel, err
   const remove = (index: number) => onFilesChange(files.filter((_, i) => i !== index));
 
   return (
-    <section>
+    <div className="nc-form">
       <StepHeader
         step={1}
         total={3}
         title="Upload documents"
         hint="Add everything you have about this client: court notices, ID, benefit letters, medication papers. We'll read them and fill in the profile for you to review."
       />
-      <DocumentDropzone onFiles={handleFiles} />
+      <section className="dash-panel">
+        <div className="nc-body">
+          <DocumentDropzone onFiles={handleFiles} />
+        </div>
+        <SelectedFiles files={files} onRemove={remove} />
+      </section>
       {fileErrors.map((message) => (
-        <p key={message} className="error" role="alert">
+        <p key={message} className="dash-error" role="alert">
           {message}
         </p>
       ))}
-      <SelectedFiles files={files} onRemove={remove} />
       {error && (
-        <p className="error" role="alert">
+        <p className="dash-error" role="alert">
           {error}
         </p>
       )}
-      <div className="row">
-        <button type="button" disabled={files.length === 0} onClick={onRead}>
+      <div className="nc-actions">
+        <button type="button" className="dash-btn" disabled={files.length === 0} onClick={onRead}>
           Read {files.length > 0 ? `${files.length} document${files.length > 1 ? "s" : ""}` : "documents"}
         </button>
-        <button type="button" className="secondary" onClick={onCancel}>
+        <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>
           Cancel
         </button>
       </div>
-    </section>
+    </div>
   );
 }

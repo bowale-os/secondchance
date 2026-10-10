@@ -1,43 +1,74 @@
-/* Styles for the create-client flow. Colors follow the palette in src/index.css. */
+/* Create-client flow. Lives inside the .dash shell, so it uses the tokens from dashboard/dashboard.css. */
 
-.card.card-wide { max-width: 760px; width: min(760px, 92vw); }
+.dash .nc-main { max-width: 52rem; }
+.nc-form { display: grid; gap: 1.5rem; }
+.nc-form > .dash-error { margin: 0; }
 
-.hint { font-size: .85rem; color: #6b7280; }
-.step-header h2 { margin: .1rem 0 .25rem; }
-.step-count { font-size: .8rem; font-weight: 600; color: #4338ca; text-transform: uppercase; letter-spacing: .04em; }
-.section-title { font-size: 1rem; margin: 1rem 0 .25rem; }
+.dash .hint { color: var(--muted); font-size: .95rem; max-width: 65ch; }
+
+/* Progress */
+.step-header { display: grid; gap: .5rem; }
+.step-header h1 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.25; }
+.stepper { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; color: var(--muted); font-weight: 600; }
+.stepper li { display: flex; align-items: center; gap: .5rem; }
+.stepper-dot { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); font-size: .9rem; }
+.stepper li.done { color: var(--ink); }
+.stepper li.done .stepper-dot { background: var(--brand); border-color: var(--brand); color: #fff; }
+.stepper li.current { color: var(--brand); }
+.stepper li.current .stepper-dot { border-color: var(--brand); color: var(--brand); }
+
+/* Panels (fieldsets share the look of .dash-panel; the legend acts as its header) */
+.nc-panel { min-width: 0; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+.nc-panel > legend { float: left; width: 100%; box-sizing: border-box; padding: 1rem 1.25rem; font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid var(--line); }
+.nc-panel > legend + * { clear: both; }
+.nc-body { padding: 1.25rem; display: grid; gap: 1rem; }
+.panel-count { color: var(--muted); }
 
 /* Upload */
-.dropzone { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 2rem 1rem; text-align: center; border: 2px dashed #c7d2fe; border-radius: 12px; background: #f8f9ff; cursor: pointer; }
-.dropzone:hover, .dropzone:focus-visible, .dropzone.dragging { border-color: #4f46e5; background: #eef0ff; outline: none; }
-.file-list { list-style: none; margin: .75rem 0 0; padding: 0; }
-.file-item { display: flex; align-items: center; gap: .75rem; padding: .5rem 0; border-top: 1px solid #e5e7eb; }
-.file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
-.icon-button { padding: .1rem .55rem; background: transparent; color: #6b7280; font-size: 1.25rem; line-height: 1; }
-.icon-button:hover { background: #f3f4f6; color: #b91c1c; }
+.dropzone { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 2.5rem 1rem; text-align: center; border: 2px dashed var(--brand); border-radius: 1rem; background: var(--bg); cursor: pointer; }
+.dropzone strong { color: var(--brand); font-size: 1.125rem; }
+.dropzone:hover, .dropzone.dragging { background: var(--brand-tint); }
+
+/* Rows: files, summaries, extracted records */
+.nc-record { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; }
+.nc-record-main { flex: 1; min-width: 0; display: grid; gap: .35rem; justify-items: start; }
+.nc-record-title { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.nc-record .dash-btn { flex: none; }
+.nc-files { border-top: 1px solid var(--line); }
+.file-name { font-weight: 600; overflow-wrap: anywhere; }
+.nc-summary { max-width: 65ch; }
+
+.badge { flex: none; padding: .1rem .6rem; border-radius: 999px; background: var(--brand-tint); color: var(--brand); font-size: .85rem; font-weight: 600; }
+.dash .warnings { margin: .25rem 0 0; padding: .6rem .9rem .6rem 2rem; border-left: 4px solid var(--attn-ink); border-radius: .5rem; background: var(--attn-bg); color: var(--attn-ink); font-size: .95rem; }
+
+.row-group + .row-group { border-top: 1px solid var(--line); }
+.row-group h3 { margin: 0; padding: .6rem 1.25rem; font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--line); }
+.row-group .nc-record { align-items: center; }
+
+/* Fields */
+.field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem 1.25rem; padding: 1.25rem; }
+.dash .field { display: block; margin: 0; font-size: 1rem; font-weight: 600; }
+.field.wide { grid-column: 1 / -1; }
+.dash .field input, .dash .field select, .dash .field textarea {
+  display: block; width: 100%; box-sizing: border-box; min-height: 3rem; margin-top: .35rem; padding: .5rem .875rem;
+  border: 2px solid var(--line); border-radius: .75rem; background: var(--surface); color: var(--ink); font: inherit; font-weight: 400;
+}
+.dash .field textarea { min-height: 6rem; padding: .75rem .875rem; resize: vertical; }
+.dash .field input:hover, .dash .field select:hover, .dash .field textarea:hover { border-color: var(--muted); }
 
 /* Reading */
-.reading { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 0; }
-.spinner { flex: none; width: 1.6rem; height: 1.6rem; border: 3px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: spin .8s linear infinite; }
+.reading { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.25rem; }
+.spinner { flex: none; width: 1.75rem; height: 1.75rem; border: 3px solid var(--brand-tint); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
 
-/* Review */
-.summary-list { list-style: none; margin: 0; padding: 0; }
-.summary-item { padding: .75rem 0; border-top: 1px solid #e5e7eb; }
-.summary-item p { margin: .35rem 0 0; font-size: .92rem; }
-.summary-title { display: flex; align-items: center; gap: .6rem; }
-.badge { flex: none; padding: .1rem .55rem; border-radius: 999px; background: #e0e7ff; color: #4338ca; font-size: .75rem; font-weight: 600; }
-.warnings { margin: .4rem 0 0; padding: .5rem .75rem .5rem 1.6rem; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: .88rem; }
+/* Actions stay in reach on the long review page */
+.nc-actions { position: sticky; bottom: 0; z-index: 1; display: flex; gap: .75rem; flex-wrap: wrap; margin: 0 calc(-1 * clamp(1rem, 5vw, 3rem)); padding: 1rem clamp(1rem, 5vw, 3rem); background: var(--bg); border-top: 1px solid var(--line); }
+.dash .nc-actions .dash-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-.form-section { margin: 1.25rem 0 0; padding: 0; border: 0; }
-.form-section legend { padding: 0; font-weight: 600; margin-bottom: .25rem; }
-.field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 1rem; }
-.field { margin-top: .6rem; }
-.field.wide { grid-column: 1 / -1; }
-.row-group h4 { margin: .75rem 0 0; font-size: .9rem; color: #374151; }
-
-select, textarea { display: block; width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .5rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; background: #fff; }
-textarea { resize: vertical; }
-
-@media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
+@media (max-width: 36rem) {
+  .field-grid { grid-template-columns: 1fr; }
+  .nc-record { flex-direction: column; }
+  .row-group .nc-record { align-items: flex-start; }
+  .stepper { gap: 1rem; }
+}

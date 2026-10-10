@@ -1,6 +1,7 @@
 """Gemini document reading: uploaded files in, a structured client draft out."""
 
 import asyncio
+import io
 import logging
 from datetime import date
 from decimal import Decimal
@@ -8,6 +9,8 @@ from typing import Optional
 
 from google import genai
 from google.genai import errors, types
+from PIL import Image, ImageOps, UnidentifiedImageError
+from pillow_heif import register_heif_opener
 from pydantic import BaseModel
 
 from app.config import get_settings
@@ -27,9 +30,12 @@ from app.tables import (
 
 logger = logging.getLogger(__name__)
 
+register_heif_opener()  # lets Pillow open iPhone HEIC photos
+
 ALLOWED_MIME = {"application/pdf", "image/png", "image/jpeg", "image/webp", "image/heic"}
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_FILES = 10
+MAX_IMAGE_SIDE = 2000  # px; small enough to be fast, big enough to read fine print
 
 PROMPT = """You read documents for a reentry case worker and fill in a client profile.
 
@@ -130,26 +136,49 @@ def to_decimal(value: Optional[float]) -> Optional[Decimal]:
     return None if value is None else Decimal(str(value))
 
 
-async def extract(files: list[tuple[str, str, bytes]]) -> Extraction:
-    """files: (filename, mime_type, bytes). Returns Gemini's structured reading."""
-    settings = get_settings()
-    client = genai.Client(api_key=settings.gemini_api_key.get_secret_value())
+def downscale(data: bytes, mime: str) -> tuple[bytes, str]:
+    """Shrink phone photos before sending them to Gemini. PDFs pass through untouched."""
+    if not mime.startswith("image/"):
+        return data, mime
+    try:
+        img = Image.open(io.BytesIO(data))
+        img = ImageOps.exif_transpose(img)  # apply phone rotation before EXIF is dropped
+        img.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))  # keeps aspect ratio, never upscales
+        out = io.BytesIO()
+        img.convert("RGB").save(out, "JPEG", quality=85)
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ExtractionError("Could not read an uploaded image") from exc
+    return out.getvalue(), "image/jpeg"
 
-    parts: list = []
-    for i, (name, mime, data) in enumerate(files):
-        parts.append(f"file {i} ({name}):")
-        parts.append(types.Part.from_bytes(data=data, mime_type=mime))
 
-    config = types.GenerateContentConfig(
-        system_instruction=PROMPT,
-        response_mime_type="application/json",
-        response_schema=Extraction,
-        temperature=0,
-    )
+_client: Optional[genai.Client] = None
+
+
+def get_client() -> genai.Client:
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=get_settings().gemini_api_key.get_secret_value())
+    return _client
+
+
+CONFIG = types.GenerateContentConfig(
+    system_instruction=PROMPT,
+    response_mime_type="application/json",
+    response_schema=Extraction,
+    temperature=0,
+    # Extraction does not need reasoning; skipping it is the biggest latency win
+    thinking_config=types.ThinkingConfig(thinking_budget=0),
+)
+
+
+async def extract_one(index: int, name: str, mime: str, data: bytes) -> Extraction:
+    """Read a single file. Its rows are tagged with `index`, its position in the upload."""
+    data, mime = await asyncio.to_thread(downscale, data, mime)
+    parts = [f"file {index} ({name}):", types.Part.from_bytes(data=data, mime_type=mime)]
     for attempt in range(4):
         try:
-            resp = await client.aio.models.generate_content(
-                model=settings.gemini_model, contents=parts, config=config
+            resp = await get_client().aio.models.generate_content(
+                model=get_settings().gemini_model, contents=parts, config=CONFIG
             )
             break
         except errors.APIError as exc:
@@ -162,4 +191,31 @@ async def extract(files: list[tuple[str, str, bytes]]) -> Extraction:
     result = resp.parsed
     if not isinstance(result, Extraction):
         raise ExtractionError("Gemini returned an unreadable response")
+    # One file per call, so every row came from this file whatever number the model wrote
+    for row in (*result.ids, *result.benefits, *result.medications, *result.obligations, *result.contacts):
+        row.source_file = index
+    result.files = [f.model_copy(update={"file": index}) for f in result.files[:1]]
     return result
+
+
+def merge(results: list[Extraction]) -> Extraction:
+    """Combine per-file readings: first non-empty value wins for single fields, lists concatenate."""
+    merged = Extraction()
+    for field in Extraction.model_fields:
+        values = [getattr(r, field) for r in results]
+        if field == "notes":
+            notes = [v for v in values if v]
+            merged.notes = "\n".join(notes) or None
+        elif isinstance(values[0], list):
+            setattr(merged, field, [item for v in values for item in v])
+        else:
+            setattr(merged, field, next((v for v in values if v is not None), None))
+    return merged
+
+
+async def extract(files: list[tuple[str, str, bytes]]) -> Extraction:
+    """files: (filename, mime_type, bytes). Reads each file concurrently and merges the results."""
+    results = await asyncio.gather(
+        *(extract_one(i, name, mime, data) for i, (name, mime, data) in enumerate(files))
+    )
+    return merge(list(results))

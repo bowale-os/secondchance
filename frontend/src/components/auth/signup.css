@@ -1,0 +1,18 @@
+/* Case worker profile setup. Builds on .login-card / .login-field (client-portal/portal.css) and the .landing tokens. */
+
+.signup-card { max-width: 32rem; }
+.signup-head { display: grid; gap: .5rem; }
+.signup-step { color: var(--brand); font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.field-hint { color: var(--muted); font-size: .95rem; font-weight: 400; }
+
+.login-field input:disabled { background: var(--bg); color: var(--muted); border-style: dashed; cursor: not-allowed; }
+.login-field input:hover:not(:disabled) { border-color: var(--muted); }
+.landing .login-field input:focus-visible { border-color: var(--brand); }
+
+/* Waiting and failure pages (StatusPage) */
+.status-card { max-width: 28rem; }
+.status-card h1 { font-size: 1.75rem; line-height: 1.25; }
+.status-card:has(.status-spinner) { grid-auto-flow: column; justify-content: start; align-items: center; gap: 1rem; }
+.status-spinner { flex: none; width: 1.75rem; height: 1.75rem; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: status-spin .8s linear infinite; }
+@keyframes status-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .status-spinner { animation-duration: 3s; } }
