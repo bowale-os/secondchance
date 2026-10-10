@@ -21,6 +21,7 @@ import {
 } from "./labels";
 import DocumentList from "./DocumentList";
 import JobWalkthrough from "./JobWalkthrough";
+import ResourceMap from "./map/LazyResourceMap";
 import TransitBadge from "./TransitBadge";
 
 interface Props {
@@ -32,13 +33,15 @@ interface Props {
   documentStatus?: (doc: RequiredDocument) => DocStatus;
   /** Remembers job walkthrough progress per person: a client id, or "me" in the client portal. */
   progressScope?: string;
+  /** Staff can drag and scroll the map; clients use the buttons. */
+  mapGestures?: boolean;
 }
 
 /**
  * Full details for one resource. A modal <dialog>: the browser traps focus inside it and
  * closes it on Escape; focus goes back to whatever opened it.
  */
-export default function ResourceDrawer({ resourceId, load, onClose, documentStatus, progressScope }: Props) {
+export default function ResourceDrawer({ resourceId, load, onClose, documentStatus, progressScope, mapGestures = false }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [resource, setResource] = useState<Resource | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +85,7 @@ export default function ResourceDrawer({ resourceId, load, onClose, documentStat
         </div>
 
         {error && <p className="dash-error" role="alert">{error}</p>}
-        {resource && <Details resource={resource} documentStatus={documentStatus} progressScope={progressScope} />}
+        {resource && <Details resource={resource} documentStatus={documentStatus} progressScope={progressScope} mapGestures={mapGestures} />}
       </div>
     </dialog>
   );
@@ -97,9 +100,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-type DetailProps = Pick<Props, "documentStatus" | "progressScope"> & { resource: Resource };
+type DetailProps = Pick<Props, "documentStatus" | "progressScope" | "mapGestures"> & { resource: Resource };
 
-function Details({ resource: r, documentStatus, progressScope }: DetailProps) {
+function Details({ resource: r, documentStatus, progressScope, mapGestures }: DetailProps) {
   const serves = [
     GENDER_LABELS[r.gender],
     r.families_welcome ? "Families welcome" : null,
@@ -126,7 +129,24 @@ function Details({ resource: r, documentStatus, progressScope }: DetailProps) {
         ) : (
           <p>No walk-in address. Reach them by phone.</p>
         )}
-        {/* Step 7: one-pin ResourceMap goes here when r.location is set. */}
+        {r.location && (
+          <>
+            <ResourceMap
+              key={r.id}
+              compact
+              markers={[{ id: r.id, lat: r.location.lat, lng: r.location.lng, category: r.category, name: r.name }]}
+              selectedId={r.id}
+              onSelect={() => {}}
+              center={r.location}
+              showTransit
+              stops={r.nearest_stops}
+              gestures={mapGestures}
+              startZoom={13}
+              label={`Map of ${r.name} and nearby transit stops`}
+            />
+            {r.nearest_stops.length > 0 && <p className="res-muted">Squares are transit stops. The dashed ring is about 1 mile.</p>}
+          </>
+        )}
         {r.phone && (
           <a className="dash-btn res-call" href={`tel:${r.phone}`}>
             Call {formatPhone(r.phone)}

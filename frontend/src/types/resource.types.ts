@@ -120,7 +120,9 @@ export interface OpeningHours {
 
 export interface TransitStop {
   stop_name: string;
-  distance_m: number; // straight-line
+  lat: number;                        // for the map's transit layer
+  lng: number;
+  distance_m: number;                 // straight-line
   routes: string[];
 }
 

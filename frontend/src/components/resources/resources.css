@@ -84,3 +84,7 @@
 .res-matched-head .res-filters { width: 100%; }
 .portal-tabs { padding: 0; }
 .portal-panel { display: grid; gap: 1.5rem; }
+
+/* List / Map view toggle */
+.res-view-toggle { display: flex; gap: .5rem; padding: .75rem 1.25rem 0; }
+.res-map-unmapped { padding: 0 1.25rem 1rem; color: var(--muted); }
