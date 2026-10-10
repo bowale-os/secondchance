@@ -29,3 +29,21 @@ export function daysUntil(iso: string): number {
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return Math.round((new Date(y, m - 1, d).getTime() - start.getTime()) / 86_400_000);
 }
+
+/** "13:30:00" -> "1:30 PM". */
+export function formatClock(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+/** "Today", "Tomorrow", or "Fri, Oct 11", with the time when there is one: "Tomorrow, 10:00 AM". */
+export function formatWhen(iso: string, time: string | null): string {
+  const days = daysUntil(iso);
+  const [y, m, d] = iso.split("-").map(Number);
+  const day =
+    days === 0 ? "Today"
+    : days === 1 ? "Tomorrow"
+    : days === -1 ? "Yesterday"
+    : new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return time ? `${day}, ${formatClock(time)}` : day;
+}

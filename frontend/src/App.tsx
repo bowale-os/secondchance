@@ -110,6 +110,7 @@ export default function App() {
     const nav: AppNav = {
       section: view.name === "resources" || view.name === "calendar" || view.name === "learn" ? view.name : "home",
       go: (section: Section) => setView(VIEW_FOR[section]),
+      onNewClient: () => setView({ name: "new-client" }),
     };
 
     switch (view.name) {
@@ -119,7 +120,6 @@ export default function App() {
             key={listVersion}
             staff={staff}
             nav={nav}
-            onNewClient={() => setView({ name: "new-client" })}
             onSelectClient={(clientId) => setView({ name: "client", clientId })}
             onLogout={doLogout}
           />

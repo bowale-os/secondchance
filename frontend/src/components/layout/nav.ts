@@ -5,6 +5,8 @@ export type Section = "home" | "resources" | "calendar" | "learn";
 export interface AppNav {
   section: Section;
   go: (section: Section) => void;
+  /** Opens the create-a-client flow. Shown as a button in the rail on every screen. */
+  onNewClient: () => void;
 }
 
 /** Tab names are the same for everyone. Every one is shown with its label, never as an icon alone. */

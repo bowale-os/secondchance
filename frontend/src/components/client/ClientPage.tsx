@@ -64,7 +64,7 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
     <AppShell staff={staff} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div>
-          <button type="button" className="dash-btn dash-btn-quiet" onClick={onBack}>‹ My clients</button>
+          <button type="button" className="dash-btn dash-btn-quiet" onClick={onBack}>‹ Home</button>
         </div>
 
         {error && <p className="dash-error" role="alert">{error}</p>}

@@ -69,7 +69,7 @@ export default function NewClientFlow({ staff, nav, onLogout, onCreated, onCance
     <AppShell staff={staff} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main nc-main">
         <div>
-          <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ My clients</button>
+          <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ Home</button>
         </div>
         {content}
       </main>

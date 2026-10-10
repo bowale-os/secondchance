@@ -58,11 +58,13 @@ export default function AppShell({ staff, nav, onLogout, children }: Props) {
       {/* Phones only: the rail's brand and user move up here, the tabs move to the bottom. */}
       <header className="shell-top">
         <span className="dash-logo">SecondChance</span>
+        <button className="dash-btn" onClick={nav.onNewClient}>+ New client</button>
         <button className="dash-btn dash-btn-quiet" onClick={onLogout}>Log out</button>
       </header>
 
       <nav className="shell-rail" aria-label="Main">
         <span className="dash-logo shell-brand">SecondChance</span>
+        <button className="dash-btn shell-new" onClick={nav.onNewClient}>+ New client</button>
         <ul className="shell-links">
           {SECTIONS.map(({ section, label }) => (
             <li key={section}>
