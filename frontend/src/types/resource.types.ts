@@ -35,6 +35,8 @@ export interface OpeningHours {
 
 export interface TransitStop {
   stop_name: string;
+  lat: number;                        // for the map's transit layer
+  lng: number;
   distance_m: number;                 // straight-line
   routes: string[];
 }

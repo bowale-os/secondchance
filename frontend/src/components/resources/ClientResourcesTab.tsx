@@ -27,6 +27,7 @@ export default function ClientResourcesTab({ client }: { client: ClientDetail })
       loadResource={loadResource}
       documentStatus={documentStatus}
       progressScope={client.id}
+      mapGestures
       copy={COPY}
     />
   );

@@ -1,0 +1,51 @@
+/* Resource map. Uses the .dash palette from dashboard.css. */
+
+.res-map { display: grid; gap: .75rem; padding: 1rem 1.25rem; }
+.res-map-compact { padding: 0; }
+
+.res-map-frame { position: relative; height: clamp(20rem, 60vh, 36rem); overflow: hidden; border: 1px solid var(--line); border-radius: .75rem; background: #D9CFC4; }
+.res-map-compact .res-map-frame { height: 14rem; }
+.res-map-frame:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.res-map-canvas { position: absolute; inset: 0; }
+.res-map-overlay { position: absolute; inset: 0; pointer-events: none; }
+.res-map-overlay button { pointer-events: auto; }
+
+.res-map-county { position: absolute; transform: translate(-50%, -50%); color: var(--brand); opacity: .75; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+
+/* Pins are centered on their point. 44px plus the outline gives a 48px target. */
+.res-map-anchor { position: absolute; width: 0; height: 0; }
+.res-map-pin { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 2px solid var(--ink); border-radius: 50%; color: #fff; font: inherit; font-weight: 800; font-size: 1.125rem; cursor: pointer; }
+.res-map-pin[aria-pressed="true"] { width: 3.5rem; height: 3.5rem; border-width: 4px; z-index: 2; }
+.res-map-pin:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 3px #fff; z-index: 3; }
+.res-map-pin-count { position: absolute; top: -.4rem; right: -.4rem; min-width: 1.25rem; height: 1.25rem; padding: 0 .25rem; border-radius: 999px; background: var(--ink); color: #fff; font-size: .8rem; line-height: 1.25rem; }
+.res-map-pin-name { position: absolute; top: 1.6rem; transform: translateX(-50%); width: 9rem; padding: 0 .2rem; border-radius: .25rem; background: rgb(251 241 232 / .9); color: var(--ink); font-size: .875rem; font-weight: 700; text-align: center; }
+
+.res-map-cluster { position: absolute; transform: translate(-50%, -50%); width: 3.25rem; height: 3.25rem; padding: 0; border: 3px solid var(--ink); border-radius: 50%; background: var(--brand); color: #fff; font: inherit; font-weight: 800; font-size: 1.125rem; cursor: pointer; }
+.res-map-cluster:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 3px #fff; }
+
+.res-map-stop { position: absolute; display: flex; align-items: center; gap: .25rem; transform: translate(-.375rem, -50%); }
+.res-map-stop-dot { width: .75rem; height: .75rem; border: 2px solid #fff; border-radius: 2px; background: var(--brand); }
+.res-map-stop-name { padding: 0 .2rem; border-radius: .25rem; background: rgb(255 255 255 / .85); font-size: .8rem; font-weight: 600; white-space: nowrap; }
+
+/* Shared-building list */
+.res-map-site { display: grid; gap: .5rem; justify-items: start; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--brand-tint); }
+.res-map-site ul { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.res-map-site .dash-btn { background: var(--surface); text-align: left; }
+
+/* Controls: a cross of arrows with Reset in the middle, zoom beside it */
+.res-map-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem 2rem; }
+.res-map-pad { display: grid; grid-template-columns: repeat(3, auto); grid-template-areas: ". up ." "left reset right" ". down ."; gap: .25rem; }
+.res-map-up { grid-area: up; } .res-map-left { grid-area: left; } .res-map-reset { grid-area: reset; }
+.res-map-right { grid-area: right; } .res-map-down { grid-area: down; }
+.res-map-zoom { display: grid; gap: .25rem; }
+.res-map-compact .res-map-controls { justify-content: flex-start; }
+.res-map-compact .res-map-zoom { grid-auto-flow: column; }
+.res-map-btn { min-width: 3rem; min-height: 3rem; padding: 0 .875rem; border: 2px solid var(--brand); border-radius: .75rem; background: var(--brand); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.res-map-btn:hover:not(:disabled) { background: var(--brand-hover); }
+.res-map-btn:disabled { border-color: var(--line); background: var(--line); color: var(--ink); cursor: default; }
+
+.res-map-hint { color: var(--muted); font-size: .95rem; }
+.res-map-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 0; padding: 0; list-style: none; font-size: .95rem; }
+.res-map-legend li { display: flex; align-items: center; gap: .4rem; }
+.res-map-legend-pin { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 2px solid var(--ink); border-radius: 50%; color: #fff; font-size: .8rem; font-weight: 800; }
+.res-map-legend-ring { width: 1.5rem; height: 1.5rem; border: 2px dashed var(--brand); border-radius: 50%; }

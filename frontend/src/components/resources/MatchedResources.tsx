@@ -13,7 +13,7 @@ import type {
 } from "../../types";
 import ResourceDrawer from "./ResourceDrawer";
 import ResourceFilters from "./ResourceFilters";
-import ResourceRows from "./ResourceRows";
+import ResourceResults from "./ResourceResults";
 import "./resources.css";
 
 export interface MatchCopy {
@@ -33,6 +33,8 @@ interface Props {
   loadResource: (id: string) => Promise<Resource>;
   documentStatus?: (doc: RequiredDocument) => DocStatus;
   progressScope: string;
+  /** Staff can drag and scroll the map; clients use the buttons. */
+  mapGestures: boolean;
   copy: MatchCopy;
 }
 
@@ -43,7 +45,7 @@ const BOOLEAN_KEYS = new Set<keyof ResourceQuery>(["near_transit", "open_now", "
  * Resources matched to one client's needs (Option C). Filters start from their profile;
  * every change is sent back as overrides so the server stays the one place the mapping lives.
  */
-export default function MatchedResources({ client, loadMatches, loadResource, documentStatus, progressScope, copy }: Props) {
+export default function MatchedResources({ client, loadMatches, loadResource, documentStatus, progressScope, mapGestures, copy }: Props) {
   const [overrides, setOverrides] = useState<ResourceQuery>({});
   const [match, setMatch] = useState<ClientResourceMatch | null>(null);
   // What the chips show: the change right away, then the server's answer.
@@ -136,14 +138,22 @@ export default function MatchedResources({ client, loadMatches, loadResource, do
         <p className="dash-empty">{copy.empty}</p>
       ) : (
         <>
-          <ResourceRows items={items} selectedId={selectedId} onSelect={setSelectedId} />
-          {match.results.next_cursor && (
-            <div className="res-more">
-              <button className="dash-btn dash-btn-quiet" onClick={showMore} disabled={loadingMore}>
-                {loadingMore ? "Loading…" : `Show more (${items.length} of ${total})`}
-              </button>
-            </div>
-          )}
+          <ResourceResults
+            items={items}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            center={shown.origin ?? null}
+            gestures={mapGestures}
+            more={
+              match.results.next_cursor && (
+                <div className="res-more">
+                  <button className="dash-btn dash-btn-quiet" onClick={showMore} disabled={loadingMore}>
+                    {loadingMore ? "Loading…" : `Show more (${items.length} of ${total})`}
+                  </button>
+                </div>
+              )
+            }
+          />
         </>
       )}
 
@@ -154,6 +164,7 @@ export default function MatchedResources({ client, loadMatches, loadResource, do
           onClose={() => setSelectedId(null)}
           documentStatus={documentStatus}
           progressScope={progressScope}
+          mapGestures={mapGestures}
         />
       )}
     </div>

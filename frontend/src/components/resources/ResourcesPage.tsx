@@ -5,7 +5,7 @@ import type { LatLng, ResourceQuery, ResourceSummary, StaffRead } from "../../ty
 import AppBar, { type AppNav } from "../layout/AppBar";
 import ResourceDrawer from "./ResourceDrawer";
 import ResourceFilters from "./ResourceFilters";
-import ResourceRows from "./ResourceRows";
+import ResourceResults from "./ResourceResults";
 import "../dashboard/dashboard.css";
 import "./resources.css";
 
@@ -92,20 +92,28 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
             <p className="dash-empty">No resources match these filters. Try turning some off.</p>
           ) : (
             <>
-              <ResourceRows items={results.items} selectedId={selectedId} onSelect={setSelectedId} />
-              {results.nextCursor && (
-                <div className="res-more">
-                  <button className="dash-btn dash-btn-quiet" onClick={showMore} disabled={loadingMore}>
-                    {loadingMore ? "Loading…" : `Show more (${results.items.length} of ${results.total})`}
-                  </button>
-                </div>
-              )}
+              <ResourceResults
+                items={results.items}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                center={origin}
+                gestures
+                more={
+                  results.nextCursor && (
+                    <div className="res-more">
+                      <button className="dash-btn dash-btn-quiet" onClick={showMore} disabled={loadingMore}>
+                        {loadingMore ? "Loading…" : `Show more (${results.items.length} of ${results.total})`}
+                      </button>
+                    </div>
+                  )
+                }
+              />
             </>
           )}
         </section>
       </main>
 
-      {selectedId && <ResourceDrawer resourceId={selectedId} load={loadResource} onClose={() => setSelectedId(null)} />}
+      {selectedId && <ResourceDrawer resourceId={selectedId} load={loadResource} onClose={() => setSelectedId(null)} mapGestures />}
     </div>
   );
 }
