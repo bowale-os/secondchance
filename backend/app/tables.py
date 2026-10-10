@@ -16,7 +16,9 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Float,
     ForeignKey,
+    Index,
     Integer,
     LargeBinary,
     Numeric,
@@ -149,6 +151,119 @@ class ContactType(enum.Enum):
     LANDLORD = "landlord"
     EMPLOYER = "employer"
     OTHER = "other"
+
+
+# ---- Community resources (mirrors frontend/src/types/resource.types.ts) ----
+
+class ResourceCategory(enum.Enum):
+    SHELTER = "shelter"
+    FOOD = "food"
+    ADDICTION = "addiction"
+    CLASSES = "classes"
+    EVENTS = "events"
+
+
+class Tri(enum.Enum):
+    """A yes/no fact the scrape may not have found. UNKNOWN is not NO:
+    filters only exclude on NO, and the UI shows UNKNOWN as "call to confirm"."""
+    YES = "yes"
+    NO = "no"
+    UNKNOWN = "unknown"
+
+
+class Gender(enum.Enum):
+    MEN = "men"
+    WOMEN = "women"
+    ANY = "any"
+    UNKNOWN = "unknown"
+
+
+class CostType(enum.Enum):
+    FREE = "free"
+    SLIDING_SCALE = "sliding_scale"
+    FEE = "fee"
+    UNKNOWN = "unknown"
+
+
+class RecordsPolicy(enum.Enum):
+    """Whether the place takes people with a criminal record. Rarely stated online."""
+    ACCEPTED = "accepted"
+    CASE_BY_CASE = "case_by_case"
+    NOT_ACCEPTED = "not_accepted"
+    UNKNOWN = "unknown"
+
+
+class VerificationStatus(enum.Enum):
+    UNVERIFIED = "unverified"   # scraped, no human has looked
+    VERIFIED = "verified"       # a case worker confirmed it
+    FLAGGED = "flagged"         # reported wrong or out of date
+
+
+class ScrapeSource(enum.Enum):
+    # Official / structured
+    SAMHSA = "samhsa"                        # FindTreatment.gov (addiction)
+    HRSA = "hrsa"                            # federally funded health centers
+    LSC = "lsc"                              # federally funded legal aid
+    GOV_OFFICE = "gov_office"                # SSA, DMV/driver services, vital records
+    TWO_ONE_ONE = "two_one_one"              # 211 / Open Referral (HSDS) feeds
+
+    # Local / community
+    CONTINUUM_OF_CARE = "continuum_of_care"  # local homeless system shelter lists
+    FOOD_BANK = "food_bank"                  # food bank partner pantries
+    REENTRY_GUIDE = "reentry_guide"          # state DOC / reentry council guides
+    MEETING_GUIDE = "meeting_guide"          # AA / NA / recovery meetings
+    EVENT_CALENDAR = "event_calendar"        # library and city calendars
+    ORG_WEBSITE = "org_website"              # the organization's own site
+    OSM = "osm"                              # OpenStreetMap (supplementary)
+
+    # Manual
+    CURATED_IMPORT = "curated_import"        # hand-checked CSV/JSON seed
+    CASE_WORKER = "case_worker"              # entered in the app
+    OTHER = "other"
+
+
+# The enums below live only inside the JSON columns of `resources`, so they have no DB type.
+
+class AccessMethod(enum.Enum):
+    WALK_IN = "walk_in"
+    APPOINTMENT = "appointment"
+    REFERRAL_REQUIRED = "referral_required"
+    PHONE_ONLY = "phone_only"
+
+
+class RequiredDocument(enum.Enum):
+    PHOTO_ID = "photo_id"
+    SSN_CARD = "ssn_card"
+    BIRTH_CERTIFICATE = "birth_certificate"
+    PROOF_OF_INCOME = "proof_of_income"
+    PROOF_OF_ADDRESS = "proof_of_address"
+    RELEASE_PAPERS = "release_papers"
+    REFERRAL_LETTER = "referral_letter"
+
+
+class FieldSource(enum.Enum):
+    SCRAPED = "scraped"
+    LLM = "llm"
+    CASE_WORKER = "case_worker"
+    CLIENT_REPORT = "client_report"
+
+
+class Confidence(enum.Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class FoodKind(enum.Enum):
+    PANTRY = "pantry"
+    HOT_MEAL = "hot_meal"
+    SNAP_HELP = "snap_help"
+
+
+class AddictionSetting(enum.Enum):
+    OUTPATIENT = "outpatient"
+    INPATIENT = "inpatient"
+    SUPPORT_GROUP = "support_group"
 
 
 # ============================================================
@@ -423,3 +538,72 @@ class ClientContact(IdMixin, TimestampMixin, ProvenanceMixin, Base):
     email: Mapped[Optional[str]] = mapped_column(String(255))
 
     client: Mapped["Client"] = relationship(back_populates="contacts")
+
+
+# ============================================================
+# Community resources (filled by web scraping, reviewed by case workers)
+# ============================================================
+
+class Resource(IdMixin, TimestampMixin, Base):
+    """
+    One shelter, pantry, treatment program, class or event. Not tied to any client.
+
+    Columns exist for what search filters or sorts on. Everything else is JSON,
+    validated by the dataclasses in schemas.py (Address, OpeningHours, ShelterDetails...).
+    """
+    __tablename__ = "resources"
+    __table_args__ = (
+        Index("ix_resources_category_transit", "category", "near_transit"),
+    )
+
+    # Same place from two sources collapses to one row (see schemas.dedupe_key)
+    dedupe_key: Mapped[str] = mapped_column(String(300), unique=True)
+
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    category: Mapped[ResourceCategory] = mapped_column(index=True)
+    description: Mapped[Optional[str]] = mapped_column(Text)  # 1-2 plain sentences
+
+    # Where and how to reach it
+    address: Mapped[Optional[dict]] = mapped_column(JSON)     # street, city, state, zip
+    lat: Mapped[Optional[float]] = mapped_column(Float)
+    lng: Mapped[Optional[float]] = mapped_column(Float)
+    phone: Mapped[Optional[str]] = mapped_column(String(20))  # E.164
+    website: Mapped[Optional[str]] = mapped_column(String(500))
+
+    # When
+    hours: Mapped[list] = mapped_column(JSON, default=list)   # [{day, opens, closes, label}]
+    hours_note: Mapped[Optional[str]] = mapped_column(Text)
+    starts_at: Mapped[Optional[datetime]] = mapped_column(    # classes/events, copied out of details
+        DateTime(timezone=True), index=True
+    )
+
+    # Who it serves (UNKNOWN until a scrape or a case worker says otherwise)
+    gender: Mapped[Gender] = mapped_column(default=Gender.UNKNOWN)
+    families_welcome: Mapped[Tri] = mapped_column(default=Tri.UNKNOWN)
+    records_policy: Mapped[RecordsPolicy] = mapped_column(default=RecordsPolicy.UNKNOWN)
+    restrictions_note: Mapped[Optional[str]] = mapped_column(Text)
+    languages: Mapped[list] = mapped_column(JSON, default=list)
+    cost_type: Mapped[CostType] = mapped_column(default=CostType.UNKNOWN)
+
+    # How to get in
+    access_methods: Mapped[list] = mapped_column(JSON, default=list)
+    required_documents: Mapped[list] = mapped_column(JSON, default=list)
+    requires_id: Mapped[bool] = mapped_column(Boolean, default=False)  # derived, powers "no ID needed"
+
+    # Getting there: computed once from location + transit stops, never scraped
+    near_transit: Mapped[Optional[bool]] = mapped_column(Boolean)  # NULL = no location to measure
+    nearest_stops: Mapped[list] = mapped_column(JSON, default=list)
+
+    # Category-specific fields (ShelterDetails, FoodDetails, ...)
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    # Can I trust this?
+    verification: Mapped[VerificationStatus] = mapped_column(default=VerificationStatus.UNVERIFIED)
+    source: Mapped[ScrapeSource] = mapped_column(default=ScrapeSource.OTHER)
+    source_url: Mapped[Optional[str]] = mapped_column(String(1000))
+    scraped_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    verified_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+    field_meta: Mapped[dict] = mapped_column(JSON, default=dict)  # {field: {source, confidence, confirmed_at}}
