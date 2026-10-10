@@ -27,7 +27,7 @@ Types are in `frontend/src/types/resource.types.ts`.
 - **A key that is present replaces** the profile's value for that key. A key that is absent keeps the profile's value.
 - **`false` turns a profile filter off**, for example `near_transit=false` when the case worker removes the "Near transit · from profile" chip.
 - **An empty string clears a profile string filter**: `language=` means "don't filter by language."
-- **An empty category list can't be sent** (repeated keys send nothing), so the profile's categories apply. This is intended.
+- **An empty category list is sent as `categories=`** and clears the profile's categories, so no category filter applies.
 - **`AppliedFilter.reason`** should be `"profile"` only for keys that still come from the profile after overrides; overridden keys are `"manual"`. The frontend shows "from profile" notes based on this.
 - **Recovery (`addiction`) is never inferred** from medications or medical documents.
 

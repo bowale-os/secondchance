@@ -79,3 +79,20 @@ async def get_current_staff(
     if not staff.is_active:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Account is deactivated")
     return staff
+
+
+async def get_staff_or_client(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+    session: AsyncSession = Depends(get_session),
+) -> Staff | Client:
+    """Whoever holds the token: a logged-in client (HS256) or an Auth0 case worker (RS256)."""
+    if creds is None:
+        raise _unauthorized("Missing bearer token")
+    try:
+        client_id = decode_client_token(creds.credentials)
+    except (jwt.PyJWTError, ValueError):
+        return await get_current_staff(await get_token_claims(creds), session)
+    client = await session.get(Client, client_id)
+    if client is None or not client.is_active:
+        raise _unauthorized("Invalid or expired token")
+    return client

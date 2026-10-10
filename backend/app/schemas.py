@@ -10,24 +10,41 @@ import uuid
 from dataclasses import dataclass, field, fields
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Literal, Optional, Union
+
+from pydantic import TypeAdapter
+
+from app.ingest.common import street_key
 
 from app.tables import (
+    AccessMethod,
+    AddictionSetting,
     AssignmentRole,
     BenefitStatus,
     BenefitType,
+    Confidence,
     ContactMethod,
     ContactType,
+    CostType,
     DataSource,
     DocumentStatus,
     DocumentType,
     EmploymentStatus,
+    FieldSource,
+    FoodKind,
+    Gender,
     HousingStatus,
     IdStatus,
     IdType,
     ObligationStatus,
     ObligationType,
+    RecordsPolicy,
+    RequiredDocument,
+    ResourceCategory,
+    ScrapeSource,
     StaffRole,
+    Tri,
+    VerificationStatus,
 )
 
 
@@ -449,3 +466,367 @@ class DocumentReview:
     doc_type: Optional[DocumentType] = None
     ai_summary: Optional[str] = None
     ai_warnings: Optional[list] = None
+
+
+# ============================================================
+# Community resources (mirrors frontend/src/types/resource.types.ts)
+# ============================================================
+
+TRANSIT_RADIUS_M = 1609  # "close to public transportation" = within 1 mile
+
+
+@dataclass
+class LatLng:
+    lat: float
+    lng: float
+
+
+@dataclass
+class Address:
+    street: str
+    city: str
+    state: str = "GA"
+    zip: str = ""
+
+
+@dataclass
+class OpeningHours:
+    day: int  # 0 = Monday, same as datetime.weekday()
+    opens: str  # "HH:MM", 24-hour, local
+    closes: str
+    label: Optional[str] = None  # e.g. "Bed check-in"
+
+    def __post_init__(self):
+        if not 0 <= self.day <= 6:
+            raise ValueError(f"day must be 0-6, got {self.day}")
+        for t in (self.opens, self.closes):
+            hh, _, mm = t.partition(":")
+            if not (hh.isdigit() and mm.isdigit() and int(hh) < 24 and int(mm) < 60):
+                raise ValueError(f"time must be HH:MM, got {t!r}")
+
+
+@dataclass
+class TransitStop:
+    stop_name: str
+    lat: float
+    lng: float
+    distance_m: float  # straight-line
+    routes: list[str] = field(default_factory=list)
+
+
+@dataclass
+class FieldMeta:
+    """How one uncertain field got its value."""
+    source: FieldSource
+    confidence: Confidence = Confidence.LOW
+    confirmed_at: Optional[datetime] = None
+
+
+# ---- Category details (stored in resources.details) ----
+
+@dataclass
+class ShelterDetails:
+    check_in_time: Optional[str] = None
+    curfew: Optional[str] = None
+    max_stay_days: Optional[int] = None
+    sober_required: Tri = Tri.UNKNOWN
+
+
+@dataclass
+class FoodDetails:
+    kind: list[FoodKind] = field(default_factory=list)
+    visit_limit: Optional[str] = None  # e.g. "Once per week"
+
+
+@dataclass
+class JobStep:
+    title: str  # e.g. "Gather documents"
+    detail: str  # plain-language instructions
+    documents: list[RequiredDocument] = field(default_factory=list)  # matched against document_checks
+
+
+@dataclass
+class JobDetails:
+    employer: str = ""
+    pay_note: Optional[str] = None  # e.g. "$15-17/hr"
+    shift_note: Optional[str] = None  # e.g. "Early mornings"
+    apply_url: Optional[str] = None
+    steps: list[JobStep] = field(default_factory=list)  # empty = frontend shows default steps
+
+
+@dataclass
+class AddictionDetails:
+    setting: list[AddictionSetting] = field(default_factory=list)
+    medication_assisted: Tri = Tri.UNKNOWN
+
+
+@dataclass
+class ClassEventDetails:
+    """Used for both CLASSES and EVENTS."""
+    starts_at: Optional[datetime] = None  # None if ongoing
+    ends_at: Optional[datetime] = None
+    recurrence: Optional[str] = None  # plain text, e.g. "Every Thursday"
+    signup_required: Tri = Tri.UNKNOWN
+
+
+ResourceDetails = Union[ShelterDetails, FoodDetails, JobDetails, AddictionDetails, ClassEventDetails]
+
+DETAILS_FOR: dict[ResourceCategory, type] = {
+    ResourceCategory.SHELTER: ShelterDetails,
+    ResourceCategory.FOOD: FoodDetails,
+    ResourceCategory.JOBS: JobDetails,
+    ResourceCategory.ADDICTION: AddictionDetails,
+    ResourceCategory.CLASSES: ClassEventDetails,
+    ResourceCategory.EVENTS: ClassEventDetails,
+}
+
+
+def coerce_details(category: ResourceCategory, details: Any) -> ResourceDetails:
+    """Return details as the dataclass that matches `category` (None -> all-unknown defaults)."""
+    expected = DETAILS_FOR[category]
+    if details is None:
+        return expected()
+    if isinstance(details, expected):
+        return details
+    if isinstance(details, dict):
+        return TypeAdapter(expected).validate_python(details)
+    raise TypeError(f"{category.value} needs {expected.__name__}, got {type(details).__name__}")
+
+
+# ---- What a scraper produces ----
+
+@dataclass
+class ResourceUpsert:
+    """
+    Normalized scrape result. Only name, category and source are required: anything the
+    page did not say stays UNKNOWN / None. near_transit and nearest_stops are not set
+    here; they are computed after geocoding.
+    """
+    name: str
+    category: ResourceCategory
+    source: ScrapeSource
+
+    description: Optional[str] = None
+    address: Optional[Address] = None
+    location: Optional[LatLng] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+    hours: list[OpeningHours] = field(default_factory=list)
+    hours_note: Optional[str] = None
+
+    gender: Gender = Gender.UNKNOWN
+    families_welcome: Tri = Tri.UNKNOWN
+    records_policy: RecordsPolicy = RecordsPolicy.UNKNOWN
+    restrictions_note: Optional[str] = None
+    languages: list[str] = field(default_factory=list)
+    cost_type: CostType = CostType.UNKNOWN
+    access_methods: list[AccessMethod] = field(default_factory=list)
+    required_documents: list[RequiredDocument] = field(default_factory=list)
+
+    details: Optional[ResourceDetails] = None
+
+    source_url: Optional[str] = None
+    scraped_at: Optional[datetime] = None
+    field_meta: dict[str, FieldMeta] = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.details = coerce_details(self.category, self.details)
+
+    def dedupe_key(self) -> str:
+        """Same place from two sources should collapse to one row."""
+        def norm(s: str) -> str:
+            return "".join(c for c in s.lower() if c.isalnum())
+
+        street = street_key(self.address.street) if self.address else ""
+        # no street: fall back to ~100 m of position, so two branches with one name stay apart
+        where = street or (f"{self.location.lat:.3f},{self.location.lng:.3f}" if self.location else "")
+        return f"{self.category.value}:{norm(self.name)}:{where}"[:300]
+
+
+def _json(value: Any) -> Any:
+    """Dataclasses/enums/datetimes -> plain JSON values, for the JSON columns."""
+    return TypeAdapter(Any).dump_python(value, mode="json")
+
+
+def resource_columns(r: ResourceUpsert) -> dict[str, Any]:
+    """Column values for `resources`, ready for insert or update. Leaves verification,
+    near_transit and nearest_stops out, so a re-scrape does not undo a case worker's review."""
+    return {
+        "dedupe_key": r.dedupe_key(),
+        "name": r.name,
+        "category": r.category,
+        "description": r.description,
+        "address": _json(r.address),
+        "lat": r.location.lat if r.location else None,
+        "lng": r.location.lng if r.location else None,
+        "phone": r.phone,
+        "website": r.website,
+        "hours": _json(r.hours),
+        "hours_note": r.hours_note,
+        "starts_at": getattr(r.details, "starts_at", None),
+        "gender": r.gender,
+        "families_welcome": r.families_welcome,
+        "records_policy": r.records_policy,
+        "restrictions_note": r.restrictions_note,
+        "languages": r.languages,
+        "cost_type": r.cost_type,
+        "access_methods": _json(r.access_methods),
+        "required_documents": _json(r.required_documents),
+        "requires_id": bool(r.required_documents),
+        "details": _json(r.details),
+        "source": r.source,
+        "source_url": r.source_url,
+        "scraped_at": r.scraped_at,
+        "field_meta": _json(r.field_meta),
+    }
+
+
+# ---- What the API returns ----
+
+@dataclass
+class ResourceSummary:
+    """A card and a map pin. Address and phone stay in ResourceRead."""
+    id: uuid.UUID
+    name: str
+    category: ResourceCategory
+    location: Optional[LatLng]
+    distance_m: Optional[float]  # from the query's origin
+    near_transit: Optional[bool]
+    open_now: Optional[bool]  # None = hours unknown
+    starts_at: Optional[datetime]
+    verification: VerificationStatus
+
+
+@dataclass
+class DocumentCheck:
+    document: RequiredDocument
+    status: Literal["have", "missing", "expired"]
+
+
+@dataclass
+class ResourceRead:
+    id: uuid.UUID
+    name: str
+    category: ResourceCategory
+    description: Optional[str]
+    address: Optional[Address]
+    location: Optional[LatLng]
+    phone: Optional[str]
+    website: Optional[str]
+    hours: list[OpeningHours]
+    hours_note: Optional[str]
+    gender: Gender
+    families_welcome: Tri
+    records_policy: RecordsPolicy
+    restrictions_note: Optional[str]
+    languages: list[str]
+    cost_type: CostType
+    access_methods: list[AccessMethod]
+    required_documents: list[RequiredDocument]
+    near_transit: Optional[bool]
+    nearest_stops: list[TransitStop]
+    details: ResourceDetails
+    verification: VerificationStatus
+    source_url: Optional[str]
+    last_verified_at: Optional[datetime]
+    updated_at: datetime
+    field_meta: dict[str, FieldMeta]
+    # Computed per request, not stored
+    document_checks: Optional[list[DocumentCheck]] = None  # only in a client context
+
+
+def _load(tp: Any, value: Any) -> Any:
+    return TypeAdapter(tp).validate_python(value)
+
+
+def _location(row) -> Optional[LatLng]:
+    return LatLng(row.lat, row.lng) if row.lat is not None and row.lng is not None else None
+
+
+def resource_summary(row, *, distance_m: Optional[float] = None, open_now: Optional[bool] = None) -> ResourceSummary:
+    return ResourceSummary(
+        id=row.id,
+        name=row.name,
+        category=row.category,
+        location=_location(row),
+        distance_m=distance_m,
+        near_transit=row.near_transit,
+        open_now=open_now,
+        starts_at=row.starts_at,
+        verification=row.verification,
+    )
+
+
+def resource_read(row, *, document_checks: Optional[list[DocumentCheck]] = None) -> ResourceRead:
+    return ResourceRead(
+        id=row.id,
+        name=row.name,
+        category=row.category,
+        description=row.description,
+        address=_load(Optional[Address], row.address),
+        location=_location(row),
+        phone=row.phone,
+        website=row.website,
+        hours=_load(list[OpeningHours], row.hours or []),
+        hours_note=row.hours_note,
+        gender=row.gender,
+        families_welcome=row.families_welcome,
+        records_policy=row.records_policy,
+        restrictions_note=row.restrictions_note,
+        languages=row.languages or [],
+        cost_type=row.cost_type,
+        access_methods=_load(list[AccessMethod], row.access_methods or []),
+        required_documents=_load(list[RequiredDocument], row.required_documents or []),
+        near_transit=row.near_transit,
+        nearest_stops=_load(list[TransitStop], row.nearest_stops or []),
+        details=_load(DETAILS_FOR[row.category], row.details or {}),
+        verification=row.verification,
+        source_url=row.source_url,
+        last_verified_at=row.last_verified_at,
+        updated_at=row.updated_at,
+        field_meta=_load(dict[str, FieldMeta], row.field_meta or {}),
+        document_checks=document_checks,
+    )
+
+
+# ---- Search ----
+
+@dataclass
+class ResourceQuery:
+    """Filters never exclude on UNKNOWN; only on a definite mismatch."""
+    q: Optional[str] = None
+    categories: Optional[list[ResourceCategory]] = None
+    near_transit: Optional[bool] = None
+    open_now: Optional[bool] = None
+    no_id_required: Optional[bool] = None
+    records_accepted: Optional[bool] = None  # accepted or case_by_case
+    gender: Optional[Gender] = None
+    families: Optional[bool] = None
+    free_only: Optional[bool] = None
+    language: Optional[str] = None
+    origin: Optional[LatLng] = None  # client address or office
+    radius_m: Optional[float] = None
+    starts_within_days: Optional[int] = None  # classes/events starting in the next N days
+    cursor: Optional[str] = None
+
+
+@dataclass
+class ResourceSearchResponse:
+    items: list[ResourceSummary]
+    total: int
+    next_cursor: Optional[str] = None
+
+
+# ---- Client matching ----
+
+@dataclass
+class AppliedFilter:
+    key: str  # a ResourceQuery field name
+    reason: str  # "profile" | "manual"
+
+
+@dataclass
+class ClientResourceMatch:
+    query: ResourceQuery
+    applied: list[AppliedFilter]
+    results: ResourceSearchResponse

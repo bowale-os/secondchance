@@ -1,6 +1,6 @@
-from contextlib import asynccontextmanager
-
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +8,8 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.db import engine
-from app.routers import auth, clients, documents, health
+from app.ingest.scheduler import run_forever
+from app.routers import auth, clients, documents, health, resources
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -16,7 +17,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    task = asyncio.create_task(run_forever()) if settings.ingest_enabled else None
     yield
+    if task:
+        task.cancel()
     await engine.dispose()
 
 
@@ -52,3 +56,4 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(clients.router)
 app.include_router(documents.router)
+app.include_router(resources.router)

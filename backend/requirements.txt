@@ -11,3 +11,4 @@ python-multipart>=0.0.20
 httpx
 pillow
 pillow-heif
+tzdata

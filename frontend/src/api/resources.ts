@@ -9,7 +9,7 @@ export type ResourceRead = Resource;
  * which is how FastAPI reads `list[str]` params; `origin` is split into `origin_lat` / `origin_lng`.
  * Unset filters are left out. `false` and "" are left out too unless `explicit` is set: in a
  * search they mean "don't filter", but in overrides they turn off a filter the profile set
- * (`near_transit=false`, `language=`). An empty category list can't be sent, so the profile's applies.
+ * (`near_transit=false`, `language=`, `categories=`).
  */
 export function toSearchParams(query: ResourceQuery, { explicit = false } = {}): string {
   const params = new URLSearchParams();

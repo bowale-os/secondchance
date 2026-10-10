@@ -79,6 +79,14 @@ class Settings(BaseSettings):
     # ---------- Maps / resources / safety ----------
     maps_api_key: SecretStr = SecretStr("")
     resources_file: str = "./data/resources.json"
+
+    # ---------- Resource ingestion (python -m app.jobs.ingest_resources) ----------
+    ingest_state: str = "GA"
+    ingest_center: str = "33.749,-84.388"  # lat,lng; SAMHSA distance search is centered here
+    ingest_radius_m: float = 80467.0  # 50 miles
+    ingest_enabled: bool = False  # run the ingest on a timer inside the API process
+    ingest_interval_hours: float = 6
+    ingest_user_agent: str = "SecondChanceResourceBot/1.0 (reentry resource directory)"
     crisis_line: str = "988"
     emergency_number: str = "911"
 
