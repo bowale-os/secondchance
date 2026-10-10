@@ -8,6 +8,8 @@ import { createPlatformStorage } from '../storage/platform';
 import { config } from '../config';
 import { stopSpeaking } from '../tts/speech';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from './settings';
+import { createPlaceRepository } from '../map/data';
+import type { MetaStore, PlaceRepository } from '../map/data/PlaceRepository';
 
 export const IDLE_LOGOUT_MS = 5 * 60 * 1000;
 
@@ -19,6 +21,10 @@ interface ActiveSession {
 
 interface SessionApi {
   ready: boolean;
+  /** Resource Map places (public data, shared by every profile on this device). */
+  places: PlaceRepository;
+  /** Small device-wide settings, e.g. the map's filter choice. */
+  deviceStore: MetaStore;
   hasProfiles: boolean;
   active: ActiveSession | null;
   login(name: string, pin: string): Promise<void>;
@@ -52,6 +58,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     () => new ProfileManager(platform.backend, platform.vaultStoreFor, platform.pinIterations),
     [platform],
   );
+  const places = useMemo(() => createPlaceRepository(platform.backend), [platform]);
   const [ready, setReady] = useState(false);
   const [hasProfiles, setHasProfiles] = useState(false);
   const [active, setActive] = useState<ActiveSession | null>(null);
@@ -100,6 +107,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const api: SessionApi = {
     ready,
+    places,
+    deviceStore: platform.backend,
     hasProfiles,
     active,
     login: async (name, pin) => open(await profiles.login(name, pin)),
