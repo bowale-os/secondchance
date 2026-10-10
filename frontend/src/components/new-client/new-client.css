@@ -1,0 +1,43 @@
+/* Styles for the create-client flow. Colors follow the palette in src/index.css. */
+
+.card.card-wide { max-width: 760px; width: min(760px, 92vw); }
+
+.hint { font-size: .85rem; color: #6b7280; }
+.step-header h2 { margin: .1rem 0 .25rem; }
+.step-count { font-size: .8rem; font-weight: 600; color: #4338ca; text-transform: uppercase; letter-spacing: .04em; }
+.section-title { font-size: 1rem; margin: 1rem 0 .25rem; }
+
+/* Upload */
+.dropzone { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 2rem 1rem; text-align: center; border: 2px dashed #c7d2fe; border-radius: 12px; background: #f8f9ff; cursor: pointer; }
+.dropzone:hover, .dropzone:focus-visible, .dropzone.dragging { border-color: #4f46e5; background: #eef0ff; outline: none; }
+.file-list { list-style: none; margin: .75rem 0 0; padding: 0; }
+.file-item { display: flex; align-items: center; gap: .75rem; padding: .5rem 0; border-top: 1px solid #e5e7eb; }
+.file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.icon-button { padding: .1rem .55rem; background: transparent; color: #6b7280; font-size: 1.25rem; line-height: 1; }
+.icon-button:hover { background: #f3f4f6; color: #b91c1c; }
+
+/* Reading */
+.reading { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 0; }
+.spinner { flex: none; width: 1.6rem; height: 1.6rem; border: 3px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+
+/* Review */
+.summary-list { list-style: none; margin: 0; padding: 0; }
+.summary-item { padding: .75rem 0; border-top: 1px solid #e5e7eb; }
+.summary-item p { margin: .35rem 0 0; font-size: .92rem; }
+.summary-title { display: flex; align-items: center; gap: .6rem; }
+.badge { flex: none; padding: .1rem .55rem; border-radius: 999px; background: #e0e7ff; color: #4338ca; font-size: .75rem; font-weight: 600; }
+.warnings { margin: .4rem 0 0; padding: .5rem .75rem .5rem 1.6rem; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: .88rem; }
+
+.form-section { margin: 1.25rem 0 0; padding: 0; border: 0; }
+.form-section legend { padding: 0; font-weight: 600; margin-bottom: .25rem; }
+.field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 1rem; }
+.field { margin-top: .6rem; }
+.field.wide { grid-column: 1 / -1; }
+.row-group h4 { margin: .75rem 0 0; font-size: .9rem; color: #374151; }
+
+select, textarea { display: block; width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .5rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; background: #fff; }
+textarea { resize: vertical; }
+
+@media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
