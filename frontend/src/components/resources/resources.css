@@ -1,0 +1,40 @@
+/* Resources tab. Builds on dashboard.css (palette, dash-panel, row-list, client-row). */
+
+.dash { --open-bg: #e6f4ea; --open-ink: #14532d; --closed-bg: #f3f4f6; }
+
+/* Filters */
+.res-panel-head { display: grid; gap: 1rem; justify-content: stretch; }
+.res-filters { display: grid; gap: .75rem; }
+.res-search { width: min(100%, 28rem); }
+.res-chip-group { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.res-chip { min-height: 3rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.res-chip:hover { border-color: var(--brand); }
+.res-chip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.res-chip[aria-pressed="true"]::before { content: "\2713\00a0"; }
+.res-chip-note { font-weight: 400; }
+.res-select { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; }
+.res-select select { min-height: 3rem; padding: 0 .75rem; border: 2px solid var(--line); border-radius: .75rem; background: var(--surface); color: var(--ink); font: inherit; }
+
+.res-count { padding: .75rem 1.25rem 0; color: var(--muted); font-weight: 600; }
+.res-count:empty { display: none; }
+
+/* Rows */
+.res-row[aria-current="true"] { background: var(--brand-tint); }
+.res-meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: var(--muted); font-size: .95rem; }
+.res-badges { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .375rem; max-width: 50%; }
+
+.res-badge { display: inline-block; padding: .15rem .65rem; border: 1px solid transparent; border-radius: 999px; font-size: .875rem; font-weight: 600; white-space: nowrap; }
+.res-badge-detail { font-weight: 400; }
+.res-badge-transit { background: var(--brand-tint); color: var(--brand); }
+.res-badge-open { background: var(--open-bg); color: var(--open-ink); }
+.res-badge-closed { background: var(--closed-bg); color: var(--muted); }
+.res-badge-verified { border-color: var(--open-ink); color: var(--open-ink); }
+.res-badge-unverified { background: var(--attn-bg); color: var(--attn-ink); }
+.res-badge-flagged { background: var(--error-bg); color: var(--error-ink); }
+
+.res-more { padding: 1rem 1.25rem; border-top: 1px solid var(--line); }
+
+@media (max-width: 36rem) {
+  .client-row.res-row { flex-wrap: wrap; }
+  .res-badges { max-width: none; justify-content: flex-start; order: 3; width: 100%; }
+}
