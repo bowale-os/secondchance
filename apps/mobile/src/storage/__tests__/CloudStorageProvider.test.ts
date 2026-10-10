@@ -12,7 +12,7 @@ function setup(responses: Response[], enabled = true) {
     enabled,
     isOnline: async () => true,
     encryptionKey: KEY,
-    fetchImpl,
+    fetchImpl: fetchImpl as unknown as typeof fetch,
   });
   return { cloud, fetchImpl };
 }

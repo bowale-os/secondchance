@@ -48,4 +48,5 @@ export async function deleteOwnerData(backend: LocalBackend, ownerId: string) {
   for (const r of await backend.listDocs(ownerId)) await backend.deleteDoc(r.id);
   await backend.deleteBlobsWithPrefix(ownerPrefix(ownerId));
   await backend.setMeta(`sync.outbox.${ownerId}`, '');
+  await backend.setMeta(`settings.${ownerId}`, '');   // see session/settings.ts
 }

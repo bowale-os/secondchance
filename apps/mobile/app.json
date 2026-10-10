@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Second Chance Reader",
+    "slug": "second-chance-reader",
+    "scheme": "secondchancereader",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F3D9C4",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take photos of your papers so the app can read them to you."
+      }
+    },
+    "android": {
+      "permissions": ["CAMERA"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      ["expo-camera", { "cameraPermission": "Take photos of your papers so the app can read them to you." }]
+    ]
+  }
+}
