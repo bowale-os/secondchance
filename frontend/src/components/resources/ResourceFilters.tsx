@@ -13,6 +13,7 @@ const TOGGLES: { key: ToggleKey; label: string }[] = [
 ];
 
 const SEARCH_DELAY_MS = 300;
+const THIS_WEEK_DAYS = 7;
 
 interface Props {
   query: ResourceQuery;
@@ -45,8 +46,12 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
     applied.some((a) => a.key === key && a.reason === "profile") ? "from profile" : undefined;
 
   const categories = query.categories ?? [];
-  const toggleCategory = (c: ResourceCategory) =>
-    onChange({ ...query, categories: categories.includes(c) ? categories.filter((x) => x !== c) : [...categories, c] });
+  const hasDated = (cs: ResourceCategory[]) => cs.includes("classes") || cs.includes("events");
+  const toggleCategory = (c: ResourceCategory) => {
+    const next = categories.includes(c) ? categories.filter((x) => x !== c) : [...categories, c];
+    // "This week" only means something for classes and events.
+    onChange({ ...query, categories: next, starts_within_days: hasDated(next) ? query.starts_within_days : undefined });
+  };
 
   return (
     <div className="res-filters">
@@ -72,6 +77,15 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
       </div>
 
       <div className="res-chip-group" role="group" aria-label="Filters">
+        {hasDated(categories) && (
+          <Chip
+            pressed={query.starts_within_days === THIS_WEEK_DAYS}
+            label="This week"
+            onClick={() =>
+              onChange({ ...query, starts_within_days: query.starts_within_days === THIS_WEEK_DAYS ? undefined : THIS_WEEK_DAYS })
+            }
+          />
+        )}
         {TOGGLES.map(({ key, label }) => (
           <Chip
             key={key}

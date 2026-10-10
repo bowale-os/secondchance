@@ -151,6 +151,7 @@ export interface ResourceQuery {
   language?: string;
   origin?: LatLng;                    // client address or office
   radius_m?: number;
+  starts_within_days?: number;        // classes/events starting in the next N days ("This week" = 7)
   cursor?: string;
 }
 
