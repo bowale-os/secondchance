@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DocStatus } from "../../lib/clientDocuments";
-import type { JobStep, RequiredDocument } from "../../types";
+import type { DocumentCheck, JobStep, RequiredDocument } from "../../types";
 import StepHeader from "../new-client/StepHeader";
 import DocumentList from "./DocumentList";
 import "../new-client/new-client.css";
@@ -46,13 +45,14 @@ interface Props {
   steps: JobStep[];
   /** Fills the "Gather documents" step when the backend sends no steps. */
   requiredDocuments: RequiredDocument[];
-  documentStatus?: (doc: RequiredDocument) => DocStatus;
+  /** The resource's document_checks: null outside a client context. */
+  checks: DocumentCheck[] | null;
   /** Remembers progress under this key, e.g. `${clientId}:${resourceId}`. */
   progressKey?: string;
 }
 
-/** Fair-chance job application, one step at a time; the documents step is checked against the client's IDs. */
-export default function JobWalkthrough({ steps: fromBackend, requiredDocuments, documentStatus, progressKey }: Props) {
+/** Fair-chance job application, one step at a time; the documents step shows the server's document checks. */
+export default function JobWalkthrough({ steps: fromBackend, requiredDocuments, checks, progressKey }: Props) {
   const steps = fromBackend.length ? fromBackend : defaultSteps(requiredDocuments);
   const total = steps.length;
   const [step, setStep] = useState(() => Math.min(readProgress(progressKey), total + 1));
@@ -78,7 +78,7 @@ export default function JobWalkthrough({ steps: fromBackend, requiredDocuments, 
         <>
           <p>{current.detail}</p>
           {current.documents && current.documents.length > 0 && (
-            <DocumentList documents={current.documents} documentStatus={documentStatus} />
+            <DocumentList documents={current.documents} checks={checks} />
           )}
         </>
       )}

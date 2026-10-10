@@ -5,6 +5,7 @@ import type {
   RecordsPolicy,
   RequiredDocument,
   ResourceCategory,
+  Tri,
   VerificationStatus,
 } from "../../types";
 
@@ -65,9 +66,27 @@ export const RECORDS_LABELS: Record<RecordsPolicy, string> = {
   unknown: "Records policy unknown",
 };
 
-export const GENDER_LABELS: Record<Gender, string> = { men: "Men only", women: "Women only", any: "Anyone" };
+export const GENDER_LABELS: Record<Gender, string> = {
+  men: "Men only",
+  women: "Women only",
+  any: "Anyone",
+  unknown: "Who it serves: call to confirm",
+};
 
-export const COST_LABELS: Record<CostType, string> = { free: "Free", sliding_scale: "Sliding scale", fee: "Fee" };
+export const COST_LABELS: Record<CostType, string> = {
+  free: "Free",
+  sliding_scale: "Sliding scale",
+  fee: "Fee",
+  unknown: "Cost: call to confirm",
+};
+
+/**
+ * Text for a yes / no / unknown fact. "unknown" is not "no": it reads "<topic>: call to confirm".
+ * Pass null for `no` to say nothing on a definite no.
+ */
+export function triText(value: Tri, yes: string, no: string | null, topic: string): string | null {
+  return value === "yes" ? yes : value === "no" ? no : `${topic}: call to confirm`;
+}
 
 /** Monday first, matching OpeningHours.day (0 = Monday). */
 export const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];

@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useApi } from "../../api";
-import { documentChecker } from "../../lib/clientDocuments";
 import type { ClientDetail, ResourceQuery } from "../../types";
 import MatchedResources, { type MatchCopy } from "./MatchedResources";
 
@@ -13,19 +12,17 @@ const COPY: MatchCopy = {
   count: (n) => `${n} ${n === 1 ? "resource matches" : "resources match"} this client`,
 };
 
-/** Fourth tab on ClientPage: resources matched to this client, with their IDs checked. */
+/** Fourth tab on ClientPage: resources matched to this client; the server checks their IDs (document_checks). */
 export default function ClientResourcesTab({ client }: { client: ClientDetail }) {
   const api = useApi();
   const loadMatches = useCallback((o: ResourceQuery) => api.resources.matchesFor(client.id, o), [api, client.id]);
-  const loadResource = useCallback((id: string) => api.resources.get(id), [api]);
-  const documentStatus = useMemo(() => documentChecker(client), [client]);
+  const loadResource = useCallback((id: string) => api.resources.get(id, { clientId: client.id }), [api, client.id]);
 
   return (
     <MatchedResources
       client={client}
       loadMatches={loadMatches}
       loadResource={loadResource}
-      documentStatus={documentStatus}
       progressScope={client.id}
       mapGestures
       copy={COPY}
