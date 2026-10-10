@@ -10,13 +10,13 @@ export default function RowGroup({ title, labels, onRemove }: Props) {
 
   return (
     <div className="row-group">
-      <h4>{title}</h4>
-      <ul className="file-list">
+      <h3>{title}</h3>
+      <ul className="row-list">
         {labels.map((label, i) => (
-          <li key={`${label}-${i}`} className="file-item">
+          <li key={`${label}-${i}`} className="nc-record">
             <span className="file-name">{label}</span>
-            <button type="button" className="icon-button" aria-label={`Remove ${label}`} onClick={() => onRemove(i)}>
-              ×
+            <button type="button" className="dash-btn dash-btn-quiet" aria-label={`Remove ${label}`} onClick={() => onRemove(i)}>
+              Remove
             </button>
           </li>
         ))}

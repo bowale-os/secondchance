@@ -2,6 +2,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from "react";
 import { ApiError, useApi } from "./api";
 import LandingPage from "./components/auth/LandingPage";
+import SignupPage from "./components/auth/SignupPage";
+import StatusPage from "./components/auth/StatusPage";
 import ClientHome from "./components/client-portal/ClientHome";
 import ClientLoginPage from "./components/client-portal/ClientLoginPage";
 import ClientPage from "./components/client/ClientPage";
@@ -20,7 +22,6 @@ export default function App() {
   const [creatingClient, setCreatingClient] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [listVersion, setListVersion] = useState(0); // bump to reload the client list
-  const [form, setForm] = useState({ full_name: "", organization_name: "", phone: "" });
 
   const [showClientLogin, setShowClientLogin] = useState(false);
   const clientSession = useClientSession();
@@ -36,7 +37,6 @@ export default function App() {
         setStage("ready");
       } catch (e) {
         if (e instanceof ApiError && e.status === 404) {
-          setForm((f) => ({ ...f, full_name: user.name && user.name !== user.email ? user.name : "" }));
           setStage("needs-signup");
         } else {
           setMessage(e instanceof Error ? e.message : String(e));
@@ -46,22 +46,16 @@ export default function App() {
     })();
   }, [isAuthenticated, api, user]);
 
-  async function submitSignup(e: React.FormEvent) {
-    e.preventDefault();
+  // Throws on failure so SignupPage can show the error next to the form.
+  async function signup(values: { full_name: string; organization_name: string; phone: string }) {
     if (!user?.email) return;
-    setMessage(null);
-    try {
-      setStaff(await api.auth.signup(toStaffSignup({ email: user.email, ...form })));
-      setStage("ready");
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : String(e));
-    }
+    setStaff(await api.auth.signup(toStaffSignup({ email: user.email, ...values })));
+    setStage("ready");
   }
 
-  const setField = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value });
   const doLogout = () => logout({ logoutParams: { returnTo: window.location.origin } });
 
-  if (isLoading) return <main className="card" role="status">Loading…</main>;
+  if (isLoading) return <StatusPage loading="Loading…" />;
 
   if (!isAuthenticated && clientSession.isLoggedIn) {
     return <ClientHome client={clientSession.client} api={clientSession.api} onLogout={clientSession.logout} />;
@@ -114,60 +108,32 @@ export default function App() {
     );
   }
 
-  return (
-    <main className={creatingClient ? "card card-wide" : "card"}>
-      <h1>Hacklanta 2026</h1>
-      {error && <p className="error">{error.message}</p>}
+  if (stage === "ready" && staff && creatingClient) {
+    return (
+      <NewClientFlow
+        staff={staff}
+        onLogout={doLogout}
+        onCancel={() => setCreatingClient(false)}
+        onCreated={() => {
+          setCreatingClient(false);
+          setListVersion((v) => v + 1);
+        }}
+      />
+    );
+  }
 
-      {stage === "checking" ? (
-        <p>Checking your account…</p>
-      ) : stage === "needs-signup" ? (
-        <form onSubmit={submitSignup}>
-          <p>Finish setting up your case worker profile.</p>
-          <label>
-            Email
-            <input value={user?.email ?? ""} disabled />
-          </label>
-          <label>
-            Full name
-            <input value={form.full_name} onChange={setField("full_name")} required />
-          </label>
-          <label>
-            Organization
-            <input value={form.organization_name} onChange={setField("organization_name")} />
-          </label>
-          <label>
-            Phone
-            <input value={form.phone} onChange={setField("phone")} type="tel" />
-          </label>
-          {message && <p className="error">{message}</p>}
-          <div className="row">
-            <button type="submit">Create profile</button>
-            <button type="button" className="secondary" onClick={doLogout}>
-              Log out
-            </button>
-          </div>
-        </form>
-      ) : stage === "ready" && staff ? (
-        creatingClient ? (
-          <NewClientFlow
-            onCancel={() => setCreatingClient(false)}
-            onCreated={() => {
-              setCreatingClient(false);
-              setListVersion((v) => v + 1);
-            }}
-          />
-        ) : null
-      ) : (
-        <>
-          <p className="error">{message}</p>
-          <div className="row">
-            <button className="secondary" onClick={doLogout}>
-              Log out
-            </button>
-          </div>
-        </>
-      )}
-    </main>
-  );
+  if (stage === "needs-signup" && user) {
+    return (
+      <SignupPage
+        email={user.email ?? ""}
+        initialName={user.name && user.name !== user.email ? user.name : ""}
+        onSubmit={signup}
+        onLogout={doLogout}
+      />
+    );
+  }
+
+  if (stage === "checking") return <StatusPage loading="Checking your account…" />;
+
+  return <StatusPage error={message ?? error?.message ?? "Something went wrong. Please try again."} onLogout={doLogout} />;
 }

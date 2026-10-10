@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
-import type { ClientDraft, ClientRead } from "../../types";
+import type { ClientDraft, ClientRead, StaffRead } from "../../types";
+import AppBar from "../layout/AppBar";
+import "../dashboard/dashboard.css";
 import "./new-client.css";
 import ReadingStep from "./ReadingStep";
 import ReviewStep from "./ReviewStep";
@@ -10,6 +12,8 @@ import UploadStep from "./UploadStep";
 type Step = { name: "upload" } | { name: "reading" } | { name: "review"; draft: ClientDraft };
 
 interface Props {
+  staff: StaffRead;
+  onLogout: () => void;
   onCreated: (client: ClientRead) => void;
   onCancel: () => void;
 }
@@ -18,7 +22,7 @@ interface Props {
  * Create-a-client flow: upload documents -> Gemini reads them -> case worker reviews
  * the filled-in profile and creates the client.
  */
-export default function NewClientFlow({ onCreated, onCancel }: Props) {
+export default function NewClientFlow({ staff, onLogout, onCreated, onCancel }: Props) {
   const api = useApi();
   const [step, setStep] = useState<Step>({ name: "upload" });
   const [files, setFiles] = useState<File[]>([]);
@@ -35,15 +39,18 @@ export default function NewClientFlow({ onCreated, onCancel }: Props) {
     }
   }
 
+  let content;
   switch (step.name) {
     case "upload":
-      return (
+      content = (
         <UploadStep files={files} onFilesChange={setFiles} onRead={readDocuments} onCancel={onCancel} error={error} />
       );
+      break;
     case "reading":
-      return <ReadingStep count={files.length} />;
+      content = <ReadingStep count={files.length} />;
+      break;
     case "review":
-      return (
+      content = (
         <ReviewStep
           draft={step.draft}
           onCreated={onCreated}
@@ -53,5 +60,19 @@ export default function NewClientFlow({ onCreated, onCancel }: Props) {
           }}
         />
       );
+      break;
   }
+
+  return (
+    <div className="dash">
+      <a className="skip-link" href="#nc-main">Skip to main content</a>
+      <AppBar staff={staff} onLogout={onLogout} />
+      <main id="nc-main" className="dash-main nc-main">
+        <div>
+          <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ My clients</button>
+        </div>
+        {content}
+      </main>
+    </div>
+  );
 }

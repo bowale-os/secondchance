@@ -10,7 +10,7 @@ export default function ClientFields({ form, onChange }: Props) {
   return (
     <>
       {CLIENT_FIELD_SECTIONS.map((section) => (
-        <fieldset key={section.title} className="form-section">
+        <fieldset key={section.title} className="nc-panel">
           <legend>{section.title}</legend>
           <div className="field-grid">
             {section.fields.map((config) => (
