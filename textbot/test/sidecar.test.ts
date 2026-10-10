@@ -1,14 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import type { Message, Space } from "spectrum-ts";
 import type { Config } from "../src/config";
-import { handleMessage } from "../src/handler";
+import { BurstBatcher } from "../src/batcher";
+import { deliver, prepare } from "../src/handler";
 import { SenderQueues } from "../src/queue";
 import { channelFor, toPlainText } from "../src/render";
 import { makeFetchHandler } from "../src/server";
 
 const config: Config = {
   mode: "cloud", projectId: "p", projectSecret: "s", backendUrl: "http://backend",
-  serviceSecret: "secret", port: 0, testSenderPhone: "+14045550100",
+  serviceSecret: "secret", port: 0, mergeWindowMs: 0, testSenderPhone: "+14045550100",
 };
 
 function fakeSpace(type = "dm") {
@@ -28,43 +29,69 @@ function fakeMessage(content: unknown, over: Partial<Record<string, unknown>> = 
   } as unknown as Message;
 }
 
-describe("handleMessage", () => {
+const prep = (space: Space, content: unknown, over = {}) =>
+  prepare(space, fakeMessage(content, over), config);
+
+describe("prepare + deliver", () => {
   test("forwards text with channel and sends replies", async () => {
     const { space, sent } = fakeSpace();
     let payload: any;
-    await handleMessage(space, fakeMessage({ type: "text", text: "Maria Lopez" }), {
-      config,
-      post: async (_u, _s, p) => { payload = p; return { replies: [{ text: "Now reply with your **PIN**." }] }; },
-    });
+    const active = await deliver([prep(space, { type: "text", text: "Maria Lopez" })!], config,
+      async (_u, _s, p) => { payload = p; return { replies: [{ text: "Now reply with your **PIN**." }] }; });
     expect(payload).toMatchObject({ sender: "+14045550100", text: "Maria Lopez", channel: "sms", attachment_count: 0 });
     expect(sent).toEqual(["Now reply with your PIN."]);
+    expect(active).toBe(false);
   });
 
-  test("counts attachments without sending bytes", async () => {
-    const { space } = fakeSpace();
-    let payload: any;
-    await handleMessage(space, fakeMessage({ type: "attachment", id: "a", name: "x.jpg", mimeType: "image/jpeg" }), {
-      config, post: async (_u, _s, p) => { payload = p; return { replies: [] }; },
-    });
-    expect(payload.attachment_count).toBe(1);
-    expect(payload.text).toBe("");
+  test("counts attachments without sending bytes", () => {
+    const p = prep(fakeSpace().space, { type: "attachment", id: "a", name: "x.jpg", mimeType: "image/jpeg" })!;
+    expect(p.attachmentCount).toBe(1);
+    expect(p.text).toBe("");
   });
 
-  test("ignores outbound, groups, and reactions", async () => {
-    let calls = 0;
-    const post = async () => { calls++; return { replies: [] }; };
-    await handleMessage(fakeSpace().space, fakeMessage({ type: "text", text: "x" }, { direction: "outbound" }), { config, post });
-    await handleMessage(fakeSpace("group").space, fakeMessage({ type: "text", text: "x" }), { config, post });
-    await handleMessage(fakeSpace().space, fakeMessage({ type: "reaction", emoji: "x" }), { config, post });
-    expect(calls).toBe(0);
+  test("ignores outbound, groups, and reactions", () => {
+    expect(prep(fakeSpace().space, { type: "text", text: "x" }, { direction: "outbound" })).toBeNull();
+    expect(prep(fakeSpace("group").space, { type: "text", text: "x" })).toBeNull();
+    expect(prep(fakeSpace().space, { type: "reaction", emoji: "x" })).toBeNull();
   });
 
   test("backend down -> generic reply with no data", async () => {
     const { space, sent } = fakeSpace();
-    await handleMessage(space, fakeMessage({ type: "text", text: "hi" }), {
-      config, post: async () => { throw new Error("down"); },
-    });
+    await deliver([prep(space, { type: "text", text: "hi" })!], config, async () => { throw new Error("down"); });
     expect(sent[0]).toContain("something went wrong");
+  });
+});
+
+describe("BurstBatcher", () => {
+  const text = (t: string) => prep(fakeSpace().space, { type: "text", text: t })!;
+
+  test("before sign-in, each message is its own turn", async () => {
+    const turns: string[][] = [];
+    const b = new BurstBatcher(async (batch) => { turns.push(batch.map((p) => p.text)); return false; }, 50);
+    b.push(text("Maria Lopez"));
+    b.push(text("4821"));
+    await b.idle();
+    expect(turns).toEqual([["Maria Lopez"], ["4821"]]);
+  });
+
+  test("after sign-in, a burst is merged into one turn", async () => {
+    const turns: string[][] = [];
+    const b = new BurstBatcher(async (batch) => { turns.push(batch.map((p) => p.text)); return true; }, 40);
+    b.push(text("4821"));            // backend says: signed in
+    await b.idle();
+    b.push(text("hey"));
+    b.push(text("wait"));
+    b.push(text("where can I eat tonight"));
+    await new Promise((r) => setTimeout(r, 80));
+    await b.idle();
+    expect(turns).toEqual([["4821"], ["hey", "wait", "where can I eat tonight"]]);
+  });
+
+  test("merged text reaches the backend one line per message", async () => {
+    let payload: any;
+    const items = ["hey", "where can I eat"].map(text);
+    await deliver(items, config, async (_u, _s, p) => { payload = p; return { replies: [] }; });
+    expect(payload.text).toBe("hey\nwhere can I eat");
   });
 });
 

@@ -11,6 +11,7 @@ export interface InboundPayload {
 
 export interface InboundResult {
   replies: { text: string }[];
+  session_active?: boolean;
 }
 
 export async function postInbound(

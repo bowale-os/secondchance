@@ -37,4 +37,7 @@ async def inbound(
             attachment_count=payload.attachment_count,
         ),
     )
-    return BotInboundResult(replies=[BotReply(text=t) for t in outcome.replies])
+    return BotInboundResult(
+        replies=[BotReply(text=t) for t in outcome.replies],
+        session_active=outcome.client_id is not None,
+    )

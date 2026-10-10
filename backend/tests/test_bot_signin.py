@@ -170,3 +170,18 @@ async def test_session_never_stores_typed_name_or_pin(db):
     assert s.name_matched is True
     cols = {c.name: getattr(s, c.name) for c in BotSession.__table__.columns}
     assert not any(isinstance(v, str) and "maria" in v.lower() for v in cols.values())
+
+
+@pytest.mark.asyncio
+async def test_stop_inside_merged_burst(db):
+    await sign_in(db)
+    assert await say(db, "where can I eat\nstop") == [msg.STOPPED]
+
+
+@pytest.mark.asyncio
+async def test_merged_burst_does_not_trigger_other_keywords(db):
+    await say(db, "hi")
+    await say(db, "Maria Lopez")
+    signed = await handle_inbound(db, Inbound(sender=PHONE, text="4821"))
+    assert signed.client_id is not None
+    assert await say(db, "menu\nsign out") == [msg.NOT_AVAILABLE_YET]

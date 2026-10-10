@@ -473,6 +473,9 @@ class BotReply:
 @dataclass
 class BotInboundResult:
     replies: list[BotReply] = field(default_factory=list)
+    # True while the sender is signed in. The sidecar uses it only to decide whether
+    # to merge message bursts; it carries no client data.
+    session_active: bool = False
 
 
 @dataclass

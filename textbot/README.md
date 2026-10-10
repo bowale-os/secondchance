@@ -36,8 +36,10 @@ Before going live:
 
 ## Behavior
 
-- Messages from one number are processed strictly in order (name, then PIN); different
-  numbers run in parallel. Bursts are not merged.
+- Messages from one number are processed strictly in order; different numbers run in parallel.
+- Before sign-in each message is sent alone (name, then PIN). After sign-in, messages
+  sent within `MERGE_WINDOW_MS` (default 2.5 s) are merged into one turn, one line each.
+  The backend still honors STOP on any line of a merged burst.
 - Group chats, reactions, edits, read receipts and typing events are ignored.
 - Attachments are counted and forwarded as `attachment_count` only; bytes are handled in phase 5.
 - Replies are sent as plain text so they read the same on SMS.

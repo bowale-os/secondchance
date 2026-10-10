@@ -8,8 +8,8 @@ import { Spectrum, type Message, type Space } from "spectrum-ts";
 import { imessage } from "spectrum-ts/providers/imessage";
 import { terminal } from "spectrum-ts/providers/terminal";
 import { loadConfig } from "./config";
-import { handleMessage, senderPhone } from "./handler";
-import { SenderQueues } from "./queue";
+import { BurstBatcher } from "./batcher";
+import { deliver, prepare } from "./handler";
 import { makeFetchHandler, type SendFn } from "./server";
 import { toPlainText } from "./render";
 
@@ -59,9 +59,8 @@ if (config.mode === "cloud") {
   console.log(`[textbot] cloud mode; /send on :${config.port}`);
 }
 
-const queues = new SenderQueues();
+const batcher = new BurstBatcher((batch) => deliver(batch, config), config.mergeWindowMs);
 for await (const [space, message] of messages) {
-  const key = senderPhone(message, config) ?? message.space.id;
-  // Don't await: other senders shouldn't wait behind this one.
-  void queues.run(key, () => handleMessage(space, message, { config }));
+  const item = prepare(space, message, config);
+  if (item) batcher.push(item);
 }

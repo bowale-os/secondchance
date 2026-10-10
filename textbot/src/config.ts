@@ -18,6 +18,8 @@ export function loadConfig() {
     backendUrl: (process.env.BACKEND_URL ?? "http://localhost:3000").replace(/\/$/, ""),
     serviceSecret: required("BOT_SERVICE_SECRET"),
     port: Number(process.env.TEXTBOT_PORT ?? 8787),
+    // After sign-in, messages this close together are merged into one turn.
+    mergeWindowMs: Number(process.env.MERGE_WINDOW_MS ?? 2500),
     testSenderPhone: process.env.TEST_SENDER_PHONE ?? "+14045550100",
   };
 }

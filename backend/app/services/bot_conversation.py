@@ -140,7 +140,11 @@ async def handle_inbound(db: AsyncSession, inbound: Inbound) -> Outcome:
 
 async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     text = (m.text or "").strip()
-    kw = keyword(text)
+    # The sidecar may merge a signed-in burst into several lines. Compliance keywords
+    # count on any line; other keywords only when the message is a single line.
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    line_kws = {keyword(ln) for ln in lines}
+    kw = keyword(text) if len(lines) <= 1 else ""
     now = _now()
 
     # 1. Crisis exception: before anything else, no sign-in, no client data.
@@ -152,7 +156,7 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     # 2. Enrollment
     enrollment = await _find_enrollment(db, m.sender, lock=True)
     if enrollment is None:
-        if kw in STOP_WORDS:
+        if line_kws & STOP_WORDS:
             return Outcome([])  # nothing to stop; stay silent
         _audit(db, None, "unenrolled", "help" if kw in HELP_WORDS else "generic_reply")
         return Outcome([msg.help_text() if kw in HELP_WORDS else msg.NOT_ENROLLED])
@@ -161,7 +165,7 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         enrollment.channel = ch
 
     # 3. Compliance keywords
-    if kw in STOP_WORDS:
+    if line_kws & STOP_WORDS:
         enrollment.status = BotEnrollmentStatus.STOPPED
         if enrollment.session and enrollment.session.state != BotSessionState.LOCKED:
             await db.delete(enrollment.session)
