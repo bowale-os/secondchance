@@ -96,6 +96,14 @@ export interface ClientLogin {
   pin: string;
 }
 
+/** Response of POST /auth/client/login. */
+export interface ClientToken {
+  access_token: string;
+  /** Seconds until the token expires. */
+  expires_in: number;
+  token_type: string;
+}
+
 /** Stored document metadata (no file bytes); open the file with api.documents. */
 export interface DocumentListItem {
   id: string;

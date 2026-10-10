@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_current_client, get_current_staff, get_token_claims
 from app.config import get_settings
 from app.db import get_session
-from app.schemas import ClientLogin, ClientRead, ClientToken, StaffRead, StaffSignup, from_row
+from app.schemas import ClientLogin, ClientRead, DocumentListItem, ClientToken, StaffRead, StaffSignup, from_row
 from app.security import create_client_token, hash_pin, verify_pin_async
-from app.tables import Client, Staff
+from app.tables import Client, Document, Staff
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -106,3 +106,15 @@ async def client_login(
 @router.get("/client/me", response_model=ClientRead)
 async def client_me(client: Client = Depends(get_current_client)) -> ClientRead:
     return from_row(ClientRead, client)
+
+
+@router.get("/client/documents", response_model=list[DocumentListItem])
+async def client_documents(
+    client: Client = Depends(get_current_client), session: AsyncSession = Depends(get_session)
+) -> list[DocumentListItem]:
+    """The logged-in client's own documents (metadata only), newest first. Open a file
+    with GET /documents/{id}/content."""
+    docs = await session.scalars(
+        select(Document).where(Document.client_id == client.id).order_by(Document.created_at.desc())
+    )
+    return [from_row(DocumentListItem, d) for d in docs]
