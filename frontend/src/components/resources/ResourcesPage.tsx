@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import type { LatLng, ResourceQuery, ResourceSummary, StaffRead } from "../../types";
 import AppBar, { type AppNav } from "../layout/AppBar";
+import ResourceDrawer from "./ResourceDrawer";
 import ResourceFilters from "./ResourceFilters";
 import ResourceRows from "./ResourceRows";
 import "../dashboard/dashboard.css";
@@ -30,6 +31,8 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const loadResource = useCallback((id: string) => api.resources.get(id), [api]);
 
   const query = useMemo<ResourceQuery>(() => ({ ...filters, origin: origin ?? undefined }), [filters, origin]);
 
@@ -101,6 +104,8 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
           )}
         </section>
       </main>
+
+      {selectedId && <ResourceDrawer resourceId={selectedId} load={loadResource} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
