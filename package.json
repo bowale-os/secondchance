@@ -1,0 +1,16 @@
+{
+  "name": "second-chance-reader",
+  "private": true,
+  "description": "Turns official documents into read-aloud audio, a plain-language version, and a dated to-do list.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}
