@@ -11,8 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_staff
 from app.db import get_session
-from app.schemas import AppointmentRead, AppointmentWrite, ScheduleItemRead, from_row
-from app.services.schedule import get_schedule
+from app.schemas import (
+    AppointmentRead,
+    AppointmentWrite,
+    ScheduleItemRead,
+    SchedulePreviewText,
+    from_row,
+)
+from app.services.bot_schedule_text import render
+from app.services.schedule import get_schedule, window
 from app.services.timeutil import aware, local_tz
 from app.tables import Appointment, Assignment, ClientObligation, Staff
 
@@ -159,3 +166,19 @@ async def preview_schedule(
     await _assert_mine(session, client_id, staff)
     items = await get_schedule(session, client_id, range, datetime.now(timezone.utc))
     return [ScheduleItemRead(**asdict(i)) for i in items]
+
+
+@router.get("/{client_id}/schedule/text", response_model=SchedulePreviewText)
+async def preview_schedule_text(
+    client_id: uuid.UUID,
+    range: Literal["day", "tomorrow", "week"] = "day",
+    staff: Staff = Depends(get_current_staff),
+    session: AsyncSession = Depends(get_session),
+) -> SchedulePreviewText:
+    """The exact text message the client gets for TODAY / TOMORROW / WEEK."""
+    await _assert_mine(session, client_id, staff)
+    now = datetime.now(timezone.utc)
+    items = await get_schedule(session, client_id, range, now)
+    first, _ = window(range, now)
+    today = now.astimezone(local_tz()).date()
+    return SchedulePreviewText(range=range, text=render(range, items, first, today))

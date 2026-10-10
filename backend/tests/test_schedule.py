@@ -267,3 +267,12 @@ async def test_schedule_preview(api):
     c, ids, _ = api
     r = await c.get(f"/clients/{ids['client']}/schedule", params={"range": "week"})
     assert r.status_code == 200 and isinstance(r.json(), list)
+
+
+@pytest.mark.asyncio
+async def test_schedule_text_preview(api):
+    c, ids, current = api
+    r = await c.get(f"/clients/{ids['client']}/schedule/text", params={"range": "week"})
+    assert r.status_code == 200 and r.json()["text"]
+    current["id"] = ids["other"]
+    assert (await c.get(f"/clients/{ids['client']}/schedule/text")).status_code == 404

@@ -6,3 +6,4 @@ export * from "./profile";
 export * from "./resource.types";
 export * from "./staff";
 export * from "./texting";
+export * from "./appointment";

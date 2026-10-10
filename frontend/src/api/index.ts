@@ -1,5 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMemo } from "react";
+import { createAppointmentsApi } from "./appointments";
 import { createAuthApi } from "./auth";
 import { createClientAuthApi } from "./clientAuth";
 import { createClientsApi } from "./clients";
@@ -19,6 +20,7 @@ export function createApi(getToken: GetToken) {
     documents: createDocumentsApi(http),
     resources: { ...createResourcesApi(http), ...createClientResourcesApi(http) },
     texting: createTextingApi(http),
+    appointments: createAppointmentsApi(http),
   };
 }
 

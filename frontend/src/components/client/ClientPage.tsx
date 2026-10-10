@@ -9,11 +9,12 @@ import ClientResourcesTab from "../resources/ClientResourcesTab";
 import DocumentsTab from "./DocumentsTab";
 import OverviewTab from "./OverviewTab";
 import RecordsTab from "./RecordsTab";
+import ScheduleTab from "./ScheduleTab";
 import { recordGroups } from "./recordGroups";
 import "../dashboard/dashboard.css";
 import "./client.css";
 
-type Tab = "overview" | "records" | "documents" | "resources";
+type Tab = "overview" | "schedule" | "records" | "documents" | "resources";
 
 interface Props {
   clientId: string;
@@ -54,6 +55,7 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
   const unverified = rows.filter((r) => !r.verified).length;
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
+    { id: "schedule", label: "Schedule" },
     { id: "records", label: `Records (${rows.length})` },
     { id: "documents", label: `Documents (${client?.documents.length ?? 0})` },
     { id: "resources", label: "Resources" },
@@ -121,6 +123,7 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
                 {tab === "overview" && <OverviewTab client={client} />}
+                {tab === "schedule" && <ScheduleTab client={client} />}
                 {tab === "records" && (
                   <RecordsTab client={client} onOpenDocument={(id) => run(() => api.documents.open(id))} />
                 )}

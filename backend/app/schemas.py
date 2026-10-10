@@ -542,3 +542,9 @@ class ScheduleItemRead:
     documents_to_bring: list[str] = field(default_factory=list)
     amount: Optional[Decimal] = None
     overdue: bool = False
+
+
+@dataclass
+class SchedulePreviewText:
+    range: str
+    text: str
