@@ -449,3 +449,44 @@ class DocumentReview:
     doc_type: Optional[DocumentType] = None
     ai_summary: Optional[str] = None
     ai_warnings: Optional[list] = None
+
+
+# ============================================================
+# Text bot
+# ============================================================
+
+@dataclass
+class BotInbound:
+    """Sidecar -> backend: one (debounced) inbound message."""
+    sender: str
+    text: str = ""
+    channel: Optional[str] = None
+    attachment_count: int = 0
+    message_id: Optional[str] = None
+
+
+@dataclass
+class BotReply:
+    text: str
+
+
+@dataclass
+class BotInboundResult:
+    replies: list[BotReply] = field(default_factory=list)
+
+
+@dataclass
+class TextingEnroll:
+    phone: str
+    consent: bool  # case worker confirms the client agreed to texts
+
+
+@dataclass
+class TextingStatus:
+    enrolled: bool
+    status: Optional[str] = None       # active | stopped | locked | revoked
+    phone_last4: Optional[str] = None
+    channel: Optional[str] = None
+    consent_at: Optional[datetime] = None
+    locked_at: Optional[datetime] = None
+    welcome_sent: Optional[bool] = None

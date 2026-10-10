@@ -423,3 +423,90 @@ class ClientContact(IdMixin, TimestampMixin, ProvenanceMixin, Base):
     email: Mapped[Optional[str]] = mapped_column(String(255))
 
     client: Mapped["Client"] = relationship(back_populates="contacts")
+
+
+# ============================================================
+# Text bot (Photon Spectrum). See docs/text-bot-plan.md.
+# ============================================================
+
+class BotChannel(enum.Enum):
+    IMESSAGE = "imessage"
+    RCS = "rcs"
+    SMS = "sms"
+    WHATSAPP = "whatsapp"
+    TELEGRAM = "telegram"
+    OTHER = "other"
+
+
+class BotEnrollmentStatus(enum.Enum):
+    ACTIVE = "active"     # bot answers this number
+    STOPPED = "stopped"   # client texted STOP; only START/HELP are answered
+    LOCKED = "locked"     # too many failed sign-ins; case worker must unlock
+    REVOKED = "revoked"   # case worker turned texting off
+
+
+class BotSessionState(enum.Enum):
+    AWAITING_NAME = "awaiting_name"
+    AWAITING_PIN = "awaiting_pin"
+    ACTIVE = "active"
+    LOCKED = "locked"
+
+
+class BotEnrollment(IdMixin, TimestampMixin, Base):
+    """A client's opt-in to texting. The bot only engages with numbers that have an
+    ACTIVE row here; everyone else gets one generic reply."""
+    __tablename__ = "bot_enrollments"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), unique=True
+    )
+    # Phone in E.164. Stored encrypted; looked up by keyed hash (see services/phone.py).
+    phone_encrypted: Mapped[str] = mapped_column(Text)
+    phone_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    phone_last4: Mapped[str] = mapped_column(String(4))  # for case-worker display only
+    channel: Mapped[Optional[BotChannel]] = mapped_column()  # last channel seen
+    status: Mapped[BotEnrollmentStatus] = mapped_column(default=BotEnrollmentStatus.ACTIVE)
+    consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    enrolled_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+    locked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    session: Mapped[Optional["BotSession"]] = relationship(
+        back_populates="enrollment", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class BotSession(IdMixin, TimestampMixin, Base):
+    """Sign-in state for one enrolled number. Never stores the typed name or PIN."""
+    __tablename__ = "bot_sessions"
+
+    enrollment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("bot_enrollments.id", ondelete="CASCADE"), unique=True
+    )
+    state: Mapped[BotSessionState] = mapped_column(default=BotSessionState.AWAITING_NAME)
+    # Result of the name check, kept until the PIN arrives so the reply never reveals
+    # which part was wrong.
+    name_matched: Mapped[bool] = mapped_column(Boolean, default=False)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    authenticated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_activity_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # Last numbered list sent, so "2" / "MAP" / "MORE" can refer back to it.
+    last_results: Mapped[Optional[dict]] = mapped_column(JSON)
+    pending_attachment_ref: Mapped[Optional[str]] = mapped_column(String(255))
+
+    enrollment: Mapped["BotEnrollment"] = relationship(back_populates="session")
+
+
+class BotAuditLog(IdMixin, Base):
+    """What the bot did, never what was said."""
+    __tablename__ = "bot_audit_log"
+
+    enrollment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("bot_enrollments.id", ondelete="SET NULL"), index=True
+    )
+    intent: Mapped[str] = mapped_column(String(50))
+    outcome: Mapped[str] = mapped_column(String(50))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
