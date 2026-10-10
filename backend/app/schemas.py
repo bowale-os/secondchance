@@ -563,6 +563,8 @@ class ScheduleItemRead:
     documents_to_bring: list[str] = field(default_factory=list)
     amount: Optional[Decimal] = None
     overdue: bool = False
+    obligation_type: Optional[str] = None
+    detail: Optional[str] = None
 
 
 @dataclass

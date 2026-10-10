@@ -17,29 +17,47 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import photo_reader
+from app.services.bot_keywords import strip_accents
+from app.services.bot_messages import EN, EN_STRINGS, Strings
 from app.services.photo_reader import Photo, PhotoError, PhotoReading
 from app.tables import BotSession, Client, DataSource, Document, DocumentStatus, DocumentType
 
-ASK_MODE = "Got it. Reply 1 to explain it in plain words, or 2 to translate it."
-PHOTO_GONE = "I don't have your photo anymore. Please send it again."
-NOT_AVAILABLE = "I can't read photos right now. Please show it to your case worker."
-UNREADABLE = "I couldn't read that. Try again in good light, with the whole page in the photo."
-UNSUPPORTED = "I can only read photos (JPG, PNG, HEIC) or PDFs under 10 MB."
-SAVED = "Saved to your documents. Your case worker will look it over."
-LEGAL_NOTE = "This looks like a legal or court paper. Check with your case worker before you act on it."
+# English strings under their old names (tests and callers); text comes from bot_messages.
+ASK_MODE = EN["PH_ASK_MODE"]
+PHOTO_GONE = EN["PH_GONE"]
+NOT_AVAILABLE = EN["PH_NOT_AVAILABLE"]
+UNREADABLE = EN["PH_UNREADABLE"]
+UNSUPPORTED = EN["PH_UNSUPPORTED"]
+SAVED = EN["PH_SAVED"]
+LEGAL_NOTE = EN["PH_LEGAL"]
 MAX_REPLY = 1500
 
-_SIMPLIFY = re.compile(r"^\s*(1|simplify|explain|plain|what does (this|it) (say|mean)\??)\s*[.!?]?\s*$", re.I)
-_TRANSLATE = re.compile(r"^\s*(?:2|translate|translation)(?:\s+(?:it\s+)?(?:to|into|in)?\s*([a-z]{2,20}))?\s*[.!?]?\s*$", re.I)
+_SIMPLIFY = re.compile(
+    r"^\s*(1|simplify|explain|plain|what does (this|it) (say|mean)\??|"
+    r"simplificar|explicar|explicame|explicalo|que dice\??|que significa\??)\s*[.!?]?\s*$", re.I)
+_TRANSLATE = re.compile(
+    r"^\s*(?:2|translate|translation|traducir|traduce|traducelo|traduccion)"
+    r"(?:\s+(?:it\s+)?(?:to|into|in|al|a|en)?\s*([a-z]{2,20}))?\s*[.!?]?\s*$", re.I)
+
+# Language names a Spanish speaker might type -> the English name sent to the model.
+_ES_LANGUAGE_NAMES = {
+    "ingles": "English", "espanol": "Spanish", "castellano": "Spanish", "frances": "French",
+    "portugues": "Portuguese", "chino": "Chinese", "mandarin": "Chinese", "vietnamita": "Vietnamese",
+    "arabe": "Arabic", "coreano": "Korean", "criollo": "Haitian Creole", "haitiano": "Haitian Creole",
+    "ruso": "Russian", "aleman": "German", "italiano": "Italian", "tagalo": "Tagalog",
+}
 
 
 def parse_mode(text: str) -> Optional[tuple[str, Optional[str]]]:
-    """'1' -> ('simplify', None); '2 spanish' / 'translate to vietnamese' -> ('translate', 'spanish')."""
-    if _SIMPLIFY.match(text or ""):
+    """'1' -> ('simplify', None); '2 spanish' / 'translate to vietnamese' -> ('translate', 'spanish');
+    'traducir al inglés' -> ('translate', 'English')."""
+    plain = strip_accents(text or "").replace("¿", "").replace("¡", "")
+    if _SIMPLIFY.match(plain):
         return ("simplify", None)
-    m = _TRANSLATE.match(text or "")
+    m = _TRANSLATE.match(plain)
     if m:
-        return ("translate", m.group(1))
+        lang = m.group(1)
+        return ("translate", _ES_LANGUAGE_NAMES.get(lang.lower(), lang) if lang else None)
     return None
 
 
@@ -48,30 +66,31 @@ def _clip(s: str, n: int) -> str:
     return s if len(s) <= n else s[: n - 1].rsplit(" ", 1)[0] + "…"
 
 
-def render(r: PhotoReading, mode: str) -> str:
+def render(r: PhotoReading, mode: str, L: Strings = EN_STRINGS) -> str:
     if not r.readable:
-        return UNREADABLE
+        return L.PH_UNREADABLE
     lines = []
     if r.document_kind:
-        lines.append(f"This looks like a {r.document_kind.strip().rstrip('.')}.")
+        lines.append(L.get("PH_LOOKS_LIKE", kind=r.document_kind.strip().rstrip(".")))
     body = r.translation if mode == "translate" and r.translation else r.summary
     if body:
         lines.append(_clip(body, 1000 if mode == "translate" else 600))
     if r.key_dates:
-        lines.append("Key dates:")
+        lines.append(L.PH_KEY_DATES)
         lines += [f"- {d.date}: {_clip(d.what, 100)}" for d in r.key_dates[:6]]
     if r.next_steps:
-        lines.append("What to do:")
+        lines.append(L.PH_TODO)
         lines += [f"- {_clip(s, 120)}" for s in r.next_steps[:3]]
     if r.legal_or_court:
-        lines.append(LEGAL_NOTE)
-    lines.append("Reply SAVE to keep a copy in your documents.")
+        lines.append(L.PH_LEGAL)
+    lines.append(L.PH_SAVE_OFFER)
     text = "\n".join(lines)
     return text if len(text) <= MAX_REPLY else text[: MAX_REPLY - 1] + "…"
 
 
 async def process(
-    client: Client, s: BotSession, photos: list[Photo], mode: str, language: Optional[str]
+    client: Client, s: BotSession, photos: list[Photo], mode: str, language: Optional[str],
+    L: Strings = EN_STRINGS,
 ) -> tuple[str, bool, str]:
     """(reply, hold_images, audit_outcome)."""
     target = photo_reader.language_name(language or client.language)
@@ -80,11 +99,11 @@ async def process(
     except PhotoError as exc:
         s.pending_attachment_ref = None
         reason = str(exc)
-        reply = {"unsupported": UNSUPPORTED, "unreadable_image": UNREADABLE}.get(reason, NOT_AVAILABLE)
+        reply = {"unsupported": L.PH_UNSUPPORTED, "unreadable_image": L.PH_UNREADABLE}.get(reason, L.PH_NOT_AVAILABLE)
         return reply, False, reason
     if not reading.readable:
         s.pending_attachment_ref = None
-        return UNREADABLE, False, "unreadable"
+        return L.PH_UNREADABLE, False, "unreadable"
     s.pending_attachment_ref = "photo_save"
     s.last_results = {
         "kind": "photo",
@@ -92,10 +111,12 @@ async def process(
         "dates": [f"{d.date}: {d.what}" for d in reading.key_dates[:10]],
         "legal": reading.legal_or_court,
     }
-    return render(reading, mode), True, "ok"
+    return render(reading, mode, L), True, "ok"
 
 
-async def save(db: AsyncSession, client: Client, s: BotSession, photos: list[Photo], now: datetime) -> str:
+async def save(
+    db: AsyncSession, client: Client, s: BotSession, photos: list[Photo], now: datetime, L: Strings = EN_STRINGS
+) -> str:
     reading = s.last_results if (s.last_results or {}).get("kind") == "photo" else {}
     usable = photo_reader.check_photos(photos)
     for n, p in enumerate(usable, 1):
@@ -115,4 +136,4 @@ async def save(db: AsyncSession, client: Client, s: BotSession, photos: list[Pho
         ))
     s.pending_attachment_ref = None
     s.last_results = None
-    return SAVED
+    return L.PH_SAVED

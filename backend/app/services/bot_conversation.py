@@ -28,7 +28,10 @@ from app.services import bot_intent, bot_photos, bot_resources
 from app.services import bot_messages as msg
 from app.services.bot_keywords import (
     HELP_WORDS,
+    MAP_WORDS,
     MENU_WORDS,
+    MORE_WORDS,
+    SAVE_WORDS,
     SCHEDULE_WORDS,
     SIGN_OUT_WORDS,
     START_WORDS,
@@ -36,6 +39,7 @@ from app.services.bot_keywords import (
     is_crisis,
     keyword,
     parse_nudge,
+    strip_accents,
 )
 from app.services.bot_schedule_text import render as render_schedule
 from app.services.schedule import get_schedule, window
@@ -157,7 +161,10 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     if text and is_crisis(text):
         enrollment = await _find_enrollment(db, m.sender)
         _audit(db, enrollment, "crisis", "hotlines_sent")
-        return Outcome([msg.crisis_text()])
+        if enrollment is None:
+            return Outcome([msg.crisis_both()])  # unknown sender: English and Spanish
+        client = await db.get(Client, enrollment.client_id)
+        return Outcome([msg.Strings(client.language).crisis_text()])
 
     # 2. Enrollment
     enrollment = await _find_enrollment(db, m.sender, lock=True)
@@ -165,10 +172,14 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         if line_kws & STOP_WORDS:
             return Outcome([])  # nothing to stop; stay silent
         _audit(db, None, "unenrolled", "help" if kw in HELP_WORDS else "generic_reply")
-        return Outcome([msg.help_text() if kw in HELP_WORDS else msg.NOT_ENROLLED])
+        if kw in HELP_WORDS:
+            return Outcome([f"{msg.EN_STRINGS.help_text()}\n\n{msg.ES_STRINGS.help_text()}"])
+        return Outcome([msg.both("NOT_ENROLLED")])
 
     if (ch := _channel(m.channel)) is not None:
         enrollment.channel = ch
+    client = await db.get(Client, enrollment.client_id)
+    L = msg.Strings(client.language)  # every reply from here on is in the client's language
 
     # 3. Compliance keywords
     if line_kws & STOP_WORDS:
@@ -176,38 +187,36 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         if enrollment.session and enrollment.session.state != BotSessionState.LOCKED:
             await db.delete(enrollment.session)
         _audit(db, enrollment, "keyword.stop", "stopped")
-        return Outcome([msg.STOPPED])
+        return Outcome([L.STOPPED])
 
     if enrollment.status == BotEnrollmentStatus.STOPPED:
         if kw in START_WORDS:
             if enrollment.session and enrollment.session.state == BotSessionState.LOCKED:
                 enrollment.status = BotEnrollmentStatus.LOCKED  # STOP doesn't clear a lock
-                return Outcome([msg.LOCKED])
+                return Outcome([L.LOCKED])
             enrollment.status = BotEnrollmentStatus.ACTIVE
             s = await _get_or_create_session(db, enrollment)
             _reset_to_name(s)
             _audit(db, enrollment, "keyword.start", "resumed")
-            return Outcome([msg.STARTED])
+            return Outcome([L.STARTED])
         if kw in HELP_WORDS:
-            return Outcome([msg.help_text()])
+            return Outcome([L.help_text()])
         return Outcome([])  # opted out: send nothing
 
     if kw in HELP_WORDS:
         _audit(db, enrollment, "keyword.help", "sent")
-        return Outcome([msg.help_text()])
+        return Outcome([L.help_text()])
 
     nudge = parse_nudge(text)
     if nudge and nudge[0] == "off":  # fewer texts never needs a sign-in
         enrollment.nudge_enabled = False
         _audit(db, enrollment, "nudge", "disabled")
-        return Outcome([msg.NUDGE_OFF])
+        return Outcome([L.NUDGE_OFF])
 
     # 4. Lock
     if enrollment.status == BotEnrollmentStatus.LOCKED:
         _audit(db, enrollment, "auth", "locked")
-        return Outcome([msg.LOCKED])
-
-    client = await db.get(Client, enrollment.client_id)
+        return Outcome([L.LOCKED])
 
     # 5./6. Session
     s = enrollment.session
@@ -215,39 +224,39 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         s = await _get_or_create_session(db, enrollment)
         _audit(db, enrollment, "auth.start", "asked_name")
         if nudge:
-            return Outcome([f"Sign in first, then reply NUDGE ON. {msg.ASK_NAME}"])
+            return Outcome([f"{L.NUDGE_SIGN_IN_FIRST} {L.ASK_NAME}"])
         if m.attachment_count:
-            return Outcome([msg.PHOTO_SIGN_IN])
-        return Outcome([msg.ASK_NAME])
+            return Outcome([L.PHOTO_SIGN_IN])
+        return Outcome([L.ASK_NAME])
 
     if s.state == BotSessionState.ACTIVE and _session_expired(s, now):
         _reset_to_name(s)
         _audit(db, enrollment, "auth.expired", "asked_name")
         if m.attachment_count:
-            return Outcome([msg.PHOTO_SIGN_IN], hold_images=bool(m.images))
-        return Outcome([msg.SESSION_ENDED])
+            return Outcome([L.PHOTO_SIGN_IN], hold_images=bool(m.images))
+        return Outcome([L.SESSION_ENDED])
 
     if m.attachment_count and s.state in (BotSessionState.AWAITING_NAME, BotSessionState.AWAITING_PIN):
         # A caption on a photo is never a name or PIN attempt.
-        prompt = msg.PHOTO_SIGN_IN if s.state == BotSessionState.AWAITING_NAME else msg.PHOTO_ASK_PIN
+        prompt = L.PHOTO_SIGN_IN if s.state == BotSessionState.AWAITING_NAME else L.PHOTO_ASK_PIN
         return Outcome([prompt], hold_images=bool(m.images))
 
     if nudge and s.state != BotSessionState.ACTIVE:
         # Never count "NUDGE ON" as a name or PIN attempt.
-        prompt = msg.ASK_PIN if s.state == BotSessionState.AWAITING_PIN else msg.ASK_NAME
-        return Outcome([f"Sign in first, then reply NUDGE ON. {prompt}"])
+        prompt = L.ASK_PIN if s.state == BotSessionState.AWAITING_PIN else L.ASK_NAME
+        return Outcome([f"{L.NUDGE_SIGN_IN_FIRST} {prompt}"])
 
     if s.state == BotSessionState.AWAITING_NAME:
         if not text:  # e.g. a photo with no caption
-            return Outcome([msg.ASK_NAME])
+            return Outcome([L.ASK_NAME])
         s.name_matched = name_matches(text, client)
         s.state = BotSessionState.AWAITING_PIN
         _audit(db, enrollment, "auth.name", "received")
-        return Outcome([msg.ASK_PIN])
+        return Outcome([L.ASK_PIN])
 
     if s.state == BotSessionState.AWAITING_PIN:
         if not text:
-            return Outcome([msg.ASK_PIN])
+            return Outcome([L.ASK_PIN])
         pin_ok = await verify_pin_async(text, client.pin_hash if s.name_matched else _dummy_hash())
         if s.name_matched and pin_ok:
             s.state = BotSessionState.ACTIVE
@@ -256,7 +265,7 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
             s.authenticated_at = now
             s.last_activity_at = now
             _audit(db, enrollment, "auth.pin", "success")
-            return Outcome([msg.SIGNED_IN], client_id=str(client.id))
+            return Outcome([L.SIGNED_IN], client_id=str(client.id))
 
         s.failed_attempts += 1
         if s.failed_attempts >= get_settings().bot_max_failed_attempts:
@@ -264,31 +273,34 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
             enrollment.status = BotEnrollmentStatus.LOCKED
             enrollment.locked_at = now
             _audit(db, enrollment, "auth.pin", "locked")
-            return Outcome([msg.LOCKED])
+            return Outcome([L.LOCKED])
         _reset_to_name(s)
         _audit(db, enrollment, "auth.pin", "failed")
-        return Outcome([msg.BAD_LOGIN])
+        return Outcome([L.BAD_LOGIN])
 
     if s.state == BotSessionState.LOCKED:  # enrollment unlocked but session not reset
         _reset_to_name(s)
         s.failed_attempts = 0
-        return Outcome([msg.ASK_NAME])
+        return Outcome([L.ASK_NAME])
 
     # ACTIVE
     s.last_activity_at = now
     if kw in SIGN_OUT_WORDS:
         await db.delete(s)
         _audit(db, enrollment, "auth.sign_out", "signed_out")
-        return Outcome([msg.SIGNED_OUT])
+        return Outcome([L.SIGNED_OUT])
     if nudge:
-        return Outcome(_set_nudge(db, enrollment, nudge), client_id=str(client.id))
+        return Outcome(_set_nudge(db, enrollment, nudge, L), client_id=str(client.id))
     reply = await handle_active(db, client, s, text, kw, m)
     return Outcome(list(reply), client_id=str(client.id), hold_images=getattr(reply, "hold", False))
 
 
 _RECOVERY_ASK = re.compile(
     r"\b(recover\w*|treatment|rehab|detox|sober\w*|addict\w*|narcotics anonymous|alcoholics anonymous|"
-    r"aa|na|methadone|suboxone|substance)\b",
+    r"aa|na|methadone|suboxone|substance|"
+    # Spanish (matched without accents)
+    r"recuperacion|recuperarme|tratamiento|rehabilitacion|desintoxica\w*|adiccion\w*|adicto|"
+    r"sobrio|sobria|metadona|narcoticos anonimos|alcoholicos anonimos)\b",
     re.IGNORECASE,
 )
 
@@ -298,53 +310,54 @@ async def handle_active(
 ) -> list[str]:
     """Signed-in requests: photos, keyword fast path, then the Gemini router for free text."""
     now = _now()
+    L = msg.Strings(client.language)
     photo_reply = await _photos(db, client, s, text, kw, m, now)
     if photo_reply is not None:
         return photo_reply
     if kw in MENU_WORDS or (not text and not m.attachment_count):
         _audit(db, s.enrollment, "menu", "sent")
-        return [msg.MENU]
+        return [L.MENU]
     if kw in SCHEDULE_WORDS:
-        return [await _schedule(db, client, s, SCHEDULE_WORDS[kw], now)]
-    if kw in ("MAP", "MAPS"):
+        return [await _schedule(db, client, s, SCHEDULE_WORDS[kw], now, L)]
+    if kw in MAP_WORDS:
         _audit(db, s.enrollment, "resources.map", "sent")
-        return await bot_resources.map_reply(db, s)
-    if kw == "MORE":
+        return await bot_resources.map_reply(db, s, L)
+    if kw in MORE_WORDS:
         _audit(db, s.enrollment, "resources.more", "sent")
-        return [await bot_resources.more_reply(db, s, now)]
+        return [await bot_resources.more_reply(db, s, now, L)]
     if kw.isdigit() and text.strip().isdigit():
         if 1 <= int(kw) <= 99:
             _audit(db, s.enrollment, "resources.detail", "sent")
-            return [await bot_resources.detail_reply(db, client, s, int(kw), now)]
-        return [msg.NOT_AVAILABLE_YET]  # e.g. a re-typed PIN: never sent to the router
+            return [await bot_resources.detail_reply(db, client, s, int(kw), now, L)]
+        return [L.NOT_AVAILABLE_YET]  # e.g. a re-typed PIN: never sent to the router
     ask = bot_resources.parse_fast(text)
     if ask:
-        return [await _resources(db, client, s, ask, now)]
+        return [await _resources(db, client, s, ask, now, L)]
 
     intent = await bot_intent.classify(text) if text else None
     if intent is None:
         _audit(db, s.enrollment, "unknown", "no_router" if text else "attachment")
-        return [msg.NOT_AVAILABLE_YET]
+        return [L.NOT_AVAILABLE_YET]
     if intent.tool == "get_schedule":
-        return [await _schedule(db, client, s, intent.schedule_range or "day", now)]
+        return [await _schedule(db, client, s, intent.schedule_range or "day", now, L)]
     if intent.tool == "search_resources" and intent.category:
-        if intent.category == "addiction" and not _RECOVERY_ASK.search(text):
+        if intent.category == "addiction" and not _RECOVERY_ASK.search(strip_accents(text)):
             intent.category = None  # never infer recovery; the client has to ask for it
         else:
             ask = bot_resources.ResourceAsk(intent.category, intent.near_place, intent.keywords)
-            return [await _resources(db, client, s, ask, now)]
+            return [await _resources(db, client, s, ask, now, L)]
     if intent.tool == "resource_detail" and intent.item_number:
         _audit(db, s.enrollment, "resources.detail", "router")
-        return [await bot_resources.detail_reply(db, client, s, intent.item_number, now)]
+        return [await bot_resources.detail_reply(db, client, s, intent.item_number, now, L)]
     if intent.tool == "send_map":
         _audit(db, s.enrollment, "resources.map", "router")
-        return await bot_resources.map_reply(db, s)
+        return await bot_resources.map_reply(db, s, L)
     if intent.tool == "more_results":
-        return [await bot_resources.more_reply(db, s, now)]
+        return [await bot_resources.more_reply(db, s, now, L)]
     if intent.tool == "menu":
-        return [msg.MENU]
+        return [L.MENU]
     _audit(db, s.enrollment, "unknown", "router")
-    return [msg.NOT_UNDERSTOOD]
+    return [L.NOT_UNDERSTOOD]
 
 
 class Replies(list):
@@ -356,6 +369,7 @@ class Replies(list):
 
 async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now: datetime):
     """Photo flow, or None to continue with normal text handling."""
+    L = msg.Strings(client.language)
     pending = s.pending_attachment_ref
     if m.images and not m.images_held:  # new photos
         s.pending_attachment_ref = None
@@ -363,27 +377,27 @@ async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now
         if mode is None and not text:
             s.pending_attachment_ref = "photo_mode"
             _audit(db, s.enrollment, "photo", "asked_mode")
-            return Replies([bot_photos.ASK_MODE], hold=True)
+            return Replies([L.PH_ASK_MODE], hold=True)
         mode = mode or ("simplify", None)  # any other caption, e.g. "what is this?"
-        reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode)
+        reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
         _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
         return Replies([reply], hold=hold)
 
     if m.images and m.images_held:  # photos we asked the sidecar to keep
         mode = bot_photos.parse_mode(text)
         if pending == "photo_mode" and mode:
-            reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode)
+            reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
             _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
             return Replies([reply], hold=hold)
-        if pending == "photo_save" and kw == "SAVE":
-            reply = await bot_photos.save(db, client, s, m.images, now)
+        if pending == "photo_save" and kw in SAVE_WORDS:
+            reply = await bot_photos.save(db, client, s, m.images, now, L)
             _audit(db, s.enrollment, "photo.save", "saved")
             return Replies([reply])
     elif pending and (
-        (pending == "photo_mode" and bot_photos.parse_mode(text)) or (pending == "photo_save" and kw == "SAVE")
+        (pending == "photo_mode" and bot_photos.parse_mode(text)) or (pending == "photo_save" and kw in SAVE_WORDS)
     ):
         s.pending_attachment_ref = None  # the sidecar's copy expired
-        return Replies([bot_photos.PHOTO_GONE])
+        return Replies([L.PH_GONE])
 
     if pending:  # the client moved on: drop the photos and anything we kept about them
         s.pending_attachment_ref = None
@@ -392,35 +406,35 @@ async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now
     if m.attachment_count and not text:
         if m.images_withheld:
             return Replies([])  # the sidecar re-sends them now that it knows we're signed in
-        return Replies([msg.PHOTO_RESEND])
+        return Replies([L.PHOTO_RESEND])
     return None
 
 
-async def _schedule(db: AsyncSession, client: Client, s: BotSession, range_: str, now: datetime) -> str:
+async def _schedule(db: AsyncSession, client: Client, s: BotSession, range_: str, now: datetime, L) -> str:
     items = await get_schedule(db, client.id, range_, now)
     first, _ = window(range_, now)
     today = now.astimezone(local_tz()).date()
     _audit(db, s.enrollment, f"schedule.{range_}", f"items_{min(len(items), 99)}")
-    return render_schedule(range_, items, first, today)
+    return render_schedule(range_, items, first, today, L)
 
 
-async def _resources(db: AsyncSession, client: Client, s: BotSession, ask, now: datetime) -> str:
-    reply = await bot_resources.search_reply(db, client, s, ask, now)
+async def _resources(db: AsyncSession, client: Client, s: BotSession, ask, now: datetime, L) -> str:
+    reply = await bot_resources.search_reply(db, client, s, ask, now, L)
     count = len((s.last_results or {}).get("ids", []))
     _audit(db, s.enrollment, f"resources.{ask.category}", f"items_{count}")
     return reply
 
 
-def _set_nudge(db: AsyncSession, enrollment: BotEnrollment, nudge: tuple) -> list[str]:
+def _set_nudge(db: AsyncSession, enrollment: BotEnrollment, nudge: tuple, L) -> list[str]:
     action, at = nudge
     if action == "bad_time":
-        return [msg.NUDGE_BAD_TIME]
+        return [L.NUDGE_BAD_TIME]
     enrollment.nudge_enabled = True
     if at is not None:
         enrollment.nudge_time = at
     when = enrollment.nudge_time or time(8, 0)
     _audit(db, enrollment, "nudge", "enabled")
-    return [msg.nudge_on(when.strftime("%I:%M %p").lstrip("0"))]
+    return [L.nudge_on(when.strftime("%I:%M %p").lstrip("0"))]
 
 
 # ---------- lookups ----------

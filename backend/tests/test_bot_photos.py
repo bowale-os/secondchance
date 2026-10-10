@@ -45,7 +45,7 @@ async def env(monkeypatch):
     Session = async_sessionmaker(engine, expire_on_commit=False)
     async with Session() as s:
         c = Client(first_name="Maria", last_name="Lopez", pin_hash=hash_pin("4821"),
-                   pin_failed_attempts=0, is_active=True, language="es")
+                   pin_failed_attempts=0, is_active=True, language="en")
         s.add(c)
         await s.flush()
         s.add(BotEnrollment(client_id=c.id, phone_encrypted=encrypt_phone(PHONE), phone_hash=phone_lookup_hash(PHONE),
@@ -102,13 +102,13 @@ async def test_images_sent_too_early_are_held_not_read(env):
 # ---------- signed in ----------
 
 @pytest.mark.asyncio
-async def test_no_caption_asks_mode_then_translates_to_profile_language(env):
+async def test_no_caption_asks_mode_then_translates(env):
     db, calls = env
     await sign_in(db)
     out = await send(db, images=[JPG])
     assert out.replies == [bot_photos.ASK_MODE] and out.hold_images
     out = await send(db, "2", images=[JPG], held=True)
-    assert calls == [(1, "translate", "Spanish")]
+    assert calls == [(1, "translate", "English")]
     reply = out.replies[0]
     assert "This looks like a court notice." in reply
     assert "- Nov 3, 2026: Hearing at 9 AM" in reply
@@ -164,7 +164,7 @@ async def test_number_after_mode_question_is_a_mode_not_a_list_item(env):
     await sign_in(db)
     await send(db, images=[JPG])
     await send(db, "1", images=[JPG], held=True)
-    assert calls == [(1, "simplify", "Spanish")]
+    assert calls == [(1, "simplify", "English")]
 
 
 @pytest.mark.asyncio

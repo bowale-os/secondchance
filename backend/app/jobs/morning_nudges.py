@@ -59,8 +59,8 @@ async def run_nudges(
     report = NudgeReport()
 
     candidates = (
-        await session.scalars(
-            select(BotEnrollment)
+        await session.execute(
+            select(BotEnrollment, Client.language)
             .join(Client, Client.id == BotEnrollment.client_id)
             .where(
                 BotEnrollment.nudge_enabled.is_(True),
@@ -71,7 +71,7 @@ async def run_nudges(
         )
     ).all()
 
-    for e in candidates:
+    for e, language in candidates:
         if not _due(e.nudge_time, today, now_local):
             report.not_due += 1
             continue
@@ -90,7 +90,7 @@ async def run_nudges(
         if not await _claim(session, e, today):
             continue  # another run got it first
         await session.commit()
-        ok = await send(decrypt_phone(e.phone_encrypted), msg.NUDGE)
+        ok = await send(decrypt_phone(e.phone_encrypted), msg.Strings(language).NUDGE)
         if ok:
             session.add(BotAuditLog(enrollment_id=e.id, intent="nudge", outcome="sent"))
             report.sent += 1

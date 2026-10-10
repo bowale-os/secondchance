@@ -18,10 +18,11 @@ from app.schemas import (
     SchedulePreviewText,
     from_row,
 )
+from app.services.bot_messages import Strings
 from app.services.bot_schedule_text import render
 from app.services.schedule import get_schedule, window
 from app.services.timeutil import aware, local_tz
-from app.tables import Appointment, Assignment, ClientObligation, Staff
+from app.tables import Appointment, Assignment, Client, ClientObligation, Staff
 
 router = APIRouter(prefix="/clients", tags=["appointments"])
 
@@ -175,10 +176,11 @@ async def preview_schedule_text(
     staff: Staff = Depends(get_current_staff),
     session: AsyncSession = Depends(get_session),
 ) -> SchedulePreviewText:
-    """The exact text message the client gets for TODAY / TOMORROW / WEEK."""
+    """The exact text message the client gets for TODAY / TOMORROW / WEEK, in their language."""
     await _assert_mine(session, client_id, staff)
+    language = await session.scalar(select(Client.language).where(Client.id == client_id))
     now = datetime.now(timezone.utc)
     items = await get_schedule(session, client_id, range, now)
     first, _ = window(range, now)
     today = now.astimezone(local_tz()).date()
-    return SchedulePreviewText(range=range, text=render(range, items, first, today))
+    return SchedulePreviewText(range=range, text=render(range, items, first, today, Strings(language)))

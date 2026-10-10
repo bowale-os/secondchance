@@ -58,7 +58,9 @@ async def sign_in(db, name="Maria Lopez", pin="4821"):
 
 @pytest.mark.asyncio
 async def test_unenrolled_number_gets_generic_reply(db):
-    assert await say(db, "Maria Lopez", sender=STRANGER) == [msg.NOT_ENROLLED]
+    reply = await say(db, "Maria Lopez", sender=STRANGER)
+    assert reply == [msg.both("NOT_ENROLLED")]  # language unknown: English then Spanish
+    assert msg.NOT_ENROLLED in reply[0] and "Este servicio" in reply[0]
 
 
 @pytest.mark.asyncio
@@ -120,10 +122,12 @@ async def test_help_never_reveals_data(db):
 
 @pytest.mark.asyncio
 async def test_crisis_reply_without_sign_in(db):
-    for sender in (PHONE, STRANGER):
-        reply = await say(db, "I have nowhere to sleep tonight", sender=sender)
-        assert reply == [msg.crisis_text()]
-        assert "988" in reply[0] and "211" in reply[0]
+    reply = await say(db, "I have nowhere to sleep tonight", sender=PHONE)
+    assert reply == [msg.crisis_text()]  # enrolled English speaker
+    stranger = await say(db, "I have nowhere to sleep tonight", sender=STRANGER)
+    assert stranger == [msg.crisis_both()]
+    for r in (reply[0], stranger[0]):
+        assert "988" in r and "211" in r
 
 
 @pytest.mark.asyncio

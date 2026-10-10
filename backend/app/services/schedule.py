@@ -39,6 +39,9 @@ class ScheduleItem:
     documents_to_bring: list[str] = field(default_factory=list)
     amount: Optional[Decimal] = None
     overdue: bool = False
+    # Obligations only: lets each language build its own title.
+    obligation_type: Optional[str] = None   # fee | court_date | check_in | report
+    detail: Optional[str] = None            # the obligation's description
 
 
 def window(range_: Range, now: datetime) -> tuple[date, date]:
@@ -123,6 +126,8 @@ async def get_schedule(
             title=title,
             amount=o.amount,
             overdue=o.status == ObligationStatus.OVERDUE,
+            obligation_type=o.obligation_type.value,
+            detail=o.description.strip()[:80] if o.description else None,
         ))
 
     # Per day: all-day items first, then by time.

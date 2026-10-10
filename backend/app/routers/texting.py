@@ -77,7 +77,7 @@ async def enroll_texting(
     session: AsyncSession = Depends(get_session),
 ) -> TextingStatus:
     """Turn texting on (or change the number). Sends a welcome text with no personal details."""
-    await _my_client(session, client_id, staff)
+    client = await _my_client(session, client_id, staff)
     if not payload.consent:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Client consent is required")
     try:
@@ -105,7 +105,7 @@ async def enroll_texting(
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "That number is already enrolled for another client")
-    welcome_sent = await send_text(e164, msg.WELCOME)
+    welcome_sent = await send_text(e164, msg.Strings(client.language).WELCOME)
     return _status(e, welcome_sent)
 
 

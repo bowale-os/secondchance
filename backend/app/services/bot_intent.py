@@ -33,6 +33,7 @@ class Intent(BaseModel):
 
 
 PROMPT = """You route text messages from a social-services text line in Atlanta.
+Messages may be in English or Spanish (or a mix); route them the same way.
 Pick exactly one tool for the user's message and fill only the arguments it needs.
 
 Tools:
@@ -43,7 +44,7 @@ Tools:
     jobs (work, hiring), classes (GED, training), events,
     addiction (ONLY if the user explicitly asks for recovery, treatment, rehab, detox,
     NA/AA or similar; never infer it from anything else).
-  near_place: the place they name ("near Five Points" -> "Five Points"), else null.
+  near_place: the place they name ("near Five Points" / "cerca de Five Points" -> "Five Points"), else null.
   keywords: extra words that narrow the search, else null.
 - resource_detail: the user asks about item N of a list they just got ("tell me about 2").
 - more_results: the user wants more of the same list.
