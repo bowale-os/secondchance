@@ -15,6 +15,8 @@ export interface DueDate {
   text?: string;
   anchor?: 'document_date' | 'release_date' | 'received_date';
   offsetHours?: number;
+  offsetDays?: number;
+  businessDays?: boolean;
   resolvedDate?: string | null;   // ISO date set by the date normalizer, never by the model
   explanation?: string;           // "72 hours after your release on Oct 9 = Oct 12"
 }
@@ -45,8 +47,14 @@ export interface SimplifiedDocument {
   glossary: GlossaryEntry[];
 }
 
-export type FlagKind = 'unverified_value' | 'low_confidence_page';
-export interface Flag { kind: FlagKind; detail: string; actionId?: string }
+export type FlagKind = 'unverified_value' | 'unverified_source' | 'low_confidence_page';
+export interface Flag {
+  kind: FlagKind;
+  detail: string;           // plain sentence shown to the resident
+  value?: string;           // the date / amount / number to highlight
+  actionId?: string;
+  page?: number;
+}
 
 export interface StoredDocument {
   id: string;
