@@ -8,7 +8,8 @@ export class ApiError extends Error {
   }
 }
 
-export type GetToken = () => Promise<string>;
+/** Resolves to the bearer token, or null for unauthenticated calls (e.g. client login). */
+export type GetToken = () => Promise<string | null>;
 
 export interface Http {
   get<T>(path: string): Promise<T>;
@@ -42,7 +43,7 @@ export function createHttp(getToken: GetToken): Http {
       method,
       headers: {
         ...(body !== undefined && !isForm && { "Content-Type": "application/json" }),
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });

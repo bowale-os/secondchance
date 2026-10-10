@@ -1,10 +1,13 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from "react";
 import { ApiError, useApi } from "./api";
-import LoginPage from "./components/auth/LoginPage";
-import ClientDetailPage from "./components/ClientDetailPage";
-import ClientList from "./components/ClientList";
+import LandingPage from "./components/auth/LandingPage";
+import ClientHome from "./components/client-portal/ClientHome";
+import ClientLoginPage from "./components/client-portal/ClientLoginPage";
+import ClientPage from "./components/client/ClientPage";
+import Dashboard from "./components/dashboard/Dashboard";
 import NewClientFlow from "./components/new-client/NewClientFlow";
+import { useClientSession } from "./hooks/useClientSession";
 import { toStaffSignup, type StaffRead } from "./schemas";
 
 export default function App() {
@@ -18,6 +21,9 @@ export default function App() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [listVersion, setListVersion] = useState(0); // bump to reload the client list
   const [form, setForm] = useState({ full_name: "", organization_name: "", phone: "" });
+
+  const [showClientLogin, setShowClientLogin] = useState(false);
+  const clientSession = useClientSession();
 
   const api = useApi();
 
@@ -55,14 +61,55 @@ export default function App() {
   const setField = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value });
   const doLogout = () => logout({ logoutParams: { returnTo: window.location.origin } });
 
-  if (isLoading) return <main className="card">Loading…</main>;
+  if (isLoading) return <main className="card" role="status">Loading…</main>;
+
+  if (!isAuthenticated && clientSession.isLoggedIn) {
+    return <ClientHome client={clientSession.client} api={clientSession.api} onLogout={clientSession.logout} />;
+  }
+
+  if (!isAuthenticated && (showClientLogin || clientSession.notice)) {
+    return (
+      <ClientLoginPage
+        notice={clientSession.notice}
+        onLogin={clientSession.login}
+        onBack={() => {
+          setShowClientLogin(false);
+          clientSession.dismissNotice();
+        }}
+      />
+    );
+  }
 
   if (!isAuthenticated) {
     return (
-      <LoginPage
+      <LandingPage
+        onClientLogin={() => setShowClientLogin(true)}
         error={error?.message}
         onLogin={() => loginWithRedirect()}
         onSignup={() => loginWithRedirect({ authorizationParams: { screen_hint: "signup" } })}
+      />
+    );
+  }
+
+  if (stage === "ready" && staff && !creatingClient && !selectedClientId) {
+    return (
+      <Dashboard
+        key={listVersion}
+        staff={staff}
+        onNewClient={() => setCreatingClient(true)}
+        onSelectClient={setSelectedClientId}
+        onLogout={doLogout}
+      />
+    );
+  }
+
+  if (stage === "ready" && staff && selectedClientId && !creatingClient) {
+    return (
+      <ClientPage
+        clientId={selectedClientId}
+        staff={staff}
+        onBack={() => setSelectedClientId(null)}
+        onLogout={doLogout}
       />
     );
   }
@@ -110,23 +157,7 @@ export default function App() {
               setListVersion((v) => v + 1);
             }}
           />
-        ) : selectedClientId ? (
-          <ClientDetailPage clientId={selectedClientId} onBack={() => setSelectedClientId(null)} />
-        ) : (
-          <>
-            <p>Welcome, {staff.full_name}!</p>
-            {staff.organization_name && <p>{staff.organization_name}</p>}
-            <div className="row">
-              <button onClick={() => setCreatingClient(true)}>New client</button>
-            </div>
-            <ClientList key={listVersion} onSelect={setSelectedClientId} />
-            <div className="row">
-              <button className="secondary" onClick={doLogout}>
-                Log out
-              </button>
-            </div>
-          </>
-        )
+        ) : null
       ) : (
         <>
           <p className="error">{message}</p>

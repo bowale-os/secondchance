@@ -21,3 +21,11 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/** Whole days from today until "YYYY-MM-DD" (negative if in the past). */
+export function daysUntil(iso: string): number {
+  const [y, m, d] = iso.split("-").map(Number);
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((new Date(y, m - 1, d).getTime() - start.getTime()) / 86_400_000);
+}
