@@ -20,6 +20,8 @@ export function loadConfig() {
     port: Number(process.env.TEXTBOT_PORT ?? 8787),
     // After sign-in, messages this close together are merged into one turn.
     mergeWindowMs: Number(process.env.MERGE_WINDOW_MS ?? 2500),
+    // Photos waiting for sign-in, a 1/2 choice, or SAVE are dropped after this long.
+    photoHoldMs: Number(process.env.PHOTO_HOLD_MS ?? 10 * 60_000),
     testSenderPhone: process.env.TEST_SENDER_PHONE ?? "+14045550100",
   };
 }

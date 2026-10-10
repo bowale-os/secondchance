@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.security import hash_pin, verify_pin_async
-from app.services import bot_intent, bot_resources
+from app.services import bot_intent, bot_photos, bot_resources
 from app.services import bot_messages as msg
 from app.services.bot_keywords import (
     HELP_WORDS,
@@ -58,12 +58,18 @@ class Inbound:
     text: str = ""
     channel: Optional[str] = None    # imessage | rcs | sms | whatsapp | ...
     attachment_count: int = 0
+    # Image bytes, only ever sent by the sidecar for a signed-in sender.
+    images: list = field(default_factory=list)   # list[photo_reader.Photo]
+    images_held: bool = False        # True = re-sent photos we asked the sidecar to hold
+    images_withheld: bool = False    # sidecar kept this turn's photos because it thought we weren't signed in
 
 
 @dataclass
 class Outcome:
     # Text replies, optionally followed by a BotImage (sent after the text before it).
     replies: list = field(default_factory=list)
+    # Ask the sidecar to keep this turn's photos and re-send them with the next message.
+    hold_images: bool = False
     # Only set once the sender is signed in; later phases use it to call
     # client-scoped services. Never sent back to the sidecar.
     client_id: Optional[str] = None
@@ -210,12 +216,21 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         _audit(db, enrollment, "auth.start", "asked_name")
         if nudge:
             return Outcome([f"Sign in first, then reply NUDGE ON. {msg.ASK_NAME}"])
+        if m.attachment_count:
+            return Outcome([msg.PHOTO_SIGN_IN])
         return Outcome([msg.ASK_NAME])
 
     if s.state == BotSessionState.ACTIVE and _session_expired(s, now):
         _reset_to_name(s)
         _audit(db, enrollment, "auth.expired", "asked_name")
+        if m.attachment_count:
+            return Outcome([msg.PHOTO_SIGN_IN], hold_images=bool(m.images))
         return Outcome([msg.SESSION_ENDED])
+
+    if m.attachment_count and s.state in (BotSessionState.AWAITING_NAME, BotSessionState.AWAITING_PIN):
+        # A caption on a photo is never a name or PIN attempt.
+        prompt = msg.PHOTO_SIGN_IN if s.state == BotSessionState.AWAITING_NAME else msg.PHOTO_ASK_PIN
+        return Outcome([prompt], hold_images=bool(m.images))
 
     if nudge and s.state != BotSessionState.ACTIVE:
         # Never count "NUDGE ON" as a name or PIN attempt.
@@ -268,7 +283,7 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     if nudge:
         return Outcome(_set_nudge(db, enrollment, nudge), client_id=str(client.id))
     reply = await handle_active(db, client, s, text, kw, m)
-    return Outcome(reply, client_id=str(client.id))
+    return Outcome(list(reply), client_id=str(client.id), hold_images=getattr(reply, "hold", False))
 
 
 _RECOVERY_ASK = re.compile(
@@ -281,8 +296,11 @@ _RECOVERY_ASK = re.compile(
 async def handle_active(
     db: AsyncSession, client: Client, s: BotSession, text: str, kw: str, m: Inbound
 ) -> list[str]:
-    """Signed-in requests: keyword fast path first, then the Gemini router for free text."""
+    """Signed-in requests: photos, keyword fast path, then the Gemini router for free text."""
     now = _now()
+    photo_reply = await _photos(db, client, s, text, kw, m, now)
+    if photo_reply is not None:
+        return photo_reply
     if kw in MENU_WORDS or (not text and not m.attachment_count):
         _audit(db, s.enrollment, "menu", "sent")
         return [msg.MENU]
@@ -327,6 +345,55 @@ async def handle_active(
         return [msg.MENU]
     _audit(db, s.enrollment, "unknown", "router")
     return [msg.NOT_UNDERSTOOD]
+
+
+class Replies(list):
+    """Replies plus whether the sidecar should hold this turn's photos."""
+    def __init__(self, items, hold: bool = False):
+        super().__init__(items)
+        self.hold = hold
+
+
+async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now: datetime):
+    """Photo flow, or None to continue with normal text handling."""
+    pending = s.pending_attachment_ref
+    if m.images and not m.images_held:  # new photos
+        s.pending_attachment_ref = None
+        mode = bot_photos.parse_mode(text)
+        if mode is None and not text:
+            s.pending_attachment_ref = "photo_mode"
+            _audit(db, s.enrollment, "photo", "asked_mode")
+            return Replies([bot_photos.ASK_MODE], hold=True)
+        mode = mode or ("simplify", None)  # any other caption, e.g. "what is this?"
+        reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode)
+        _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
+        return Replies([reply], hold=hold)
+
+    if m.images and m.images_held:  # photos we asked the sidecar to keep
+        mode = bot_photos.parse_mode(text)
+        if pending == "photo_mode" and mode:
+            reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode)
+            _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
+            return Replies([reply], hold=hold)
+        if pending == "photo_save" and kw == "SAVE":
+            reply = await bot_photos.save(db, client, s, m.images, now)
+            _audit(db, s.enrollment, "photo.save", "saved")
+            return Replies([reply])
+    elif pending and (
+        (pending == "photo_mode" and bot_photos.parse_mode(text)) or (pending == "photo_save" and kw == "SAVE")
+    ):
+        s.pending_attachment_ref = None  # the sidecar's copy expired
+        return Replies([bot_photos.PHOTO_GONE])
+
+    if pending:  # the client moved on: drop the photos and anything we kept about them
+        s.pending_attachment_ref = None
+        if (s.last_results or {}).get("kind") == "photo":
+            s.last_results = None
+    if m.attachment_count and not text:
+        if m.images_withheld:
+            return Replies([])  # the sidecar re-sends them now that it knows we're signed in
+        return Replies([msg.PHOTO_RESEND])
+    return None
 
 
 async def _schedule(db: AsyncSession, client: Client, s: BotSession, range_: str, now: datetime) -> str:

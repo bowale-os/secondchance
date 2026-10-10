@@ -18,6 +18,9 @@ BAD_LOGIN = "That name and PIN don't match. Reply with your full name to try aga
 LOCKED = "Too many tries. Contact your case worker to unlock texting."
 SESSION_ENDED = "You were signed out to keep your info safe. Reply with your full name to sign in."
 SIGNED_IN = "You're signed in. Reply MENU to see what I can do."
+PHOTO_SIGN_IN = "Got your photo. Sign in first and I'll read it: reply with your full name."
+PHOTO_ASK_PIN = "Got your photo. Now reply with your PIN and I'll read it."
+PHOTO_RESEND = "I couldn't open that file. Please send it again as a photo."
 SIGNED_OUT = "You're signed out. Text anything to sign in again."
 STOPPED = "You won't get any more texts. Reply START to turn texting back on."
 STARTED = "Texting is back on. Reply with your full name to sign in."
@@ -33,6 +36,7 @@ MENU = (
     "WEEK - the next 7 days\n"
     "NUDGE ON - a morning text on days you have something\n"
     "FOOD, SHELTER, JOBS, CLASSES - places near you (add \"near West End\")\n"
+    "Send a photo of a letter - I'll explain or translate it\n"
     "SIGN OUT - end this session"
 )
 

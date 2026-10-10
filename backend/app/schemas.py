@@ -456,6 +456,13 @@ class DocumentReview:
 # ============================================================
 
 @dataclass
+class BotImageIn:
+    data_base64: str
+    mime_type: str
+    name: str = "photo.jpg"
+
+
+@dataclass
 class BotInbound:
     """Sidecar -> backend: one (debounced) inbound message."""
     sender: str
@@ -463,6 +470,9 @@ class BotInbound:
     channel: Optional[str] = None
     attachment_count: int = 0
     message_id: Optional[str] = None
+    images: list[BotImageIn] = field(default_factory=list)  # signed-in senders only
+    images_held: bool = False
+    images_withheld: bool = False
 
 
 @dataclass
@@ -484,6 +494,7 @@ class BotInboundResult:
     # True while the sender is signed in. The sidecar uses it only to decide whether
     # to merge message bursts; it carries no client data.
     session_active: bool = False
+    hold_images: bool = False  # sidecar: keep this turn's photos for the next message
 
 
 @dataclass

@@ -59,7 +59,7 @@ if (config.mode === "cloud") {
   console.log(`[textbot] cloud mode; /send on :${config.port}`);
 }
 
-const batcher = new BurstBatcher((batch) => deliver(batch, config), config.mergeWindowMs);
+const batcher = new BurstBatcher((batch, extras) => deliver(batch, config, extras), config.mergeWindowMs, config.photoHoldMs);
 for await (const [space, message] of messages) {
   const item = prepare(space, message, config);
   if (item) batcher.push(item);
