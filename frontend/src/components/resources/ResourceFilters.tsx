@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AppliedFilter, Gender, ResourceCategory, ResourceQuery } from "../../types";
+import type { Gender, ResourceCategory, ResourceQuery } from "../../types";
 import { CATEGORIES, CATEGORY_LABELS } from "./labels";
 
 /** Yes/no filters shown as chips after the category chips. */
@@ -18,8 +18,9 @@ const THIS_WEEK_DAYS = 7;
 interface Props {
   query: ResourceQuery;
   onChange: (query: ResourceQuery) => void;
-  /** Filters set from a client's profile get a "from profile" note (client tab only). */
-  applied?: AppliedFilter[];
+  /** Note for a chip that is on because of a client's profile, e.g. "from profile: no car". */
+  noteFor?: (key: keyof ResourceQuery, category?: ResourceCategory) => string | undefined;
+  placeholder?: string;
 }
 
 function Chip({ pressed, label, note, onClick }: { pressed: boolean; label: string; note?: string; onClick: () => void }) {
@@ -32,7 +33,7 @@ function Chip({ pressed, label, note, onClick }: { pressed: boolean; label: stri
 }
 
 /** Search box and filter chips. Every chip is a toggle button (aria-pressed). */
-export default function ResourceFilters({ query, onChange, applied = [] }: Props) {
+export default function ResourceFilters({ query, onChange, noteFor, placeholder = "Search by name or service" }: Props) {
   const [text, setText] = useState(query.q ?? "");
 
   // Wait for a pause in typing before searching.
@@ -41,9 +42,6 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
     const t = setTimeout(() => onChange({ ...query, q: text || undefined }), SEARCH_DELAY_MS);
     return () => clearTimeout(t);
   }, [text, query, onChange]);
-
-  const fromProfile = (key: keyof ResourceQuery) =>
-    applied.some((a) => a.key === key && a.reason === "profile") ? "from profile" : undefined;
 
   const categories = query.categories ?? [];
   const hasDated = (cs: ResourceCategory[]) => cs.includes("classes") || cs.includes("events");
@@ -58,7 +56,7 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
       <input
         type="search"
         className="dash-search res-search"
-        placeholder="Search by name or service"
+        placeholder={placeholder}
         aria-label="Search resources"
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -70,7 +68,7 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
             key={c}
             pressed={categories.includes(c)}
             label={CATEGORY_LABELS[c]}
-            note={categories.includes(c) ? fromProfile("categories") : undefined}
+            note={categories.includes(c) ? noteFor?.("categories", c) : undefined}
             onClick={() => toggleCategory(c)}
           />
         ))}
@@ -91,14 +89,14 @@ export default function ResourceFilters({ query, onChange, applied = [] }: Props
             key={key}
             pressed={!!query[key]}
             label={label}
-            note={query[key] ? fromProfile(key) : undefined}
+            note={query[key] ? noteFor?.(key) : undefined}
             onClick={() => onChange({ ...query, [key]: !query[key] })}
           />
         ))}
         <Chip
           pressed={query.language === "es"}
           label="Spanish-speaking"
-          note={query.language === "es" ? fromProfile("language") : undefined}
+          note={query.language === "es" ? noteFor?.("language") : undefined}
           onClick={() => onChange({ ...query, language: query.language === "es" ? undefined : "es" })}
         />
         <label className="res-select">

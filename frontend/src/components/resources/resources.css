@@ -78,3 +78,9 @@
 .res-walkthrough .step-header h3 { font-size: 1.0625rem; }
 .res-walkthrough .stepper { flex-direction: column; gap: .5rem; }
 .res-walkthrough-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* Matched resources (client tab and client portal) */
+.res-matched-head { display: grid; gap: .75rem; justify-items: start; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.res-matched-head .res-filters { width: 100%; }
+.portal-tabs { padding: 0; }
+.portal-panel { display: grid; gap: 1.5rem; }
