@@ -493,3 +493,52 @@ class TextingStatus:
     consent_at: Optional[datetime] = None
     locked_at: Optional[datetime] = None
     welcome_sent: Optional[bool] = None
+
+
+# ============================================================
+# Appointments and schedule
+# ============================================================
+
+@dataclass
+class AppointmentWrite:
+    """Create or replace an appointment. Times without an offset are local time."""
+    title: str
+    starts_at: datetime
+    ends_at: Optional[datetime] = None
+    location_name: Optional[str] = None
+    address: Optional[str] = None
+    transit_note: Optional[str] = None
+    documents_to_bring: list[str] = field(default_factory=list)
+    obligation_id: Optional[uuid.UUID] = None
+
+
+@dataclass
+class AppointmentRead:
+    id: uuid.UUID
+    client_id: uuid.UUID
+    title: str
+    starts_at: datetime
+    ends_at: Optional[datetime]
+    location_name: Optional[str]
+    address: Optional[str]
+    transit_note: Optional[str]
+    documents_to_bring: Optional[list]
+    obligation_id: Optional[uuid.UUID]
+    cancelled: bool
+    created_by_staff_id: Optional[uuid.UUID]
+    created_at: datetime
+
+
+@dataclass
+class ScheduleItemRead:
+    kind: str
+    day: date
+    title: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    location_name: Optional[str] = None
+    address: Optional[str] = None
+    transit_note: Optional[str] = None
+    documents_to_bring: list[str] = field(default_factory=list)
+    amount: Optional[Decimal] = None
+    overdue: bool = False

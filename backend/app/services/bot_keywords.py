@@ -10,6 +10,11 @@ START_WORDS = {"START", "UNSTOP"}
 HELP_WORDS = {"HELP", "INFO"}
 SIGN_OUT_WORDS = {"SIGNOUT", "LOGOUT", "LOGOFF", "BYE"}
 MENU_WORDS = {"MENU", "0"}
+SCHEDULE_WORDS = {
+    "TODAY": "day", "SCHEDULE": "day", "MYSCHEDULE": "day",
+    "TOMORROW": "tomorrow",
+    "WEEK": "week", "THISWEEK": "week",
+}
 
 _CRISIS_PATTERNS = [
     # overdose

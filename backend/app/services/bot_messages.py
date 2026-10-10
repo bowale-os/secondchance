@@ -24,8 +24,9 @@ STARTED = "Texting is back on. Reply with your full name to sign in."
 NOT_AVAILABLE_YET = "That isn't available yet. Reply MENU to see what I can do."
 MENU = (
     "Reply with a word:\n"
-    "TODAY - today's schedule (coming soon)\n"
-    "WEEK - this week (coming soon)\n"
+    "TODAY - today's schedule\n"
+    "TOMORROW - tomorrow's schedule\n"
+    "WEEK - the next 7 days\n"
     "FOOD, SHELTER, JOBS - places near you (coming soon)\n"
     "SIGN OUT - end this session"
 )

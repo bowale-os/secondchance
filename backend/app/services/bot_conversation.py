@@ -28,12 +28,16 @@ from app.services import bot_messages as msg
 from app.services.bot_keywords import (
     HELP_WORDS,
     MENU_WORDS,
+    SCHEDULE_WORDS,
     SIGN_OUT_WORDS,
     START_WORDS,
     STOP_WORDS,
     is_crisis,
     keyword,
 )
+from app.services.bot_schedule_text import render as render_schedule
+from app.services.schedule import get_schedule, window
+from app.services.timeutil import aware, local_tz
 from app.services.phone import InvalidPhone, normalize_phone, phone_lookup_hash
 from app.tables import (
     BotAuditLog,
@@ -66,13 +70,6 @@ class Outcome:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
-
-
-def _aware(dt: Optional[datetime]) -> Optional[datetime]:
-    """SQLite (tests) drops tzinfo; Postgres keeps it."""
-    if dt is not None and dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt
 
 
 def _normalize_name(name: str) -> str:
@@ -111,8 +108,8 @@ def _audit(db: AsyncSession, enrollment: Optional[BotEnrollment], intent: str, o
 
 def _session_expired(s: BotSession, now: datetime) -> bool:
     settings = get_settings()
-    last = _aware(s.last_activity_at) or _aware(s.authenticated_at)
-    started = _aware(s.authenticated_at)
+    last = aware(s.last_activity_at) or aware(s.authenticated_at)
+    started = aware(s.authenticated_at)
     if last is None or started is None:
         return True
     return (
@@ -259,11 +256,19 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
 async def handle_active(
     db: AsyncSession, client: Client, s: BotSession, text: str, kw: str, m: Inbound
 ) -> list[str]:
-    """Signed-in requests. Phase 1 only has the menu; later phases add the intent
-    router (schedule, resources, maps, photos) here."""
+    """Signed-in requests. Keyword fast path now; the Gemini intent router for free
+    text (phase 3+) plugs in before the fallback."""
     if kw in MENU_WORDS or (not text and not m.attachment_count):
         _audit(db, s.enrollment, "menu", "sent")
         return [msg.MENU]
+    if kw in SCHEDULE_WORDS:
+        range_ = SCHEDULE_WORDS[kw]
+        now = _now()
+        items = await get_schedule(db, client.id, range_, now)
+        first, _ = window(range_, now)
+        today = now.astimezone(local_tz()).date()
+        _audit(db, s.enrollment, f"schedule.{range_}", f"items_{min(len(items), 99)}")
+        return [render_schedule(range_, items, first, today)]
     _audit(db, s.enrollment, "unknown", "not_available")
     return [msg.NOT_AVAILABLE_YET]
 

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     api_base_url: str = "http://localhost:3000"
     port: int = 3000
     default_language: str = "en"
+    local_timezone: str = "America/New_York"  # schedules are shown in this zone
     supported_languages: str = "en,es"
 
     # ---------- Security ----------

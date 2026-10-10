@@ -1,4 +1,6 @@
+from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -8,7 +10,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_current_client, get_current_staff, get_token_claims
 from app.config import get_settings
 from app.db import get_session
-from app.schemas import ClientLogin, ClientRead, DocumentListItem, ClientToken, StaffRead, StaffSignup, from_row
+from app.schemas import (
+    ClientLogin,
+    ClientRead,
+    ClientToken,
+    DocumentListItem,
+    ScheduleItemRead,
+    StaffRead,
+    StaffSignup,
+    from_row,
+)
+from app.services.schedule import get_schedule
 from app.security import create_client_token, hash_pin, verify_pin_async
 from app.tables import Client, Document, Staff
 
@@ -118,3 +130,14 @@ async def client_documents(
         select(Document).where(Document.client_id == client.id).order_by(Document.created_at.desc())
     )
     return [from_row(DocumentListItem, d) for d in docs]
+
+
+@router.get("/client/schedule", response_model=list[ScheduleItemRead])
+async def client_schedule(
+    range: Literal["day", "tomorrow", "week"] = "day",
+    client: Client = Depends(get_current_client),
+    session: AsyncSession = Depends(get_session),
+) -> list[ScheduleItemRead]:
+    """The logged-in client's own schedule (same data the text bot sends)."""
+    items = await get_schedule(session, client.id, range, datetime.now(timezone.utc))
+    return [ScheduleItemRead(**asdict(i)) for i in items]

@@ -77,11 +77,11 @@ async def enroll_texting(
     """Turn texting on (or change the number). Sends a welcome text with no personal details."""
     await _my_client(session, client_id, staff)
     if not payload.consent:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Client consent is required")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Client consent is required")
     try:
         e164 = normalize_phone(payload.phone)
     except InvalidPhone as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
 
     e = await _enrollment(session, client_id)
     if e is None:

@@ -258,6 +258,9 @@ class Client(IdMixin, TimestampMixin, Base):
     contacts: Mapped[list["ClientContact"]] = relationship(
         back_populates="client", cascade="all, delete-orphan"
     )
+    appointments: Mapped[list["Appointment"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
 
     @property
     def display_name(self) -> str:
@@ -408,6 +411,7 @@ class ClientObligation(IdMixin, TimestampMixin, ProvenanceMixin, Base):
     status: Mapped[ObligationStatus] = mapped_column(default=ObligationStatus.OPEN)
 
     client: Mapped["Client"] = relationship(back_populates="obligations")
+    appointments: Mapped[list["Appointment"]] = relationship(back_populates="obligation")
 
 
 class ClientContact(IdMixin, TimestampMixin, ProvenanceMixin, Base):
@@ -510,3 +514,37 @@ class BotAuditLog(IdMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
+
+
+# ============================================================
+# Appointments (what the client's daily/weekly schedule is built from)
+# ============================================================
+
+class Appointment(IdMixin, TimestampMixin, Base):
+    """A dated, timed thing the client must attend. Added by the case worker.
+    Open obligations (fees, court dates) also appear on the schedule by due date."""
+    __tablename__ = "appointments"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(200))
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    location_name: Mapped[Optional[str]] = mapped_column(String(200))
+    address: Mapped[Optional[str]] = mapped_column(String(255))
+    # Typed by the case worker for now ("Five Points station, then the #3 bus").
+    # Filled automatically once geocoding + MARTA stops exist (Resources ingest).
+    transit_note: Mapped[Optional[str]] = mapped_column(String(255))
+    documents_to_bring: Mapped[Optional[list]] = mapped_column(JSON)  # ["State ID", ...]
+    # Optional link, e.g. the court date this appointment fulfils.
+    obligation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("client_obligations.id", ondelete="SET NULL")
+    )
+    cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+
+    client: Mapped["Client"] = relationship(back_populates="appointments")
+    obligation: Mapped[Optional["ClientObligation"]] = relationship(back_populates="appointments")
