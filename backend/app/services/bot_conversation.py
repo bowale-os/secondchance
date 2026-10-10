@@ -83,18 +83,10 @@ def _normalize_name(name: str) -> str:
 
 
 def name_matches(typed: str, client: Client) -> bool:
-    """Accepts 'First Last', 'Preferred Last', or 'Last, First' (case, accents,
-    punctuation and extra spaces ignored)."""
-    typed_n = _normalize_name(typed)
-    first, last = _normalize_name(client.first_name), _normalize_name(client.last_name)
-    accepted = {f"{first} {last}", f"{last} {first}"}
-    if client.preferred_name:
-        preferred = _normalize_name(client.preferred_name)
-        accepted |= {f"{preferred} {last}", f"{last} {preferred}"}
-    matched = False
-    for candidate in accepted:  # compare against every candidate; no early exit
-        matched |= hmac.compare_digest(typed_n.encode(), candidate.encode())
-    return matched
+    """Only 'First Last' as on file. Case, accents, punctuation and extra spaces are
+    ignored; preferred names and 'Last, First' are not accepted."""
+    expected = f"{_normalize_name(client.first_name)} {_normalize_name(client.last_name)}"
+    return hmac.compare_digest(_normalize_name(typed).encode(), expected.encode())
 
 
 @lru_cache

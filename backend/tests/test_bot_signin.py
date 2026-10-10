@@ -68,9 +68,15 @@ async def test_successful_sign_in(db):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("name", ["maria lopez", "  MARIA   LÓPEZ ", "Mari Lopez", "Lopez, Maria"])
-async def test_name_variants_accepted(db, name):
+@pytest.mark.parametrize("name", ["maria lopez", "  MARIA   LÓPEZ ", "Maria López."])
+async def test_name_formatting_ignored(db, name):
     assert await sign_in(db, name=name) == [msg.SIGNED_IN]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", ["Mari Lopez", "Lopez, Maria", "Maria"])
+async def test_other_name_forms_rejected(db, name):
+    assert await sign_in(db, name=name) == [msg.BAD_LOGIN]
 
 
 @pytest.mark.asyncio
