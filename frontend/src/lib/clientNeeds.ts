@@ -9,7 +9,6 @@
 import type { ClientRead, ResourceCategory, ResourceQuery } from "../types";
 
 const SHELTER_HOUSING = ["shelter", "unstable", "homeless", "transitional"];
-const JOB_EMPLOYMENT = ["seeking", "not_working"];
 
 /** Short reason for one profile-applied filter, or undefined if the profile doesn't explain it. */
 export function profileReason(
@@ -21,9 +20,6 @@ export function profileReason(
     case "categories":
       if (category === "shelter" && client.housing_status && SHELTER_HOUSING.includes(client.housing_status)) {
         return `housing: ${client.housing_status.replace(/_/g, " ")}`;
-      }
-      if (category === "jobs" && client.employment_status && JOB_EMPLOYMENT.includes(client.employment_status)) {
-        return "looking for work";
       }
       return undefined;
     case "near_transit":

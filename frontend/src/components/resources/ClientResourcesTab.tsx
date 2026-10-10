@@ -23,7 +23,6 @@ export default function ClientResourcesTab({ client }: { client: ClientDetail })
       client={client}
       loadMatches={loadMatches}
       loadResource={loadResource}
-      progressScope={client.id}
       mapGestures
       copy={COPY}
     />

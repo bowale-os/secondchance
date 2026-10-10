@@ -20,7 +20,6 @@ import {
   todayIndex,
 } from "./labels";
 import DocumentList from "./DocumentList";
-import JobWalkthrough from "./JobWalkthrough";
 import ResourceMap from "./map/LazyResourceMap";
 import TransitBadge from "./TransitBadge";
 
@@ -29,8 +28,6 @@ interface Props {
   /** GET /resources/{id}, from whichever API (staff or client) the page uses. */
   load: (id: string) => Promise<Resource>;
   onClose: () => void;
-  /** Remembers job walkthrough progress per person: a client id, or "me" in the client portal. */
-  progressScope?: string;
   /** Staff can drag and scroll the map; clients use the buttons. */
   mapGestures?: boolean;
 }
@@ -39,7 +36,7 @@ interface Props {
  * Full details for one resource. A modal <dialog>: the browser traps focus inside it and
  * closes it on Escape; focus goes back to whatever opened it.
  */
-export default function ResourceDrawer({ resourceId, load, onClose, progressScope, mapGestures = false }: Props) {
+export default function ResourceDrawer({ resourceId, load, onClose, mapGestures = false }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [resource, setResource] = useState<Resource | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +80,7 @@ export default function ResourceDrawer({ resourceId, load, onClose, progressScop
         </div>
 
         {error && <p className="dash-error" role="alert">{error}</p>}
-        {resource && <Details resource={resource} progressScope={progressScope} mapGestures={mapGestures} />}
+        {resource && <Details resource={resource} mapGestures={mapGestures} />}
       </div>
     </dialog>
   );
@@ -98,9 +95,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-type DetailProps = Pick<Props, "progressScope" | "mapGestures"> & { resource: Resource };
+type DetailProps = Pick<Props, "mapGestures"> & { resource: Resource };
 
-function Details({ resource: r, progressScope, mapGestures }: DetailProps) {
+function Details({ resource: r, mapGestures }: DetailProps) {
   const serves = [
     GENDER_LABELS[r.gender],
     triText(r.families_welcome, "Families welcome", "Adults only", "Families"),
@@ -157,7 +154,7 @@ function Details({ resource: r, progressScope, mapGestures }: DetailProps) {
         {r.hours_note && <p className="res-note">{r.hours_note}</p>}
       </Section>
 
-      <CategoryDetails resource={r} progressScope={progressScope} />
+      <CategoryDetails resource={r} />
 
       <Section title="Who it serves">
         <ul className="res-list">
@@ -246,7 +243,7 @@ function Hours({ hours }: { hours: OpeningHours[] }) {
   );
 }
 
-function CategoryDetails({ resource: r, progressScope }: DetailProps) {
+function CategoryDetails({ resource: r }: DetailProps) {
   switch (r.category) {
     case "shelter": {
       const d = r.details;
@@ -264,26 +261,6 @@ function CategoryDetails({ resource: r, progressScope }: DetailProps) {
         <Section title="Food">
           <p>{d.kind.map(humanize).join(" · ").replace("Snap help", "SNAP help")}</p>
           {d.visit_limit && <p className="res-note">{d.visit_limit}</p>}
-        </Section>
-      );
-    }
-    case "jobs": {
-      const d = r.details;
-      return (
-        <Section title="The job">
-          <ul className="res-list">
-            <li>Employer: {d.employer}</li>
-            {d.pay_note && <li>Pay: {d.pay_note}</li>}
-            {d.shift_note && <li>Shifts: {d.shift_note}</li>}
-          </ul>
-          <ExternalLink label="Apply at" url={d.apply_url} />
-          <JobWalkthrough
-            key={r.id}
-            steps={d.steps}
-            requiredDocuments={r.required_documents}
-            checks={r.document_checks}
-            progressKey={`${progressScope ?? "staff"}:${r.id}`}
-          />
         </Section>
       );
     }

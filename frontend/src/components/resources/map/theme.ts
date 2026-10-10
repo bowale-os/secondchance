@@ -7,7 +7,6 @@ import type { ResourceCategory } from "../../../types";
 export const CATEGORY_COLORS: Record<ResourceCategory, string> = {
   shelter: "#B45309",
   food: "#BE185D",
-  jobs: "#044CB6",
   addiction: "#047857",
   classes: "#6D28D9",
   events: "#A2080C",
@@ -16,7 +15,6 @@ export const CATEGORY_COLORS: Record<ResourceCategory, string> = {
 export const CATEGORY_LETTERS: Record<ResourceCategory, string> = {
   shelter: "S",
   food: "F",
-  jobs: "J",
   addiction: "R",
   classes: "C",
   events: "E",

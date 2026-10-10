@@ -18,6 +18,6 @@ export default function MyResources({ client, api }: { client: ClientRead; api: 
   const loadResource = useCallback((id: string) => api.resources.get(id), [api]);
 
   return (
-    <MatchedResources client={client} loadMatches={loadMatches} loadResource={loadResource} progressScope="me" mapGestures={false} copy={COPY} />
+    <MatchedResources client={client} loadMatches={loadMatches} loadResource={loadResource} mapGestures={false} copy={COPY} />
   );
 }

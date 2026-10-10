@@ -72,12 +72,6 @@
   .res-drawer { width: 100vw; border-left: 0; }
 }
 
-/* Job walkthrough (reuses the new-client stepper) */
-.res-walkthrough { display: grid; gap: .75rem; margin-top: .5rem; padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--bg); }
-.res-walkthrough .step-header h3 { font-size: 1.0625rem; }
-.res-walkthrough .stepper { flex-direction: column; gap: .5rem; }
-.res-walkthrough-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-
 /* Matched resources (client tab and client portal) */
 .res-matched-head { display: grid; gap: .75rem; justify-items: start; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
 .res-matched-head .res-filters { width: 100%; }
