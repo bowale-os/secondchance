@@ -158,6 +158,7 @@ class ContactType(enum.Enum):
 class ResourceCategory(enum.Enum):
     SHELTER = "shelter"
     FOOD = "food"
+    JOBS = "jobs"  # fair-chance employers
     ADDICTION = "addiction"
     CLASSES = "classes"
     EVENTS = "events"

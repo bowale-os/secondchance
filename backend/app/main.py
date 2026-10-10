@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.db import engine
 from app.ingest.scheduler import run_forever
-from app.routers import auth, clients, documents, health
+from app.routers import auth, clients, documents, health, resources
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -56,3 +56,4 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(clients.router)
 app.include_router(documents.router)
+app.include_router(resources.router)

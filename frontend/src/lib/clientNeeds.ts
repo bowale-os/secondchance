@@ -29,7 +29,7 @@ export function profileReason(
     case "near_transit":
       return client.has_transportation === false ? "no car" : undefined;
     case "language":
-      return client.language === "es" ? "speaks Spanish" : undefined;
+      return client.language && client.language !== "en" ? "speaks Spanish" : undefined;
     case "no_id_required":
       return "missing ID";
     default:

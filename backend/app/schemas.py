@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass, field, fields
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from pydantic import TypeAdapter
 
@@ -508,6 +508,8 @@ class OpeningHours:
 @dataclass
 class TransitStop:
     stop_name: str
+    lat: float
+    lng: float
     distance_m: float  # straight-line
     routes: list[str] = field(default_factory=list)
 
@@ -537,6 +539,22 @@ class FoodDetails:
 
 
 @dataclass
+class JobStep:
+    title: str  # e.g. "Gather documents"
+    detail: str  # plain-language instructions
+    documents: list[RequiredDocument] = field(default_factory=list)  # matched against document_checks
+
+
+@dataclass
+class JobDetails:
+    employer: str = ""
+    pay_note: Optional[str] = None  # e.g. "$15-17/hr"
+    shift_note: Optional[str] = None  # e.g. "Early mornings"
+    apply_url: Optional[str] = None
+    steps: list[JobStep] = field(default_factory=list)  # empty = frontend shows default steps
+
+
+@dataclass
 class AddictionDetails:
     setting: list[AddictionSetting] = field(default_factory=list)
     medication_assisted: Tri = Tri.UNKNOWN
@@ -551,11 +569,12 @@ class ClassEventDetails:
     signup_required: Tri = Tri.UNKNOWN
 
 
-ResourceDetails = Union[ShelterDetails, FoodDetails, AddictionDetails, ClassEventDetails]
+ResourceDetails = Union[ShelterDetails, FoodDetails, JobDetails, AddictionDetails, ClassEventDetails]
 
 DETAILS_FOR: dict[ResourceCategory, type] = {
     ResourceCategory.SHELTER: ShelterDetails,
     ResourceCategory.FOOD: FoodDetails,
+    ResourceCategory.JOBS: JobDetails,
     ResourceCategory.ADDICTION: AddictionDetails,
     ResourceCategory.CLASSES: ClassEventDetails,
     ResourceCategory.EVENTS: ClassEventDetails,
@@ -681,7 +700,7 @@ class ResourceSummary:
 @dataclass
 class DocumentCheck:
     document: RequiredDocument
-    status: str  # "have" | "missing" | "expired"
+    status: Literal["have", "missing", "expired"]
 
 
 @dataclass
@@ -787,6 +806,7 @@ class ResourceQuery:
     language: Optional[str] = None
     origin: Optional[LatLng] = None  # client address or office
     radius_m: Optional[float] = None
+    starts_within_days: Optional[int] = None  # classes/events starting in the next N days
     cursor: Optional[str] = None
 
 
