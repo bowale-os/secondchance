@@ -1,24 +1,17 @@
-import type { DocStatus } from "../../lib/clientDocuments";
-import type { RequiredDocument } from "../../types";
+import type { DocumentCheck, RequiredDocument } from "../../types";
 import { DOCUMENT_LABELS } from "./labels";
 
-/** Documents to bring; with a client selected, each says whether they have it. */
-export default function DocumentList({
-  documents,
-  documentStatus,
-}: {
-  documents: RequiredDocument[];
-  documentStatus?: (doc: RequiredDocument) => DocStatus;
-}) {
+/** Documents to bring. In a client context the server sends `checks`, and each says whether they have it. */
+export default function DocumentList({ documents, checks }: { documents: RequiredDocument[]; checks: DocumentCheck[] | null }) {
   return (
     <ul className="res-list">
       {documents.map((d) => {
-        const status = documentStatus?.(d) ?? null;
+        const status = checks?.find((c) => c.document === d)?.status ?? null;
         return (
-          <li key={d} className={status === "missing" ? "res-doc-missing" : undefined}>
+          <li key={d} className={status === "missing" || status === "expired" ? "res-doc-missing" : undefined}>
             {DOCUMENT_LABELS[d]}
-            {status === "has" && <span className="res-doc-has"> ✓ on file</span>}
-            {status === "applied" && <span className="res-doc-applied"> · applied, in progress</span>}
+            {status === "have" && <span className="res-doc-has"> ✓ on file</span>}
+            {status === "expired" && <strong> ✗ expired, renew this first</strong>}
             {status === "missing" && <strong> ✗ missing, get this first</strong>}
           </li>
         );

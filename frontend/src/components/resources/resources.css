@@ -71,7 +71,6 @@
 @media (max-width: 36rem) {
   .res-drawer { width: 100vw; border-left: 0; }
 }
-.res-doc-applied { color: var(--attn-ink); }
 
 /* Job walkthrough (reuses the new-client stepper) */
 .res-walkthrough { display: grid; gap: .75rem; margin-top: .5rem; padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--bg); }

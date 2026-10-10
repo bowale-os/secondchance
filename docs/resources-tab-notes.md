@@ -7,7 +7,7 @@ The frontend for the Resources tab (`frontend/src/components/resources/`, `front
 | Endpoint | Returns | Who |
 |---|---|---|
 | `GET /resources` | `ResourceSearchResponse` | staff or client |
-| `GET /resources/{id}` | `ResourceRead` (the `Resource` union) | staff or client |
+| `GET /resources/{id}` | `ResourceRead` (the `Resource` union) | staff or client. Staff on a client's tab add `?client_id=<id>` so `document_checks` is filled for that client |
 | `GET /clients/{id}/resources` | `ClientResourceMatch` | staff, for their own assigned client (404 otherwise) |
 | `GET /me/resources` | `ClientResourceMatch` | the logged-in client |
 
@@ -33,10 +33,24 @@ Types are in `frontend/src/types/resource.types.ts`.
 
 The frontend does not reproduce the needs mapping. `frontend/src/lib/clientNeeds.ts` only turns each applied filter into a short reason for the chip ("no car", "housing: homeless"). If the server mapping changes, update the field lists there.
 
+## Request: restore the `jobs` category
+
+Commit `675cb4c` ("edited resource types") removed `jobs`, `JobDetails` and `JobStep`. The product plan keeps **Fair-chance employers** with an application walkthrough, so this branch adds them back in the same style (`ResourceCategory.JOBS`, `JobDetails`, `JobStep`, and the `jobs` member of the `Resource` union). **@Daniel: please restore `jobs` on the backend side**, or let us know if it was dropped on purpose so we can talk it through.
+
+`JobDetails.steps` drives the walkthrough. When it's empty the frontend shows five default steps (check eligibility, gather documents, apply, prepare for the interview, follow up).
+
 ## Fields the frontend added to the shared types
 
 - **`ResourceQuery.starts_within_days?: number`**: the "This week" chip sends `7`. It is only offered when Classes or Community events is selected and should limit classes and events to those starting within N days.
 - **`TransitStop.lat` / `TransitStop.lng`**: needed to draw stops on the map. The ingest job already geocodes stops from MARTA GTFS; it should store their coordinates too.
+
+## How the frontend reads the revised types
+
+- **`Tri` and `"unknown"`** (`families_welcome`, `sober_required`, `medication_assisted`, `signup_required`, and `unknown` for gender and cost) show as "<topic>: call to confirm", never as "no".
+- **`document_checks`** drives the ✓ on file / ✗ missing / ✗ expired marks in the drawer and the job walkthrough. The frontend no longer works these out from the client's ID records.
+- **`near_transit: null`** means no location, so no transit badge is shown.
+- **`free_only`** has a "Free only" chip.
+- **Not used yet:** `field_meta` and `completeness`.
 
 ## Conventions to keep in step
 
@@ -49,7 +63,6 @@ The frontend does not reproduce the needs mapping. `frontend/src/lib/clientNeeds
 
 - **No "Add to plan", "Text to client" or "Verify" buttons.** There are no endpoints for them yet.
 - **No distance on the top-level Resources page.** Staff have no office address on file. `ResourcesPage` keeps an `origin` state ready for when staff can enter one.
-- **No ✓ / ✗ document checks in the client portal.** `GET /me` returns `ClientRead`, which has no ID records. Adding `ids` (and document types) to that response would turn the check on.
 
 ## Reminders (not done by this change)
 

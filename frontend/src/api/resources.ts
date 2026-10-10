@@ -37,8 +37,12 @@ export function createResourcesApi(http: Http) {
     search: (query: ResourceQuery = {}): Promise<ResourceSearchResponse> =>
       http.get<ResourceSearchResponse>(`/resources${toSearchParams(query)}`),
 
-    /** GET /resources/{id}: the full resource for the detail drawer. */
-    get: (resourceId: string): Promise<ResourceRead> => http.get<ResourceRead>(`/resources/${resourceId}`),
+    /**
+     * GET /resources/{id}: the full resource for the detail drawer. Staff pass `clientId` so the
+     * server fills `document_checks` for that client; a logged-in client gets theirs from the token.
+     */
+    get: (resourceId: string, { clientId }: { clientId?: string } = {}): Promise<ResourceRead> =>
+      http.get<ResourceRead>(`/resources/${resourceId}${clientId ? `?client_id=${encodeURIComponent(clientId)}` : ""}`),
   };
 }
 

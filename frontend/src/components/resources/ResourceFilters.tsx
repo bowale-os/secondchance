@@ -3,13 +3,14 @@ import type { Gender, ResourceCategory, ResourceQuery } from "../../types";
 import { CATEGORIES, CATEGORY_LABELS } from "./labels";
 
 /** Yes/no filters shown as chips after the category chips. */
-type ToggleKey = "near_transit" | "open_now" | "no_id_required" | "records_accepted" | "families";
+type ToggleKey = "near_transit" | "open_now" | "no_id_required" | "records_accepted" | "families" | "free_only";
 const TOGGLES: { key: ToggleKey; label: string }[] = [
   { key: "near_transit", label: "Near transit" },
   { key: "open_now", label: "Open now" },
   { key: "no_id_required", label: "No ID required" },
   { key: "records_accepted", label: "Records accepted" },
   { key: "families", label: "Families welcome" },
+  { key: "free_only", label: "Free only" },
 ];
 
 const SEARCH_DELAY_MS = 300;

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { errorText } from "../../lib/errors";
-import type { DocStatus } from "../../lib/clientDocuments";
 import { formatDate, humanize } from "../../lib/format";
-import type { OpeningHours, RequiredDocument, Resource } from "../../types";
+import type { OpeningHours, Resource } from "../../types";
 import {
   ACCESS_LABELS,
   CATEGORY_LABELS,
@@ -17,6 +16,7 @@ import {
   formatTime,
   languageName,
   safeLink,
+  triText,
   todayIndex,
 } from "./labels";
 import DocumentList from "./DocumentList";
@@ -29,8 +29,6 @@ interface Props {
   /** GET /resources/{id}, from whichever API (staff or client) the page uses. */
   load: (id: string) => Promise<Resource>;
   onClose: () => void;
-  /** With a client selected: whether they have each document the resource asks for. */
-  documentStatus?: (doc: RequiredDocument) => DocStatus;
   /** Remembers job walkthrough progress per person: a client id, or "me" in the client portal. */
   progressScope?: string;
   /** Staff can drag and scroll the map; clients use the buttons. */
@@ -41,7 +39,7 @@ interface Props {
  * Full details for one resource. A modal <dialog>: the browser traps focus inside it and
  * closes it on Escape; focus goes back to whatever opened it.
  */
-export default function ResourceDrawer({ resourceId, load, onClose, documentStatus, progressScope, mapGestures = false }: Props) {
+export default function ResourceDrawer({ resourceId, load, onClose, progressScope, mapGestures = false }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [resource, setResource] = useState<Resource | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +83,7 @@ export default function ResourceDrawer({ resourceId, load, onClose, documentStat
         </div>
 
         {error && <p className="dash-error" role="alert">{error}</p>}
-        {resource && <Details resource={resource} documentStatus={documentStatus} progressScope={progressScope} mapGestures={mapGestures} />}
+        {resource && <Details resource={resource} progressScope={progressScope} mapGestures={mapGestures} />}
       </div>
     </dialog>
   );
@@ -100,12 +98,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-type DetailProps = Pick<Props, "documentStatus" | "progressScope" | "mapGestures"> & { resource: Resource };
+type DetailProps = Pick<Props, "progressScope" | "mapGestures"> & { resource: Resource };
 
-function Details({ resource: r, documentStatus, progressScope, mapGestures }: DetailProps) {
+function Details({ resource: r, progressScope, mapGestures }: DetailProps) {
   const serves = [
     GENDER_LABELS[r.gender],
-    r.families_welcome ? "Families welcome" : null,
+    triText(r.families_welcome, "Families welcome", "Adults only", "Families"),
     RECORDS_LABELS[r.records_policy],
     r.languages.length ? `Speaks ${r.languages.map(languageName).join(", ")}` : null,
     COST_LABELS[r.cost_type],
@@ -117,7 +115,7 @@ function Details({ resource: r, documentStatus, progressScope, mapGestures }: De
         <span className="res-badge res-badge-transit">{CATEGORY_LABELS[r.category]}</span>
         <span className={`res-badge res-badge-${r.verification}`}>{VERIFICATION_LABELS[r.verification]}</span>
       </div>
-      <p>{r.description}</p>
+      {r.description && <p>{r.description}</p>}
 
       <Section title="Where">
         {r.address ? (
@@ -159,7 +157,7 @@ function Details({ resource: r, documentStatus, progressScope, mapGestures }: De
         {r.hours_note && <p className="res-note">{r.hours_note}</p>}
       </Section>
 
-      <CategoryDetails resource={r} documentStatus={documentStatus} progressScope={progressScope} />
+      <CategoryDetails resource={r} progressScope={progressScope} />
 
       <Section title="Who it serves">
         <ul className="res-list">
@@ -173,7 +171,7 @@ function Details({ resource: r, documentStatus, progressScope, mapGestures }: De
         {r.required_documents.length > 0 ? (
           <>
             <p className="res-subhead">Bring:</p>
-            <DocumentList documents={r.required_documents} documentStatus={documentStatus} />
+            <DocumentList documents={r.required_documents} checks={r.document_checks} />
           </>
         ) : (
           <p>No documents needed.</p>
@@ -220,7 +218,7 @@ function ExternalLink({ label, url }: { label: string; url: string | null }) {
 
 /** The whole week, Monday first, with today marked. A day can have several entries. */
 function Hours({ hours }: { hours: OpeningHours[] }) {
-  if (hours.length === 0) return <p>Hours not listed. Call ahead.</p>;
+  if (hours.length === 0) return <p>Call for hours.</p>;
   const today = todayIndex();
   return (
     <table className="res-hours">
@@ -248,7 +246,7 @@ function Hours({ hours }: { hours: OpeningHours[] }) {
   );
 }
 
-function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailProps) {
+function CategoryDetails({ resource: r, progressScope }: DetailProps) {
   switch (r.category) {
     case "shelter": {
       const d = r.details;
@@ -256,7 +254,7 @@ function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailP
         d.check_in_time && `Check in at ${formatTime(d.check_in_time)}`,
         d.curfew && `Curfew ${formatTime(d.curfew)}`,
         d.max_stay_days !== null && `Stay up to ${d.max_stay_days} days`,
-        d.sober_required && "Must be sober",
+        triText(d.sober_required, "Must be sober", null, "Sobriety rule"),
       ].filter(Boolean) as string[];
       return facts.length ? <Section title="Shelter rules"><ul className="res-list">{facts.map((f) => <li key={f}>{f}</li>)}</ul></Section> : null;
     }
@@ -283,7 +281,7 @@ function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailP
             key={r.id}
             steps={d.steps}
             requiredDocuments={r.required_documents}
-            documentStatus={documentStatus}
+            checks={r.document_checks}
             progressKey={`${progressScope ?? "staff"}:${r.id}`}
           />
         </Section>
@@ -294,7 +292,9 @@ function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailP
       return (
         <Section title="Recovery support">
           <p>{d.setting.map(humanize).join(" · ")}</p>
-          {d.medication_assisted && <p>Offers medication-assisted treatment.</p>}
+          {d.medication_assisted !== "no" && (
+            <p>{triText(d.medication_assisted, "Offers medication-assisted treatment.", null, "Medication-assisted treatment")}</p>
+          )}
         </Section>
       );
     }
@@ -307,7 +307,7 @@ function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailP
             {d.starts_at && <li>Starts {formatStart(d.starts_at)}</li>}
             {d.ends_at && <li>Ends {formatStart(d.ends_at)}</li>}
             {d.recurrence && <li>{d.recurrence}</li>}
-            <li>{d.signup_required ? "Sign-up required" : "No sign-up needed"}</li>
+            <li>{triText(d.signup_required, "Sign-up required", "No sign-up needed", "Sign-up")}</li>
           </ul>
         </Section>
       );

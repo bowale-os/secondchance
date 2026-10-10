@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import type { DocStatus } from "../../lib/clientDocuments";
 import { profileReason } from "../../lib/clientNeeds";
 import { errorText } from "../../lib/errors";
 import type {
   ClientRead,
   ClientResourceMatch,
-  RequiredDocument,
   Resource,
   ResourceCategory,
   ResourceQuery,
@@ -31,7 +29,6 @@ interface Props {
   /** GET /clients/{id}/resources or GET /me/resources, with overrides. */
   loadMatches: (overrides: ResourceQuery) => Promise<ClientResourceMatch>;
   loadResource: (id: string) => Promise<Resource>;
-  documentStatus?: (doc: RequiredDocument) => DocStatus;
   progressScope: string;
   /** Staff can drag and scroll the map; clients use the buttons. */
   mapGestures: boolean;
@@ -39,13 +36,13 @@ interface Props {
 }
 
 /** Keys the profile can turn on that are yes/no, so turning one off must be sent as `false`. */
-const BOOLEAN_KEYS = new Set<keyof ResourceQuery>(["near_transit", "open_now", "no_id_required", "records_accepted", "families"]);
+const BOOLEAN_KEYS = new Set<keyof ResourceQuery>(["near_transit", "open_now", "no_id_required", "records_accepted", "families", "free_only"]);
 
 /**
  * Resources matched to one client's needs (Option C). Filters start from their profile;
  * every change is sent back as overrides so the server stays the one place the mapping lives.
  */
-export default function MatchedResources({ client, loadMatches, loadResource, documentStatus, progressScope, mapGestures, copy }: Props) {
+export default function MatchedResources({ client, loadMatches, loadResource, progressScope, mapGestures, copy }: Props) {
   const [overrides, setOverrides] = useState<ResourceQuery>({});
   const [match, setMatch] = useState<ClientResourceMatch | null>(null);
   // What the chips show: the change right away, then the server's answer.
@@ -162,7 +159,6 @@ export default function MatchedResources({ client, loadMatches, loadResource, do
           resourceId={selectedId}
           load={loadResource}
           onClose={() => setSelectedId(null)}
-          documentStatus={documentStatus}
           progressScope={progressScope}
           mapGestures={mapGestures}
         />
