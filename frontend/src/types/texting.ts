@@ -12,6 +12,9 @@ export interface TextingStatus {
   locked_at: string | null;
   /** Only set right after enrolling: whether the welcome text went out. */
   welcome_sent: boolean | null;
+  /** Morning reminder, set by the client by texting NUDGE ON / NUDGE OFF / NUDGE 7:30. */
+  nudge_enabled: boolean;
+  nudge_time: string | null; // "08:00", Eastern
 }
 
 export interface TextingEnroll {

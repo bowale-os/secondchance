@@ -27,6 +27,7 @@ MENU = (
     "TODAY - today's schedule\n"
     "TOMORROW - tomorrow's schedule\n"
     "WEEK - the next 7 days\n"
+    "NUDGE ON - a morning text on days you have something\n"
     "FOOD, SHELTER, JOBS - places near you (coming soon)\n"
     "SIGN OUT - end this session"
 )
@@ -47,4 +48,19 @@ def crisis_text() -> str:
         f"If you are in danger or someone overdosed, call {s.emergency_number} now. "
         f"To talk to someone any time, call or text {s.crisis_line}. "
         f"For a place to sleep tonight, call {s.help_line}."
+    )
+
+
+# ---------- morning nudge ----------
+
+NUDGE = "Your schedule for today is ready. Reply to sign in. (Reply NUDGE OFF to stop these.)"
+NUDGE_OFF = "Morning reminders are off. Reply NUDGE ON after signing in to turn them back on."
+NUDGE_BAD_TIME = "I didn't get that time. Try NUDGE 8 or NUDGE 7:30 (between 5 AM and 9 PM)."
+
+
+def nudge_on(at: str) -> str:
+    return (
+        f"Morning reminders are on. On days you have something scheduled, you'll get a text "
+        f"at {at}. It won't say what; reply to sign in and see it. "
+        "Reply NUDGE 7:30 to change the time or NUDGE OFF to stop."
     )

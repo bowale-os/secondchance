@@ -54,6 +54,8 @@ def _status(e: BotEnrollment | None, welcome_sent: bool | None = None) -> Textin
         consent_at=e.consent_at,
         locked_at=e.locked_at,
         welcome_sent=welcome_sent,
+        nudge_enabled=bool(e.nudge_enabled),
+        nudge_time=e.nudge_time.strftime("%H:%M") if e.nudge_time else None,
     )
 
 

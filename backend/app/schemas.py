@@ -493,6 +493,8 @@ class TextingStatus:
     consent_at: Optional[datetime] = None
     locked_at: Optional[datetime] = None
     welcome_sent: Optional[bool] = None
+    nudge_enabled: bool = False
+    nudge_time: Optional[str] = None   # "08:00", local time; set by the client by text
 
 
 # ============================================================

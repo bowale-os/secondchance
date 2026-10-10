@@ -7,7 +7,7 @@ Install:  pip install sqlalchemy psycopg[binary]
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Optional
 
@@ -19,6 +19,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     LargeBinary,
+    Time,
     Numeric,
     String,
     Text,
@@ -475,6 +476,12 @@ class BotEnrollment(IdMixin, TimestampMixin, Base):
         ForeignKey("staff.id", ondelete="SET NULL")
     )
     locked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    # Morning nudge: the client opts in by texting NUDGE ON. The nudge itself never
+    # contains schedule details (it may show on a lock screen).
+    nudge_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    nudge_time: Mapped[time] = mapped_column(Time, default=time(8, 0), server_default="08:00:00")
+    last_nudged_on: Mapped[Optional[date]] = mapped_column(Date)  # local date; prevents repeats
 
     session: Mapped[Optional["BotSession"]] = relationship(
         back_populates="enrollment", cascade="all, delete-orphan", uselist=False

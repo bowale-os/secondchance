@@ -15,7 +15,7 @@ import hmac
 import re
 import unicodedata
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from functools import lru_cache
 from typing import Optional
 
@@ -34,6 +34,7 @@ from app.services.bot_keywords import (
     STOP_WORDS,
     is_crisis,
     keyword,
+    parse_nudge,
 )
 from app.services.bot_schedule_text import render as render_schedule
 from app.services.schedule import get_schedule, window
@@ -187,6 +188,12 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         _audit(db, enrollment, "keyword.help", "sent")
         return Outcome([msg.help_text()])
 
+    nudge = parse_nudge(text)
+    if nudge and nudge[0] == "off":  # fewer texts never needs a sign-in
+        enrollment.nudge_enabled = False
+        _audit(db, enrollment, "nudge", "disabled")
+        return Outcome([msg.NUDGE_OFF])
+
     # 4. Lock
     if enrollment.status == BotEnrollmentStatus.LOCKED:
         _audit(db, enrollment, "auth", "locked")
@@ -199,12 +206,19 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     if s is None:
         s = await _get_or_create_session(db, enrollment)
         _audit(db, enrollment, "auth.start", "asked_name")
+        if nudge:
+            return Outcome([f"Sign in first, then reply NUDGE ON. {msg.ASK_NAME}"])
         return Outcome([msg.ASK_NAME])
 
     if s.state == BotSessionState.ACTIVE and _session_expired(s, now):
         _reset_to_name(s)
         _audit(db, enrollment, "auth.expired", "asked_name")
         return Outcome([msg.SESSION_ENDED])
+
+    if nudge and s.state != BotSessionState.ACTIVE:
+        # Never count "NUDGE ON" as a name or PIN attempt.
+        prompt = msg.ASK_PIN if s.state == BotSessionState.AWAITING_PIN else msg.ASK_NAME
+        return Outcome([f"Sign in first, then reply NUDGE ON. {prompt}"])
 
     if s.state == BotSessionState.AWAITING_NAME:
         if not text:  # e.g. a photo with no caption
@@ -249,6 +263,8 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
         await db.delete(s)
         _audit(db, enrollment, "auth.sign_out", "signed_out")
         return Outcome([msg.SIGNED_OUT])
+    if nudge:
+        return Outcome(_set_nudge(db, enrollment, nudge), client_id=str(client.id))
     reply = await handle_active(db, client, s, text, kw, m)
     return Outcome(reply, client_id=str(client.id))
 
@@ -271,6 +287,18 @@ async def handle_active(
         return [render_schedule(range_, items, first, today)]
     _audit(db, s.enrollment, "unknown", "not_available")
     return [msg.NOT_AVAILABLE_YET]
+
+
+def _set_nudge(db: AsyncSession, enrollment: BotEnrollment, nudge: tuple) -> list[str]:
+    action, at = nudge
+    if action == "bad_time":
+        return [msg.NUDGE_BAD_TIME]
+    enrollment.nudge_enabled = True
+    if at is not None:
+        enrollment.nudge_time = at
+    when = enrollment.nudge_time or time(8, 0)
+    _audit(db, enrollment, "nudge", "enabled")
+    return [msg.nudge_on(when.strftime("%I:%M %p").lstrip("0"))]
 
 
 # ---------- lookups ----------

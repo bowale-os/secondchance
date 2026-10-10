@@ -42,3 +42,34 @@ def keyword(text: str) -> str:
 
 def is_crisis(text: str) -> bool:
     return bool(_CRISIS_RE.search(text))
+
+
+_NUDGE_RE = re.compile(
+    r"^\s*(?:nudge|reminder|reminders)\s*(on|off|(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?)?\s*[.!]?\s*$",
+    re.IGNORECASE,
+)
+
+
+def parse_nudge(text: str):
+    """'NUDGE ON' -> ('on', None); 'nudge off' -> ('off', None);
+    'nudge 7:30' -> ('on', time(7, 30)); 'nudge 6pm' -> ('on', time(18, 0));
+    'nudge 3' / 'nudge 25' -> ('bad_time', None); anything else -> None.
+    A bare hour of 1-11 means AM. Allowed window: 5:00 AM to 9:00 PM."""
+    from datetime import time
+
+    m = _NUDGE_RE.match(text or "")
+    if not m:
+        return None
+    word, hour, minute, ampm = m.group(1), m.group(2), m.group(3), m.group(4)
+    if word is None or word.lower() == "on":
+        return ("on", None)
+    if word.lower() == "off":
+        return ("off", None)
+    h, mi = int(hour), int(minute or 0)
+    if ampm:
+        if not 1 <= h <= 12:
+            return ("bad_time", None)
+        h = (h % 12) + (12 if ampm.lower().startswith("p") else 0)
+    if not (0 <= h <= 23 and 0 <= mi <= 59) or not (time(5, 0) <= time(h, mi) <= time(21, 0)):
+        return ("bad_time", None)
+    return ("on", time(h, mi))

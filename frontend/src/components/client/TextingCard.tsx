@@ -12,6 +12,12 @@ const CHANNEL_LABEL: Record<TextingChannel, string> = {
   other: "Text",
 };
 
+/** "07:30" -> "7:30 AM" */
+function formatClock(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
@@ -156,6 +162,12 @@ export default function TextingCard({ client }: { client: ClientRead }) {
             Number ending in <strong>{status.phone_last4}</strong>
             {status.channel && <> · last seen on {CHANNEL_LABEL[status.channel]}</>}
             {status.consent_at && <> · consent recorded {formatDateTime(status.consent_at)}</>}
+          </p>
+
+          <p className="texting-hint">
+            {status.nudge_enabled && status.nudge_time
+              ? <>Morning reminder: <strong>on at {formatClock(status.nudge_time)}</strong>, on days with something scheduled. The client controls this by text.</>
+              : <>Morning reminder: off. The client can text NUDGE ON after signing in.</>}
           </p>
 
           {state === "locked" && (
