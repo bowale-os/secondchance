@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.security import hash_pin, verify_pin_async
+from app.services import bot_intent, bot_resources
 from app.services import bot_messages as msg
 from app.services.bot_keywords import (
     HELP_WORDS,
@@ -269,24 +270,71 @@ async def _handle(db: AsyncSession, m: Inbound) -> Outcome:
     return Outcome(reply, client_id=str(client.id))
 
 
+_RECOVERY_ASK = re.compile(
+    r"\b(recover\w*|treatment|rehab|detox|sober\w*|addict\w*|narcotics anonymous|alcoholics anonymous|"
+    r"aa|na|methadone|suboxone|substance)\b",
+    re.IGNORECASE,
+)
+
+
 async def handle_active(
     db: AsyncSession, client: Client, s: BotSession, text: str, kw: str, m: Inbound
 ) -> list[str]:
-    """Signed-in requests. Keyword fast path now; the Gemini intent router for free
-    text (phase 3+) plugs in before the fallback."""
+    """Signed-in requests: keyword fast path first, then the Gemini router for free text."""
+    now = _now()
     if kw in MENU_WORDS or (not text and not m.attachment_count):
         _audit(db, s.enrollment, "menu", "sent")
         return [msg.MENU]
     if kw in SCHEDULE_WORDS:
-        range_ = SCHEDULE_WORDS[kw]
-        now = _now()
-        items = await get_schedule(db, client.id, range_, now)
-        first, _ = window(range_, now)
-        today = now.astimezone(local_tz()).date()
-        _audit(db, s.enrollment, f"schedule.{range_}", f"items_{min(len(items), 99)}")
-        return [render_schedule(range_, items, first, today)]
-    _audit(db, s.enrollment, "unknown", "not_available")
-    return [msg.NOT_AVAILABLE_YET]
+        return [await _schedule(db, client, s, SCHEDULE_WORDS[kw], now)]
+    if kw == "MORE":
+        _audit(db, s.enrollment, "resources.more", "sent")
+        return [await bot_resources.more_reply(db, s, now)]
+    if kw.isdigit() and text.strip().isdigit():
+        if 1 <= int(kw) <= 99:
+            _audit(db, s.enrollment, "resources.detail", "sent")
+            return [await bot_resources.detail_reply(db, client, s, int(kw), now)]
+        return [msg.NOT_AVAILABLE_YET]  # e.g. a re-typed PIN: never sent to the router
+    ask = bot_resources.parse_fast(text)
+    if ask:
+        return [await _resources(db, client, s, ask, now)]
+
+    intent = await bot_intent.classify(text) if text else None
+    if intent is None:
+        _audit(db, s.enrollment, "unknown", "no_router" if text else "attachment")
+        return [msg.NOT_AVAILABLE_YET]
+    if intent.tool == "get_schedule":
+        return [await _schedule(db, client, s, intent.schedule_range or "day", now)]
+    if intent.tool == "search_resources" and intent.category:
+        if intent.category == "addiction" and not _RECOVERY_ASK.search(text):
+            intent.category = None  # never infer recovery; the client has to ask for it
+        else:
+            ask = bot_resources.ResourceAsk(intent.category, intent.near_place, intent.keywords)
+            return [await _resources(db, client, s, ask, now)]
+    if intent.tool == "resource_detail" and intent.item_number:
+        _audit(db, s.enrollment, "resources.detail", "router")
+        return [await bot_resources.detail_reply(db, client, s, intent.item_number, now)]
+    if intent.tool == "more_results":
+        return [await bot_resources.more_reply(db, s, now)]
+    if intent.tool == "menu":
+        return [msg.MENU]
+    _audit(db, s.enrollment, "unknown", "router")
+    return [msg.NOT_UNDERSTOOD]
+
+
+async def _schedule(db: AsyncSession, client: Client, s: BotSession, range_: str, now: datetime) -> str:
+    items = await get_schedule(db, client.id, range_, now)
+    first, _ = window(range_, now)
+    today = now.astimezone(local_tz()).date()
+    _audit(db, s.enrollment, f"schedule.{range_}", f"items_{min(len(items), 99)}")
+    return render_schedule(range_, items, first, today)
+
+
+async def _resources(db: AsyncSession, client: Client, s: BotSession, ask, now: datetime) -> str:
+    reply = await bot_resources.search_reply(db, client, s, ask, now)
+    count = len((s.last_results or {}).get("ids", []))
+    _audit(db, s.enrollment, f"resources.{ask.category}", f"items_{count}")
+    return reply
 
 
 def _set_nudge(db: AsyncSession, enrollment: BotEnrollment, nudge: tuple) -> list[str]:

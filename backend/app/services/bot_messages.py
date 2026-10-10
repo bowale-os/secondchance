@@ -21,14 +21,18 @@ SIGNED_IN = "You're signed in. Reply MENU to see what I can do."
 SIGNED_OUT = "You're signed out. Text anything to sign in again."
 STOPPED = "You won't get any more texts. Reply START to turn texting back on."
 STARTED = "Texting is back on. Reply with your full name to sign in."
-NOT_AVAILABLE_YET = "That isn't available yet. Reply MENU to see what I can do."
+NOT_AVAILABLE_YET = "I can't do that yet. Reply MENU to see what I can do."
+NOT_UNDERSTOOD = (
+    "Sorry, I can only help with your schedule and finding places like food or shelter. "
+    "For anything else, contact your case worker. Reply MENU for options."
+)
 MENU = (
     "Reply with a word:\n"
     "TODAY - today's schedule\n"
     "TOMORROW - tomorrow's schedule\n"
     "WEEK - the next 7 days\n"
     "NUDGE ON - a morning text on days you have something\n"
-    "FOOD, SHELTER, JOBS - places near you (coming soon)\n"
+    "FOOD, SHELTER, JOBS, CLASSES - places near you (add \"near West End\")\n"
     "SIGN OUT - end this session"
 )
 
