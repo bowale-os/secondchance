@@ -1,4 +1,4 @@
-import type { ClientLogin, ClientRead, ClientToken, DocumentListItem } from "../types";
+import type { CaseWorkerRead, ClientLogin, ClientRead, ClientToken, DocumentListItem } from "../types";
 import type { Http } from "./http";
 
 export function createClientAuthApi(http: Http) {
@@ -13,6 +13,9 @@ export function createClientAuthApi(http: Http) {
     me: (): Promise<ClientRead> => http.get<ClientRead>("/auth/client/me"),
 
     /** GET /auth/client/documents: the client's own documents, newest first. Open one with `documents.open`. */
+    /** GET /auth/client/case-worker: who to call (404 if none is assigned). */
+    caseWorker: (): Promise<CaseWorkerRead> => http.get<CaseWorkerRead>("/auth/client/case-worker"),
+
     documents: (): Promise<DocumentListItem[]> => http.get<DocumentListItem[]>("/auth/client/documents"),
   };
 }

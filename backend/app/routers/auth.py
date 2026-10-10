@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_current_client, get_current_staff, get_token_claims
 from app.config import get_settings
 from app.db import get_session
-from app.schemas import ClientLogin, ClientRead, DocumentListItem, ClientToken, StaffRead, StaffSignup, from_row
+from app.schemas import CaseWorkerRead, ClientLogin, ClientRead, DocumentListItem, ClientToken, StaffRead, StaffSignup, from_row
 from app.security import create_client_token, hash_pin, verify_pin_async
-from app.tables import Client, Document, Staff
+from app.tables import Assignment, Client, Document, Staff
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -118,3 +118,19 @@ async def client_documents(
         select(Document).where(Document.client_id == client.id).order_by(Document.created_at.desc())
     )
     return [from_row(DocumentListItem, d) for d in docs]
+
+
+@router.get("/client/case-worker", response_model=CaseWorkerRead)
+async def client_case_worker(
+    client: Client = Depends(get_current_client), session: AsyncSession = Depends(get_session)
+) -> CaseWorkerRead:
+    """Who to call: the client's active case worker."""
+    staff = await session.scalar(
+        select(Staff)
+        .join(Assignment, Assignment.staff_id == Staff.id)
+        .where(Assignment.client_id == client.id, Assignment.is_active.is_(True), Staff.is_active.is_(True))
+        .order_by(Assignment.started_on.desc())
+    )
+    if staff is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No case worker assigned")
+    return from_row(CaseWorkerRead, staff)

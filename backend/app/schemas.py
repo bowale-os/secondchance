@@ -8,7 +8,7 @@ SQLAlchemy models in tables.py so we control exactly which fields leave the API
 
 import uuid
 from dataclasses import dataclass, field, fields
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any, Literal, Optional, Union
 
@@ -305,7 +305,11 @@ class ClientObligationRead:
     description: Optional[str]
     amount: Optional[Decimal]
     due_date: Optional[date]
+    due_time: Optional[time]
+    location: Optional[str]
     status: ObligationStatus
+    added_by_client: bool
+    staff_seen_at: Optional[datetime]
     source_document_id: Optional[uuid.UUID]
     verified: bool
     verified_by_staff_id: Optional[uuid.UUID]
@@ -830,3 +834,52 @@ class ClientResourceMatch:
     query: ResourceQuery
     applied: list[AppliedFilter]
     results: ResourceSearchResponse
+
+
+# ============================================================
+# Calendar events (client obligations)
+# ============================================================
+
+@dataclass
+class EventWrite:
+    """What a client sends to add or change one of their own events."""
+    description: str
+    due_date: date
+    obligation_type: ObligationType = ObligationType.OTHER
+    due_time: Optional[time] = None
+    location: Optional[str] = None
+    amount: Optional[Decimal] = None
+
+
+@dataclass
+class EventRead:
+    id: uuid.UUID
+    client_id: uuid.UUID
+    obligation_type: ObligationType
+    description: Optional[str]
+    amount: Optional[Decimal]
+    due_date: Optional[date]
+    due_time: Optional[time]
+    location: Optional[str]
+    status: ObligationStatus  # OVERDUE is worked out from the date, never stored
+    added_by_client: bool
+    staff_seen_at: Optional[datetime]
+    created_at: datetime
+
+
+@dataclass
+class StaffEventRead(EventRead):
+    client_name: str = ""
+
+
+@dataclass
+class EventStatusUpdate:
+    status: ObligationStatus  # open or done
+
+
+@dataclass
+class CaseWorkerRead:
+    full_name: str
+    phone: Optional[str]
+    email: str
+    organization_name: Optional[str]

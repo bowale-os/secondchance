@@ -101,7 +101,11 @@ export interface ClientObligationRead extends Provenance {
   description: string | null;
   amount: string | null;
   due_date: string | null;
+  due_time: string | null; // "HH:MM:SS"
+  location: string | null;
   status: ObligationStatus;
+  added_by_client: boolean;
+  staff_seen_at: string | null;
 }
 
 export interface ClientContactRead extends Provenance {
