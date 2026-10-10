@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ProgressEvent } from '@scr/shared';
 
 vi.mock('expo/fetch', () => ({ fetch: vi.fn() }));
+vi.mock('expo-constants', () => ({ default: { expoConfig: {} } }));
 const { localToday, ndjsonLines, processDocument } = await import('../api/processStream');
 
 function streamOf(chunks: string[]) {

@@ -123,7 +123,8 @@ export const FAKE_ACTIONS: ActionsOutput = {
       order: 4,
       title: 'Tell your officer if you move or change jobs',
       details: 'Call or visit your parole officer each time your address or job changes.',
-      due: { ...none, type: 'relative', text: 'within 10 business days', anchor: 'document_date', offsetDays: 10, businessDays: true },
+      // Counts from the move or job change, not from the paper's date: no fixed day.
+      due: { ...none, text: 'within 10 business days of any change of address or employment' },
       location: null,
       contact: officer,
       bring: [],

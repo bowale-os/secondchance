@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, sizes } from '../theme';
-import { AppText } from './AppText';
+import { AppText, useTextScale } from './AppText';
 
 type Kind = 'primary' | 'secondary' | 'danger';
 
@@ -19,6 +19,7 @@ interface Props {
 
 export function BigButton({ label, icon, onPress, kind = 'primary', big, disabled, busy, hint }: Props) {
   const fg = kind === 'primary' ? colors.onMoss : colors.ink;
+  const scale = useTextScale();
   return (
     <Pressable
       onPress={onPress}
@@ -38,8 +39,8 @@ export function BigButton({ label, icon, onPress, kind = 'primary', big, disable
       ]}
     >
       <View style={styles.row}>
-        {busy ? <ActivityIndicator color={fg} /> : icon && <Ionicons name={icon} size={big ? 32 : 24} color={fg} />}
-        <AppText variant="label" style={{ color: fg, fontSize: big ? 22 : 20 }}>{label}</AppText>
+        {busy ? <ActivityIndicator color={fg} /> : icon && <Ionicons name={icon} size={(big ? 32 : 24) * scale} color={fg} />}
+        <AppText variant="label" style={{ color: fg, fontSize: (big ? 22 : 20) * scale, lineHeight: (big ? 28 : 26) * scale, flexShrink: 1 }}>{label}</AppText>
       </View>
     </Pressable>
   );

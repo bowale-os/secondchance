@@ -10,8 +10,9 @@ export interface AiRequest<T> {
   system: string;
   content: Anthropic.Beta.BetaContentBlockParam[];
   schema: z.ZodType<T>;
-  /** Which page an extract call is for (used by the fake client and in logs). */
+  /** Which page an extract call is for, and how many pages there are (used by the fake client). */
   page?: number;
+  pageCount?: number;
 }
 
 export interface AiClient {

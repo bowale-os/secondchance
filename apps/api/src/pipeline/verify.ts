@@ -91,6 +91,11 @@ function indexOriginal(original: string) {
 
 type Index = ReturnType<typeof indexOriginal>;
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+  'September', 'October', 'November', 'December'];
+/** 2026-10-30 → "October 30, 2026" */
+const humanDate = (iso: string) => `${MONTH_NAMES[+iso.slice(5, 7) - 1]} ${+iso.slice(8, 10)}, ${iso.slice(0, 4)}`;
+
 /** Values in a piece of generated text that are not on the original paper. */
 function unverifiedValues(text: string, idx: Index): string[] {
   const missing = new Set<string>();
@@ -122,7 +127,9 @@ export function verify(original: string, simplified: SimplifiedDocument, actions
 
     if (a.due.type === 'exact' && a.due.resolvedDate) {
       const md = a.due.resolvedDate.slice(5);
-      if (!idx.isoDates.has(a.due.resolvedDate) && !idx.yearlessMonthDays.has(md)) flagValue(a.due.resolvedDate, a.id);
+      if (!idx.isoDates.has(a.due.resolvedDate) && !idx.yearlessMonthDays.has(md)) {
+        flagValue(humanDate(a.due.resolvedDate), a.id);   // "October 30, 2026", not 2026-10-30
+      }
     }
 
     const quote = normalizeQuote(a.sourceQuote);

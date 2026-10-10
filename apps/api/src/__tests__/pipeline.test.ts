@@ -32,8 +32,9 @@ describe('processDocument (fake AI)', () => {
     const { result } = await run();
     const meet = result.actions.find(a => a.title === 'Meet your parole officer')!;
     expect(meet.due).toMatchObject({ resolvedDate: '2026-10-12', explanation: '72 hours after your release on Oct 9 = Oct 12' });
-    // 10 business days after the paper's date (Mon Oct 5) = Mon Oct 19
-    expect(result.actions.find(a => a.title.startsWith('Tell your officer'))!.due.resolvedDate).toBe('2026-10-19');
+    // "Within 10 business days of any change of address" counts from a move, not the paper's date.
+    expect(result.actions.find(a => a.title.startsWith('Tell your officer'))!.due)
+      .toMatchObject({ type: 'none', resolvedDate: null, text: 'within 10 business days of any change of address or employment' });
     expect(result.actions.every(a => a.priority === 'urgent')).toBe(true);   // parole paper
     expect(result.actions[0].title).toBe('Meet your parole officer');
   });
@@ -66,7 +67,14 @@ describe('processDocument (fake AI)', () => {
       actions: { actions: FAKE_ACTIONS.actions.map(a => a.order === 2 ? { ...a, due: { ...a.due, exactDate: '2026-10-31' } } : a) },
     });
     const { result } = await run(ai);
-    expect(result.flags.map(f => f.value)).toEqual(['$300.00', '2026-10-31']);
+    expect(result.flags.map(f => f.value)).toEqual(['$300.00', 'October 31, 2026']);
+  });
+
+  it('fake mode: a one-photo demo still gets the whole sample letter, with no false alarms', async () => {
+    const { result } = await run(undefined, { files: [page] });
+    expect(result.extracted.pages).toHaveLength(1);
+    expect(result.extracted.text).toContain('Reentry Orientation');
+    expect(result.flags).toEqual([]);
   });
 
   it('rejects AI output that breaks the schema', async () => {

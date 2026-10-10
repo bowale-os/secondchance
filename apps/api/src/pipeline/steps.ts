@@ -40,6 +40,7 @@ export async function extractText(ai: AiClient, pages: Page[]): Promise<Extracte
       const out = await ai.generate({
         step: 'extract',
         page: page.n,
+        pageCount: pages.length,
         system: EXTRACT_SYSTEM,
         schema: extractOutputSchema,
         content: [pageBlock(page), { type: 'text', text: `Transcribe page ${page.n}.` }],

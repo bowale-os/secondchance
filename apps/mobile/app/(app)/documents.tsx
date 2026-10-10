@@ -82,7 +82,7 @@ export default function Documents() {
                   <View style={{ flex: 1, gap: 2 }}>
                     <AppText variant="label">{d.title}</AppText>
                     <AppText variant="muted">
-                      {DOC_TYPE_LABELS[d.docType]} · Read {friendlyDate(d.createdAt.slice(0, 10))} · {open.length} {open.length === 1 ? 'step' : 'steps'} left
+                      {DOC_TYPE_LABELS[d.docType]} · Read {friendlyDate(localToday(new Date(d.createdAt)))} · {open.length} {open.length === 1 ? 'step' : 'steps'} left
                     </AppText>
                     {urgent > 0 && <AppText variant="label" style={{ fontSize: 16 }}>⚠ {urgent} urgent</AppText>}
                   </View>

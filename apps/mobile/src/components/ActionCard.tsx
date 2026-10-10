@@ -21,8 +21,9 @@ interface Props {
 
 export function dueLine(a: ActionItem, today: string, language: 'en' | 'es') {
   if (a.due.resolvedDate) return `${friendlyDate(a.due.resolvedDate, language)} · ${dueWords(a.due.resolvedDate, today)}`;
-  if (a.due.type === 'relative') return a.due.text ?? 'Date needed';
-  return 'No date on the paper';
+  // No fixed day, but the paper may still say when ("within 10 days of any change of address").
+  if (a.due.text) return a.due.text.charAt(0).toUpperCase() + a.due.text.slice(1);
+  return a.due.type === 'relative' ? 'Date needed' : 'No date on the paper';
 }
 
 /** What the read-aloud button says for this step. */

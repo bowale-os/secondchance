@@ -58,7 +58,8 @@ For each action return:
 - due: when it is due.
   - type "exact" when the paper gives a calendar date. Put it in exactDate as YYYY-MM-DD. If the paper gives a month and day with no year, use the year of the paper's date.
   - type "relative" when the paper gives a time from an event ("within 72 hours of release", "10 business days from the date of this letter"). Set anchor to release_date, document_date, or received_date, and put the amount in offsetHours (for hours) or offsetDays (for days), with businessDays true only if the paper says business or working days. Do NOT calculate the date yourself; leave exactDate null.
-  - type "none" when no time is given. Set every other due field to null.
+  - type "none" when no time is given, or when the time counts from something that may happen later ("within 10 days of any change of address", "within 24 hours of an arrest", "each time you move"). Put that wording in text so the person still sees it. Never count those from the paper's date.
+  - type "none" leaves every other due field null except text.
   - text: the due wording exactly as the paper says it, or null.
 - location: where to go, exactly as written, or null.
 - contact: who to contact, with name and phone or email exactly as written, or null.

@@ -25,7 +25,17 @@ export class FakeAiClient implements AiClient {
 
   private defaultAnswer(req: AiRequest<unknown>) {
     switch (req.step) {
-      case 'extract': return FAKE_PAGES[((req.page ?? 1) - 1) % FAKE_PAGES.length];
+      case 'extract': {
+        // Fewer uploads than sample pages: the last upload carries the rest of the letter,
+        // so a one-photo demo still matches the sample simple version and to-do list.
+        const n = req.page ?? 1;
+        const count = req.pageCount ?? FAKE_PAGES.length;
+        if (n === count && count < FAKE_PAGES.length) {
+          const rest = FAKE_PAGES.slice(n - 1);
+          return { ...rest[0], text: rest.map(p => p.text).join('\n\n') };
+        }
+        return FAKE_PAGES[(n - 1) % FAKE_PAGES.length];
+      }
       case 'classify': return FAKE_CLASSIFY;
       case 'simplify': return FAKE_SIMPLIFY;
       case 'actions': return FAKE_ACTIONS;

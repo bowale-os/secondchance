@@ -120,7 +120,9 @@ function Toggle({ label, hint, value, onChange }: { label: string; hint?: string
         {hint && <AppText variant="muted">{hint}</AppText>}
       </View>
       <Switch value={value} onValueChange={onChange} accessibilityLabel={label}
-        trackColor={{ true: colors.moss, false: colors.line }} thumbColor={colors.surface} />
+        trackColor={{ true: colors.moss, false: colors.line }} thumbColor={colors.surface}
+        // Web-only props: without them react-native-web draws its default teal.
+        {...({ activeThumbColor: colors.surface, activeTrackColor: colors.moss } as object)} />
     </View>
   );
 }
