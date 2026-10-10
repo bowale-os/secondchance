@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { errorText } from "../../lib/errors";
+import type { DocStatus } from "../../lib/clientDocuments";
 import { formatDate, humanize } from "../../lib/format";
 import type { OpeningHours, RequiredDocument, Resource } from "../../types";
 import {
@@ -7,7 +8,6 @@ import {
   CATEGORY_LABELS,
   COST_LABELS,
   DAY_NAMES,
-  DOCUMENT_LABELS,
   GENDER_LABELS,
   RECORDS_LABELS,
   VERIFICATION_LABELS,
@@ -19,6 +19,8 @@ import {
   safeLink,
   todayIndex,
 } from "./labels";
+import DocumentList from "./DocumentList";
+import JobWalkthrough from "./JobWalkthrough";
 import TransitBadge from "./TransitBadge";
 
 interface Props {
@@ -26,15 +28,17 @@ interface Props {
   /** GET /resources/{id}, from whichever API (staff or client) the page uses. */
   load: (id: string) => Promise<Resource>;
   onClose: () => void;
-  /** With a client selected: true if they have this document, false if missing, null if unknown. */
-  hasDocument?: (doc: RequiredDocument) => boolean | null;
+  /** With a client selected: whether they have each document the resource asks for. */
+  documentStatus?: (doc: RequiredDocument) => DocStatus;
+  /** Remembers job walkthrough progress per person: a client id, or "me" in the client portal. */
+  progressScope?: string;
 }
 
 /**
  * Full details for one resource. A modal <dialog>: the browser traps focus inside it and
  * closes it on Escape; focus goes back to whatever opened it.
  */
-export default function ResourceDrawer({ resourceId, load, onClose, hasDocument }: Props) {
+export default function ResourceDrawer({ resourceId, load, onClose, documentStatus, progressScope }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [resource, setResource] = useState<Resource | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +82,7 @@ export default function ResourceDrawer({ resourceId, load, onClose, hasDocument 
         </div>
 
         {error && <p className="dash-error" role="alert">{error}</p>}
-        {resource && <Details resource={resource} hasDocument={hasDocument} />}
+        {resource && <Details resource={resource} documentStatus={documentStatus} progressScope={progressScope} />}
       </div>
     </dialog>
   );
@@ -93,7 +97,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Details({ resource: r, hasDocument }: { resource: Resource; hasDocument?: Props["hasDocument"] }) {
+type DetailProps = Pick<Props, "documentStatus" | "progressScope"> & { resource: Resource };
+
+function Details({ resource: r, documentStatus, progressScope }: DetailProps) {
   const serves = [
     GENDER_LABELS[r.gender],
     r.families_welcome ? "Families welcome" : null,
@@ -133,7 +139,7 @@ function Details({ resource: r, hasDocument }: { resource: Resource; hasDocument
         {r.hours_note && <p className="res-note">{r.hours_note}</p>}
       </Section>
 
-      <CategoryDetails resource={r} />
+      <CategoryDetails resource={r} documentStatus={documentStatus} progressScope={progressScope} />
 
       <Section title="Who it serves">
         <ul className="res-list">
@@ -147,7 +153,7 @@ function Details({ resource: r, hasDocument }: { resource: Resource; hasDocument
         {r.required_documents.length > 0 ? (
           <>
             <p className="res-subhead">Bring:</p>
-            <DocumentList documents={r.required_documents} hasDocument={hasDocument} />
+            <DocumentList documents={r.required_documents} documentStatus={documentStatus} />
           </>
         ) : (
           <p>No documents needed.</p>
@@ -222,25 +228,7 @@ function Hours({ hours }: { hours: OpeningHours[] }) {
   );
 }
 
-/** Documents to bring; with a client selected, each says whether they have it. */
-export function DocumentList({ documents, hasDocument }: { documents: RequiredDocument[]; hasDocument?: Props["hasDocument"] }) {
-  return (
-    <ul className="res-list">
-      {documents.map((d) => {
-        const has = hasDocument?.(d) ?? null;
-        return (
-          <li key={d} className={has === false ? "res-doc-missing" : undefined}>
-            {DOCUMENT_LABELS[d]}
-            {has === true && <span className="res-doc-has"> ✓ on file</span>}
-            {has === false && <strong> ✗ missing, get this first</strong>}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function CategoryDetails({ resource: r }: { resource: Resource }) {
+function CategoryDetails({ resource: r, documentStatus, progressScope }: DetailProps) {
   switch (r.category) {
     case "shelter": {
       const d = r.details;
@@ -270,8 +258,14 @@ function CategoryDetails({ resource: r }: { resource: Resource }) {
             {d.pay_note && <li>Pay: {d.pay_note}</li>}
             {d.shift_note && <li>Shifts: {d.shift_note}</li>}
           </ul>
-          {/* Step 5: JobWalkthrough (d.steps) goes here. */}
           <ExternalLink label="Apply at" url={d.apply_url} />
+          <JobWalkthrough
+            key={r.id}
+            steps={d.steps}
+            requiredDocuments={r.required_documents}
+            documentStatus={documentStatus}
+            progressKey={`${progressScope ?? "staff"}:${r.id}`}
+          />
         </Section>
       );
     }
