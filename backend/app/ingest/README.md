@@ -25,7 +25,7 @@ ingest in the background when it starts, then every `INGEST_INTERVAL_HOURS` (def
 | Step | File | What it does |
 |---|---|---|
 | schedule | `scheduler.py` | Runs the pipeline on a timer, once at a time across workers. |
-| fetch + normalize | `samhsa.py`, `osm.py` | Source-specific. Raw API rows become `ResourceUpsert`. |
+| fetch + normalize | `samhsa.py`, `feed_america.py`, `osm.py` | Source-specific. Raw API rows become `ResourceUpsert`. |
 | contract check | `base.py` | Rejects a source whose output is malformed (bad phone, wrong details type, out-of-range position). |
 | sort | `base.py` | Orders by source priority, category, name, so results do not depend on server row order. |
 | merge | `runner.py` | Folds the same place from different sources into one resource. |
@@ -51,7 +51,7 @@ module to `SOURCES` in `base.py`.
 ## Source priority
 
 `SOURCES` in `base.py` is ordered best first. When two sources describe one place the earlier one
-keeps its values and only gains fields it was missing. Currently SAMHSA, then OSM (OSM is volunteer-edited, so its fields are marked LOW confidence).
+keeps its values and only gains fields it was missing. Currently SAMHSA, Feed America, then OSM (OSM is volunteer-edited, so its fields are marked LOW confidence).
 
 ## Duplicates
 
@@ -82,5 +82,6 @@ server and often returns 5xx; re-running fixes it.
 
 - No hours from SAMHSA, no records policy or medication info from OSM.
 - `near_transit` is never computed; nothing in the repo does it yet.
-- No classes/events source.
+- No classes/events source, and no shelter source beyond OSM.
+- Feed America (feedam.org, CC BY 4.0) is itself an aggregate of 211, Plentiful and FoodPantries.org, so its fields are LOW confidence and its hours are often missing. Keep the attribution: each row's `source_url` points back to feedam.org.
 - No offline tests or raw-response snapshots yet, so runs against live APIs are not reproducible.

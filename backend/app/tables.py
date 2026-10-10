@@ -216,6 +216,7 @@ class ScrapeSource(enum.Enum):
     EVENT_CALENDAR = "event_calendar"        # library and city calendars
     ORG_WEBSITE = "org_website"              # the organization's own site
     OSM = "osm"                              # OpenStreetMap (supplementary)
+    FEED_AMERICA = "feed_america"            # feedam.org food directory (CC BY 4.0)
 
     # Manual
     CURATED_IMPORT = "curated_import"        # hand-checked CSV/JSON seed

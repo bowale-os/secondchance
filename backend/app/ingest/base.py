@@ -15,7 +15,7 @@ from typing import Protocol
 
 import httpx
 
-from app.ingest import osm, samhsa
+from app.ingest import feed_america, osm, samhsa
 from app.ingest.common import IngestError
 from app.ingest.runner import merge_sources
 from app.schemas import DETAILS_FOR, ResourceUpsert
@@ -28,7 +28,7 @@ class Source(Protocol):
 
 
 # Best source first: when two sources describe one place, the earlier one's values win
-SOURCES: dict[str, Source] = {"samhsa": samhsa, "osm": osm}
+SOURCES: dict[str, Source] = {"samhsa": samhsa, "feed_america": feed_america, "osm": osm}
 
 
 def problems(item: ResourceUpsert) -> list[str]:
