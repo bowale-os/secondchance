@@ -16,6 +16,7 @@ export interface Http {
   getBlob(path: string): Promise<Blob>;
   post<T, B = undefined>(path: string, body?: B): Promise<T>;
   patch<T, B>(path: string, body: B): Promise<T>;
+  put<T, B>(path: string, body: B): Promise<T>;
   delete<T = void>(path: string): Promise<T>;
 }
 
@@ -66,6 +67,7 @@ export function createHttp(getToken: GetToken): Http {
     getBlob: async (path) => (await fetchOk("GET", path)).blob(),
     post: (path, body) => request("POST", path, body),
     patch: (path, body) => request("PATCH", path, body),
+    put: (path, body) => request("PUT", path, body),
     delete: (path) => request("DELETE", path),
   };
 }

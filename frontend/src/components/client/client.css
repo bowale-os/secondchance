@@ -47,3 +47,23 @@
   .record { flex-direction: column; }
   .doc-actions { justify-content: flex-start; }
 }
+
+/* Texting card (Overview) */
+.texting-card { display: grid; gap: .75rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--bg); max-width: 48rem; }
+.texting-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.texting-head h3 { margin: 0; font-size: 1rem; }
+.texting-body, .texting-form, .texting-confirm { display: grid; gap: .6rem; }
+.texting-body p, .texting-confirm p { margin: 0; max-width: 65ch; }
+.texting-form label { font-weight: 600; }
+.texting-form .dash-search { width: min(100%, 18rem); }
+.texting-check { display: flex; align-items: flex-start; gap: .6rem; font-weight: 400 !important; min-height: 3rem; }
+.texting-check input { width: 1.5rem; height: 1.5rem; margin: .1rem 0 0; flex: none; accent-color: var(--brand); }
+.texting-hint { margin: 0; color: var(--muted); font-size: .95rem; max-width: 65ch; }
+.texting-attn { margin: 0; padding: .75rem 1rem; background: var(--attn-bg); color: var(--attn-ink); border: 2px solid var(--attn-ink); border-radius: .75rem; max-width: 65ch; }
+.texting-notice { margin: 0; color: var(--brand); font-weight: 600; }
+.texting-error { margin: 0; padding: .75rem 1rem; background: var(--error-bg); color: var(--error-ink); border: 2px solid var(--error-ink); border-radius: .75rem; }
+.texting-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.texting-actions .dash-btn:disabled { opacity: .6; cursor: not-allowed; }
+.texting-off { background: var(--line); color: var(--ink); }
+.dash-btn-danger { background: var(--error-ink); border-color: var(--error-ink); }
+.dash-btn-danger:hover { background: #5f1515; border-color: #5f1515; }
