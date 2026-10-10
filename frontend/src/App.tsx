@@ -6,9 +6,11 @@ import SignupPage from "./components/auth/SignupPage";
 import StatusPage from "./components/auth/StatusPage";
 import ClientHome from "./components/client-portal/ClientHome";
 import ClientLoginPage from "./components/client-portal/ClientLoginPage";
+import CalendarPage from "./components/calendar/CalendarPage";
 import ClientPage from "./components/client/ClientPage";
 import Dashboard from "./components/dashboard/Dashboard";
-import type { AppNav } from "./components/layout/AppBar";
+import LearnPage from "./components/learn/LearnPage";
+import type { AppNav, Section } from "./components/layout/nav";
 import NewClientFlow from "./components/new-client/NewClientFlow";
 import ResourcesPage from "./components/resources/ResourcesPage";
 import { useClientSession } from "./hooks/useClientSession";
@@ -19,7 +21,16 @@ type View =
   | { name: "clients" }
   | { name: "client"; clientId: string }
   | { name: "new-client" }
-  | { name: "resources" };
+  | { name: "resources" }
+  | { name: "calendar" }
+  | { name: "learn" };
+
+const VIEW_FOR: Record<Section, View> = {
+  home: { name: "clients" },
+  resources: { name: "resources" },
+  calendar: { name: "calendar" },
+  learn: { name: "learn" },
+};
 
 export default function App() {
   const { isLoading, isAuthenticated, user, error, loginWithRedirect, logout } = useAuth0();
@@ -95,10 +106,10 @@ export default function App() {
 
   if (stage === "ready" && staff) {
     const toClients = () => setView({ name: "clients" });
-    // A client's page and the new-client flow both sit under "My clients".
+    // A client's page and the new-client flow both sit under Home.
     const nav: AppNav = {
-      section: view.name === "resources" ? "resources" : "clients",
-      go: (section) => setView(section === "resources" ? { name: "resources" } : { name: "clients" }),
+      section: view.name === "resources" || view.name === "calendar" || view.name === "learn" ? view.name : "home",
+      go: (section: Section) => setView(VIEW_FOR[section]),
     };
 
     switch (view.name) {
@@ -130,6 +141,10 @@ export default function App() {
         );
       case "resources":
         return <ResourcesPage staff={staff} nav={nav} onLogout={doLogout} />;
+      case "calendar":
+        return <CalendarPage staff={staff} nav={nav} onLogout={doLogout} />;
+      case "learn":
+        return <LearnPage staff={staff} nav={nav} onLogout={doLogout} />;
     }
   }
 

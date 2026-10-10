@@ -3,7 +3,8 @@ import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import { daysUntil } from "../../lib/format";
 import type { ClientRead, StaffRead } from "../../types";
-import AppBar, { type AppNav } from "../layout/AppBar";
+import AppShell from "../layout/AppShell";
+import type { AppNav } from "../layout/nav";
 import ClientRows from "./ClientRows";
 import StatTile from "./StatTile";
 import "./dashboard.css";
@@ -56,10 +57,7 @@ export default function Dashboard({ staff, nav, onNewClient, onSelectClient, onL
   const firstName = staff.full_name.split(" ")[0];
 
   return (
-    <div className="dash">
-      <a className="skip-link" href="#dash-main">Skip to main content</a>
-      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
-
+    <AppShell staff={staff} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div className="dash-title">
           <h1>{greeting()}, {firstName}</h1>
@@ -102,6 +100,6 @@ export default function Dashboard({ staff, nav, onNewClient, onSelectClient, onL
           )}
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }
