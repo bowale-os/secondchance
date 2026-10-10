@@ -32,4 +32,13 @@ export const config = {
   STORAGE_MODE: storageMode(process.env.EXPO_PUBLIC_STORAGE_MODE),
   /** TODO(cloud): set to true once the AWS setup checklist is done. */
   AWS_ENABLED: process.env.EXPO_PUBLIC_AWS_ENABLED === 'true',
+
+  /**
+   * Resource Map place data. 'sample' = bundled fake places (today); 'api' = the places backend.
+   * TODO(backend): switch to 'api' and set PLACES_API_URL once the backend exists.
+   */
+  PLACES_SOURCE: (process.env.EXPO_PUBLIC_PLACES_SOURCE === 'api' ? 'api' : 'sample') as 'sample' | 'api',
+  PLACES_API_URL: process.env.EXPO_PUBLIC_PLACES_API_URL ?? '',
+  /** Base map style URL (Amazon Location Service). Empty = county outlines only, no tiles. */
+  MAP_STYLE_URL: process.env.EXPO_PUBLIC_MAP_STYLE_URL ?? '',
 };

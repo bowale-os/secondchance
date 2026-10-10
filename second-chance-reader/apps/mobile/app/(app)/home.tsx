@@ -60,6 +60,7 @@ export default function Home() {
       <BigButton big icon="camera" label="Take a Photo" onPress={() => { capture.clear(); router.push('/capture'); }} />
       <BigButton big icon="document-attach" label="Upload a File" onPress={upload} busy={busy} />
       <BigButton big icon="folder-open" label="My Documents" kind="secondary" onPress={() => router.push('/documents')} />
+      <BigButton big icon="map" label="Resource Map" kind="secondary" onPress={() => router.push('/map')} />
 
       {error && <View style={styles.error} accessibilityRole="alert"><AppText variant="label">{error}</AppText></View>}
 
