@@ -1,0 +1,49 @@
+/* Client page. Builds on the shared .dash shell in dashboard/dashboard.css. */
+
+.client-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.avatar-lg { width: 4rem; height: 4rem; font-size: 1.25rem; }
+.client-head-main { flex: 1; min-width: 12rem; }
+.client-head h1 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.25; overflow-wrap: anywhere; }
+.client-sub { color: var(--muted); }
+
+.review-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.25rem; background: var(--attn-bg); color: var(--attn-ink); border: 2px solid var(--attn-ink); border-radius: 1rem; }
+.review-banner .dash-btn { background: var(--attn-ink); border-color: var(--attn-ink); }
+.review-banner .dash-btn:disabled { opacity: .6; cursor: not-allowed; }
+.all-verified { color: var(--brand); font-weight: 600; }
+
+/* Tabs */
+.tabs { display: flex; gap: .25rem; padding: 0 .75rem; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { min-height: 3rem; padding: 0 1rem; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+
+/* Overview */
+.panel-body { padding: 1.25rem; display: grid; gap: 1.5rem; }
+.facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.25rem 1.5rem; }
+.fact dt { font-size: .9rem; color: var(--muted); }
+.fact dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+.fact-missing { color: var(--muted); font-weight: 400; font-style: italic; }
+.notes h3 { font-size: 1rem; margin: 0 0 .25rem; }
+.notes p { white-space: pre-wrap; max-width: 65ch; }
+
+/* Records and documents */
+.record-group h3 { margin: 0; padding: .75rem 1.25rem; font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--line); }
+.record-group + .record-group h3 { border-top: 1px solid var(--line); }
+.record { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; }
+.record-main { min-width: 0; display: grid; gap: .15rem; justify-items: start; }
+.record-title { font-weight: 600; overflow-wrap: anywhere; }
+.record-details { color: var(--muted); font-size: .95rem; }
+.text-link { padding: 0; min-height: 0; border: 0; background: none; color: var(--brand); font: inherit; font-size: .95rem; text-decoration: underline; cursor: pointer; text-align: left; }
+.status { flex: none; padding: .2rem .7rem; border-radius: 999px; font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.status-ok { background: var(--brand-tint); color: var(--brand); }
+.status-review { background: var(--attn-bg); color: var(--attn-ink); }
+
+.doc-type { margin-left: .4rem; padding: .1rem .6rem; border-radius: 999px; background: var(--brand-tint); color: var(--brand); font-size: .8rem; font-weight: 600; }
+.doc-summary { margin: .35rem 0 0; max-width: 65ch; }
+.doc-warning { margin: .25rem 0 0; color: var(--attn-ink); font-size: .95rem; }
+.doc-actions { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 36rem) {
+  .record { flex-direction: column; }
+  .doc-actions { justify-content: flex-start; }
+}

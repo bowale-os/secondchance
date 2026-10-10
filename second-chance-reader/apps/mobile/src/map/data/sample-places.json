@@ -1,0 +1,3359 @@
+{
+  "categories": [
+    {
+      "id": "courts",
+      "label": "Courts",
+      "label_es": "Tribunales",
+      "icon": "bank",
+      "colorToken": "courts",
+      "order": 0
+    },
+    {
+      "id": "probation_parole",
+      "label": "Probation and parole",
+      "label_es": "Libertad condicional",
+      "icon": "clipboard-account",
+      "colorToken": "probation_parole",
+      "order": 1
+    },
+    {
+      "id": "id_license",
+      "label": "ID and driver's license",
+      "label_es": "Identificación y licencia",
+      "icon": "card-account-details",
+      "colorToken": "id_license",
+      "order": 2
+    },
+    {
+      "id": "benefits",
+      "label": "Benefits",
+      "label_es": "Beneficios",
+      "icon": "hand-heart",
+      "colorToken": "benefits",
+      "order": 3
+    },
+    {
+      "id": "legal_help",
+      "label": "Legal help",
+      "label_es": "Ayuda legal",
+      "icon": "scale-balance",
+      "colorToken": "legal_help",
+      "order": 4
+    },
+    {
+      "id": "health_recovery",
+      "label": "Health and recovery",
+      "label_es": "Salud y recuperación",
+      "icon": "medical-bag",
+      "colorToken": "health_recovery",
+      "order": 5
+    },
+    {
+      "id": "housing_shelter",
+      "label": "Housing and shelter",
+      "label_es": "Vivienda y refugio",
+      "icon": "home",
+      "colorToken": "housing_shelter",
+      "order": 6
+    },
+    {
+      "id": "food",
+      "label": "Food",
+      "label_es": "Comida",
+      "icon": "bowl-mix",
+      "colorToken": "food",
+      "order": 7
+    },
+    {
+      "id": "jobs_training",
+      "label": "Jobs and training",
+      "label_es": "Empleo y capacitación",
+      "icon": "briefcase",
+      "colorToken": "jobs_training",
+      "order": 8
+    },
+    {
+      "id": "libraries_computers",
+      "label": "Libraries and computers",
+      "label_es": "Bibliotecas y computadoras",
+      "icon": "book-open-variant",
+      "colorToken": "libraries_computers",
+      "order": 9
+    }
+  ],
+  "places": [
+    {
+      "id": "sample-courts-1",
+      "name": "SAMPLE — Atlanta County Courthouse",
+      "categoryId": "courts",
+      "buildingType": "County courthouse",
+      "location": {
+        "lat": 33.7265,
+        "lng": -84.415
+      },
+      "address": {
+        "street": "100 Sample St",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30303"
+      },
+      "county": "fulton",
+      "phone": "404-555-0100",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "16:30"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Pay fines and fees",
+        "Request court records",
+        "Jury check-in",
+        "Ask about court dates"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Case number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-courts-2",
+      "name": "SAMPLE — Tucker County Courthouse",
+      "categoryId": "courts",
+      "buildingType": "County courthouse",
+      "location": {
+        "lat": 33.846,
+        "lng": -84.2035
+      },
+      "address": {
+        "street": "101 Sample Ave",
+        "city": "Tucker",
+        "state": "GA",
+        "zip": "30084"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0101",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "16:30"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Pay fines and fees",
+        "Request court records",
+        "Jury check-in",
+        "Ask about court dates"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Case number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-courts-3",
+      "name": "SAMPLE — Kennesaw County Courthouse",
+      "categoryId": "courts",
+      "buildingType": "County courthouse",
+      "location": {
+        "lat": 34.0275,
+        "lng": -84.6195
+      },
+      "address": {
+        "street": "102 Sample Rd",
+        "city": "Kennesaw",
+        "state": "GA",
+        "zip": "30144"
+      },
+      "county": "cobb",
+      "phone": "404-555-0102",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "16:30"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Pay fines and fees",
+        "Request court records",
+        "Jury check-in",
+        "Ask about court dates"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Case number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-courts-4",
+      "name": "SAMPLE — Snellville County Courthouse",
+      "categoryId": "courts",
+      "buildingType": "County courthouse",
+      "location": {
+        "lat": 33.875,
+        "lng": -84.0425
+      },
+      "address": {
+        "street": "103 Sample Blvd",
+        "city": "Snellville",
+        "state": "GA",
+        "zip": "30078"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0103",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "16:30"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Pay fines and fees",
+        "Request court records",
+        "Jury check-in",
+        "Ask about court dates"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Case number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-probation_parole-1",
+      "name": "SAMPLE — Tucker Community Supervision Office",
+      "categoryId": "probation_parole",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.864,
+        "lng": -84.2215
+      },
+      "address": {
+        "street": "110 Sample St",
+        "city": "Tucker",
+        "state": "GA",
+        "zip": "30084"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0104",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 1,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "13:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "hoursNote": "Walk-ins until 3:00 PM",
+      "services": [
+        "Report to your officer",
+        "Drug testing",
+        "Pay supervision fees",
+        "Update your address"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Release papers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-probation_parole-2",
+      "name": "SAMPLE — Kennesaw Community Supervision Office",
+      "categoryId": "probation_parole",
+      "buildingType": "State office",
+      "location": {
+        "lat": 34.0455,
+        "lng": -84.6375
+      },
+      "address": {
+        "street": "111 Sample Ave",
+        "city": "Kennesaw",
+        "state": "GA",
+        "zip": "30144"
+      },
+      "county": "cobb",
+      "phone": "404-555-0105",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 1,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "13:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "hoursNote": "Walk-ins until 3:00 PM",
+      "services": [
+        "Report to your officer",
+        "Drug testing",
+        "Pay supervision fees",
+        "Update your address"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Release papers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-probation_parole-3",
+      "name": "SAMPLE — Snellville Community Supervision Office",
+      "categoryId": "probation_parole",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.8435,
+        "lng": -84.002
+      },
+      "address": {
+        "street": "112 Sample Rd",
+        "city": "Snellville",
+        "state": "GA",
+        "zip": "30078"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0106",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 1,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "13:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "hoursNote": "Walk-ins until 3:00 PM",
+      "services": [
+        "Report to your officer",
+        "Drug testing",
+        "Pay supervision fees",
+        "Update your address"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Release papers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-probation_parole-4",
+      "name": "SAMPLE — Jonesboro Community Supervision Office",
+      "categoryId": "probation_parole",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.521,
+        "lng": -84.354
+      },
+      "address": {
+        "street": "113 Sample Blvd",
+        "city": "Jonesboro",
+        "state": "GA",
+        "zip": "30236"
+      },
+      "county": "clayton",
+      "phone": "404-555-0107",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "12:00"
+        },
+        {
+          "day": 1,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "13:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "13:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "hoursNote": "Walk-ins until 3:00 PM",
+      "services": [
+        "Report to your officer",
+        "Drug testing",
+        "Pay supervision fees",
+        "Update your address"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Release papers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-id_license-1",
+      "name": "SAMPLE — Kennesaw Driver Services Center",
+      "categoryId": "id_license",
+      "buildingType": "State office",
+      "location": {
+        "lat": 34.014,
+        "lng": -84.597
+      },
+      "address": {
+        "street": "120 Sample St",
+        "city": "Kennesaw",
+        "state": "GA",
+        "zip": "30144"
+      },
+      "county": "cobb",
+      "phone": "404-555-0108",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 6,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Get a state ID card",
+        "Replace a lost ID",
+        "Renew a driver's license",
+        "Request a birth certificate"
+      ],
+      "whatToBring": [
+        "Proof of identity",
+        "Two proofs of address",
+        "Social Security number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-id_license-2",
+      "name": "SAMPLE — Snellville Driver Services Center",
+      "categoryId": "id_license",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.8615,
+        "lng": -84.02
+      },
+      "address": {
+        "street": "121 Sample Ave",
+        "city": "Snellville",
+        "state": "GA",
+        "zip": "30078"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0109",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 6,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Get a state ID card",
+        "Replace a lost ID",
+        "Renew a driver's license",
+        "Request a birth certificate"
+      ],
+      "whatToBring": [
+        "Proof of identity",
+        "Two proofs of address",
+        "Social Security number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-id_license-3",
+      "name": "SAMPLE — Jonesboro Driver Services Center",
+      "categoryId": "id_license",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.539,
+        "lng": -84.372
+      },
+      "address": {
+        "street": "122 Sample Rd",
+        "city": "Jonesboro",
+        "state": "GA",
+        "zip": "30236"
+      },
+      "county": "clayton",
+      "phone": "404-555-0110",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 6,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Get a state ID card",
+        "Replace a lost ID",
+        "Renew a driver's license",
+        "Request a birth certificate"
+      ],
+      "whatToBring": [
+        "Proof of identity",
+        "Two proofs of address",
+        "Social Security number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-id_license-4",
+      "name": "SAMPLE — College Park Driver Services Center",
+      "categoryId": "id_license",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.662,
+        "lng": -84.46025
+      },
+      "address": {
+        "street": "123 Sample Blvd",
+        "city": "College Park",
+        "state": "GA",
+        "zip": "30337"
+      },
+      "county": "fulton",
+      "phone": "404-555-0111",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 6,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Get a state ID card",
+        "Replace a lost ID",
+        "Renew a driver's license",
+        "Request a birth certificate"
+      ],
+      "whatToBring": [
+        "Proof of identity",
+        "Two proofs of address",
+        "Social Security number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-benefits-1",
+      "name": "SAMPLE — Snellville Family and Children Services Office",
+      "categoryId": "benefits",
+      "buildingType": "County office",
+      "location": {
+        "lat": 33.8795,
+        "lng": -84.038
+      },
+      "address": {
+        "street": "130 Sample St",
+        "city": "Snellville",
+        "state": "GA",
+        "zip": "30078"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0112",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Apply for SNAP (food stamps)",
+        "Apply for Medicaid",
+        "Apply for TANF",
+        "Get help with an application"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Proof of income, if any"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-benefits-2",
+      "name": "SAMPLE — Jonesboro Family and Children Services Office",
+      "categoryId": "benefits",
+      "buildingType": "County office",
+      "location": {
+        "lat": 33.5075,
+        "lng": -84.3315
+      },
+      "address": {
+        "street": "131 Sample Ave",
+        "city": "Jonesboro",
+        "state": "GA",
+        "zip": "30236"
+      },
+      "county": "clayton",
+      "phone": "404-555-0113",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Apply for SNAP (food stamps)",
+        "Apply for Medicaid",
+        "Apply for TANF",
+        "Get help with an application"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Proof of income, if any"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-benefits-3",
+      "name": "SAMPLE — College Park Family and Children Services Office",
+      "categoryId": "benefits",
+      "buildingType": "County office",
+      "location": {
+        "lat": 33.653,
+        "lng": -84.4445
+      },
+      "address": {
+        "street": "132 Sample Rd",
+        "city": "College Park",
+        "state": "GA",
+        "zip": "30337"
+      },
+      "county": "fulton",
+      "phone": "404-555-0114",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Apply for SNAP (food stamps)",
+        "Apply for Medicaid",
+        "Apply for TANF",
+        "Get help with an application"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Proof of income, if any"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-benefits-4",
+      "name": "SAMPLE — Stone Mountain Family and Children Services Office",
+      "categoryId": "benefits",
+      "buildingType": "County office",
+      "location": {
+        "lat": 33.8215,
+        "lng": -84.1835
+      },
+      "address": {
+        "street": "133 Sample Blvd",
+        "city": "Stone Mountain",
+        "state": "GA",
+        "zip": "30083"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0115",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Apply for SNAP (food stamps)",
+        "Apply for Medicaid",
+        "Apply for TANF",
+        "Get help with an application"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Proof of income, if any"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-legal_help-1",
+      "name": "SAMPLE — Jonesboro Legal Aid Office",
+      "categoryId": "legal_help",
+      "buildingType": "Nonprofit office",
+      "location": {
+        "lat": 33.5255,
+        "lng": -84.3495
+      },
+      "address": {
+        "street": "140 Sample St",
+        "city": "Jonesboro",
+        "state": "GA",
+        "zip": "30236"
+      },
+      "county": "clayton",
+      "phone": "404-555-0116",
+      "hours": [
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Free legal advice",
+        "Record restriction (expungement) help",
+        "Housing and benefits disputes",
+        "Child support questions"
+      ],
+      "whatToBring": [
+        "Any court papers you have"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-legal_help-2",
+      "name": "SAMPLE — College Park Legal Aid Office",
+      "categoryId": "legal_help",
+      "buildingType": "Nonprofit office",
+      "location": {
+        "lat": 33.671,
+        "lng": -84.4625
+      },
+      "address": {
+        "street": "141 Sample Ave",
+        "city": "College Park",
+        "state": "GA",
+        "zip": "30337"
+      },
+      "county": "fulton",
+      "phone": "404-555-0117",
+      "hours": [
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Free legal advice",
+        "Record restriction (expungement) help",
+        "Housing and benefits disputes",
+        "Child support questions"
+      ],
+      "whatToBring": [
+        "Any court papers you have"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-legal_help-3",
+      "name": "SAMPLE — Stone Mountain Legal Aid Office",
+      "categoryId": "legal_help",
+      "buildingType": "Nonprofit office",
+      "location": {
+        "lat": 33.79,
+        "lng": -84.143
+      },
+      "address": {
+        "street": "142 Sample Rd",
+        "city": "Stone Mountain",
+        "state": "GA",
+        "zip": "30083"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0118",
+      "hours": [
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Free legal advice",
+        "Record restriction (expungement) help",
+        "Housing and benefits disputes",
+        "Child support questions"
+      ],
+      "whatToBring": [
+        "Any court papers you have"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-05-15",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-legal_help-4",
+      "name": "SAMPLE — Austell Legal Aid Office",
+      "categoryId": "legal_help",
+      "buildingType": "Nonprofit office",
+      "location": {
+        "lat": 33.8085,
+        "lng": -84.625
+      },
+      "address": {
+        "street": "143 Sample Blvd",
+        "city": "Austell",
+        "state": "GA",
+        "zip": "30106"
+      },
+      "county": "cobb",
+      "phone": "404-555-0119",
+      "hours": [
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Free legal advice",
+        "Record restriction (expungement) help",
+        "Housing and benefits disputes",
+        "Child support questions"
+      ],
+      "whatToBring": [
+        "Any court papers you have"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-health_recovery-1",
+      "name": "SAMPLE — College Park Community Health Center",
+      "categoryId": "health_recovery",
+      "buildingType": "Health center",
+      "location": {
+        "lat": 33.64963,
+        "lng": -84.44225
+      },
+      "address": {
+        "street": "150 Sample St",
+        "city": "College Park",
+        "state": "GA",
+        "zip": "30337"
+      },
+      "county": "fulton",
+      "phone": "404-555-0120",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "13:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Doctor visits",
+        "Mental health counseling",
+        "Substance use treatment",
+        "Help getting medicine"
+      ],
+      "whatToBring": [
+        "Photo ID, if you have one"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-health_recovery-2",
+      "name": "SAMPLE — Stone Mountain Community Health Center",
+      "categoryId": "health_recovery",
+      "buildingType": "Health center",
+      "location": {
+        "lat": 33.808,
+        "lng": -84.161
+      },
+      "address": {
+        "street": "151 Sample Ave",
+        "city": "Stone Mountain",
+        "state": "GA",
+        "zip": "30083"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0121",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "13:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Doctor visits",
+        "Mental health counseling",
+        "Substance use treatment",
+        "Help getting medicine"
+      ],
+      "whatToBring": [
+        "Photo ID, if you have one"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-health_recovery-3",
+      "name": "SAMPLE — Austell Community Health Center",
+      "categoryId": "health_recovery",
+      "buildingType": "Health center",
+      "location": {
+        "lat": 33.8265,
+        "lng": -84.643
+      },
+      "address": {
+        "street": "152 Sample Rd",
+        "city": "Austell",
+        "state": "GA",
+        "zip": "30106"
+      },
+      "county": "cobb",
+      "phone": "404-555-0122",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "13:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Doctor visits",
+        "Mental health counseling",
+        "Substance use treatment",
+        "Help getting medicine"
+      ],
+      "whatToBring": [
+        "Photo ID, if you have one"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-health_recovery-4",
+      "name": "SAMPLE — Lawrenceville Community Health Center",
+      "categoryId": "health_recovery",
+      "buildingType": "Health center",
+      "location": {
+        "lat": 33.9335,
+        "lng": -84.015
+      },
+      "address": {
+        "street": "153 Sample Blvd",
+        "city": "Lawrenceville",
+        "state": "GA",
+        "zip": "30046"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0123",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "13:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "services": [
+        "Doctor visits",
+        "Mental health counseling",
+        "Substance use treatment",
+        "Help getting medicine"
+      ],
+      "whatToBring": [
+        "Photo ID, if you have one"
+      ],
+      "languages": [
+        "en",
+        "es"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-housing_shelter-1",
+      "name": "SAMPLE — Stone Mountain Shelter and Housing Help",
+      "categoryId": "housing_shelter",
+      "buildingType": "Nonprofit shelter",
+      "location": {
+        "lat": 33.826,
+        "lng": -84.179
+      },
+      "address": {
+        "street": "160 Sample St",
+        "city": "Stone Mountain",
+        "state": "GA",
+        "zip": "30083"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0124",
+      "hours": [
+        {
+          "day": 0,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 1,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 2,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 3,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 4,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 5,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "23:59"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "Beds assigned at 6:00 PM",
+      "services": [
+        "Emergency beds",
+        "Transitional housing referrals",
+        "Showers and laundry",
+        "Mail address"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-housing_shelter-2",
+      "name": "SAMPLE — Austell Shelter and Housing Help",
+      "categoryId": "housing_shelter",
+      "buildingType": "Nonprofit shelter",
+      "location": {
+        "lat": 33.8085,
+        "lng": -84.64075
+      },
+      "address": {
+        "street": "161 Sample Ave",
+        "city": "Austell",
+        "state": "GA",
+        "zip": "30106"
+      },
+      "county": "cobb",
+      "phone": "404-555-0125",
+      "hours": [
+        {
+          "day": 0,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 1,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 2,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 3,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 4,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 5,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "23:59"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "Beds assigned at 6:00 PM",
+      "services": [
+        "Emergency beds",
+        "Transitional housing referrals",
+        "Showers and laundry",
+        "Mail address"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-housing_shelter-3",
+      "name": "SAMPLE — Lawrenceville Shelter and Housing Help",
+      "categoryId": "housing_shelter",
+      "buildingType": "Nonprofit shelter",
+      "location": {
+        "lat": 33.9515,
+        "lng": -83.9745
+      },
+      "address": {
+        "street": "162 Sample Rd",
+        "city": "Lawrenceville",
+        "state": "GA",
+        "zip": "30046"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0126",
+      "hours": [
+        {
+          "day": 0,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 1,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 2,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 3,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 4,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 5,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "23:59"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "Beds assigned at 6:00 PM",
+      "services": [
+        "Emergency beds",
+        "Transitional housing referrals",
+        "Showers and laundry",
+        "Mail address"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-housing_shelter-4",
+      "name": "SAMPLE — Forest Park Shelter and Housing Help",
+      "categoryId": "housing_shelter",
+      "buildingType": "Nonprofit shelter",
+      "location": {
+        "lat": 33.631,
+        "lng": -84.3735
+      },
+      "address": {
+        "street": "163 Sample Blvd",
+        "city": "Forest Park",
+        "state": "GA",
+        "zip": "30297"
+      },
+      "county": "clayton",
+      "phone": "404-555-0127",
+      "hours": [
+        {
+          "day": 0,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 1,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 2,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 3,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 4,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 5,
+          "open": "00:00",
+          "close": "23:59"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "23:59"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "Beds assigned at 6:00 PM",
+      "services": [
+        "Emergency beds",
+        "Transitional housing referrals",
+        "Showers and laundry",
+        "Mail address"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-food-1",
+      "name": "SAMPLE — Austell Food Pantry",
+      "categoryId": "food",
+      "buildingType": "Church fellowship hall",
+      "location": {
+        "lat": 33.813,
+        "lng": -84.6205
+      },
+      "address": {
+        "street": "170 Sample St",
+        "city": "Austell",
+        "state": "GA",
+        "zip": "30106"
+      },
+      "county": "cobb",
+      "phone": "404-555-0128",
+      "hours": [
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "12:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "No ID needed",
+      "services": [
+        "Free groceries",
+        "Hot meals on Saturdays",
+        "Baby food and diapers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-food-2",
+      "name": "SAMPLE — Lawrenceville Food Pantry",
+      "categoryId": "food",
+      "buildingType": "Church fellowship hall",
+      "location": {
+        "lat": 33.9695,
+        "lng": -83.9925
+      },
+      "address": {
+        "street": "171 Sample Ave",
+        "city": "Lawrenceville",
+        "state": "GA",
+        "zip": "30046"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0129",
+      "hours": [
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "12:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "No ID needed",
+      "services": [
+        "Free groceries",
+        "Hot meals on Saturdays",
+        "Baby food and diapers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "temporarily_closed",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z",
+      "statusNote": "Closed for repairs until November"
+    },
+    {
+      "id": "sample-food-3",
+      "name": "SAMPLE — Forest Park Food Pantry",
+      "categoryId": "food",
+      "buildingType": "Church fellowship hall",
+      "location": {
+        "lat": 33.5995,
+        "lng": -84.3915
+      },
+      "address": {
+        "street": "172 Sample Rd",
+        "city": "Forest Park",
+        "state": "GA",
+        "zip": "30297"
+      },
+      "county": "clayton",
+      "phone": "404-555-0130",
+      "hours": [
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "12:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "No ID needed",
+      "services": [
+        "Free groceries",
+        "Hot meals on Saturdays",
+        "Baby food and diapers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-food-4",
+      "name": "SAMPLE — Sandy Springs Food Pantry",
+      "categoryId": "food",
+      "buildingType": "Church fellowship hall",
+      "location": {
+        "lat": 33.915,
+        "lng": -84.361
+      },
+      "address": {
+        "street": "173 Sample Blvd",
+        "city": "Sandy Springs",
+        "state": "GA",
+        "zip": "30328"
+      },
+      "county": "fulton",
+      "phone": "404-555-0131",
+      "hours": [
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "09:00",
+          "close": "12:00"
+        }
+      ],
+      "hoursExceptions": [],
+      "hoursNote": "No ID needed",
+      "services": [
+        "Free groceries",
+        "Hot meals on Saturdays",
+        "Baby food and diapers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-jobs_training-1",
+      "name": "SAMPLE — Lawrenceville Career Center",
+      "categoryId": "jobs_training",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.938,
+        "lng": -84.0105
+      },
+      "address": {
+        "street": "180 Sample St",
+        "city": "Lawrenceville",
+        "state": "GA",
+        "zip": "30046"
+      },
+      "county": "gwinnett",
+      "phone": "404-555-0132",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Job search help",
+        "Resume help",
+        "Reentry job programs",
+        "Free job training classes"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Social Security card"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-jobs_training-2",
+      "name": "SAMPLE — Forest Park Career Center",
+      "categoryId": "jobs_training",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.6175,
+        "lng": -84.351
+      },
+      "address": {
+        "street": "181 Sample Ave",
+        "city": "Forest Park",
+        "state": "GA",
+        "zip": "30297"
+      },
+      "county": "clayton",
+      "phone": "404-555-0133",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Job search help",
+        "Resume help",
+        "Reentry job programs",
+        "Free job training classes"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Social Security card"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-jobs_training-3",
+      "name": "SAMPLE — Sandy Springs Career Center",
+      "categoryId": "jobs_training",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.933,
+        "lng": -84.379
+      },
+      "address": {
+        "street": "182 Sample Rd",
+        "city": "Sandy Springs",
+        "state": "GA",
+        "zip": "30328"
+      },
+      "county": "fulton",
+      "phone": "404-555-0134",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Job search help",
+        "Resume help",
+        "Reentry job programs",
+        "Free job training classes"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Social Security card"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-jobs_training-4",
+      "name": "SAMPLE — Lithonia Career Center",
+      "categoryId": "jobs_training",
+      "buildingType": "State office",
+      "location": {
+        "lat": 33.7345,
+        "lng": -84.123
+      },
+      "address": {
+        "street": "183 Sample Blvd",
+        "city": "Lithonia",
+        "state": "GA",
+        "zip": "30058"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0135",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "17:00"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "17:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Job search help",
+        "Resume help",
+        "Reentry job programs",
+        "Free job training classes"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Social Security card"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "permanently_closed",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-libraries_computers-1",
+      "name": "SAMPLE — Forest Park Public Library",
+      "categoryId": "libraries_computers",
+      "buildingType": "Public library",
+      "location": {
+        "lat": 33.6355,
+        "lng": -84.369
+      },
+      "address": {
+        "street": "190 Sample St",
+        "city": "Forest Park",
+        "state": "GA",
+        "zip": "30297"
+      },
+      "county": "clayton",
+      "phone": "404-555-0136",
+      "hours": [
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 0,
+          "open": "14:00",
+          "close": "18:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Free computers and internet",
+        "Printing and copies",
+        "Help with online forms",
+        "Quiet place to read"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-libraries_computers-2",
+      "name": "SAMPLE — Sandy Springs Public Library",
+      "categoryId": "libraries_computers",
+      "buildingType": "Public library",
+      "location": {
+        "lat": 33.9015,
+        "lng": -84.397
+      },
+      "address": {
+        "street": "191 Sample Ave",
+        "city": "Sandy Springs",
+        "state": "GA",
+        "zip": "30328"
+      },
+      "county": "fulton",
+      "phone": "404-555-0137",
+      "hours": [
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 0,
+          "open": "14:00",
+          "close": "18:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Free computers and internet",
+        "Printing and copies",
+        "Help with online forms",
+        "Quiet place to read"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-libraries_computers-3",
+      "name": "SAMPLE — Lithonia Public Library",
+      "categoryId": "libraries_computers",
+      "buildingType": "Public library",
+      "location": {
+        "lat": 33.703,
+        "lng": -84.0825
+      },
+      "address": {
+        "street": "192 Sample Rd",
+        "city": "Lithonia",
+        "state": "GA",
+        "zip": "30058"
+      },
+      "county": "dekalb",
+      "phone": "404-555-0138",
+      "hours": [
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 0,
+          "open": "14:00",
+          "close": "18:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Free computers and internet",
+        "Printing and copies",
+        "Help with online forms",
+        "Quiet place to read"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-libraries_computers-4",
+      "name": "SAMPLE — Marietta Public Library",
+      "categoryId": "libraries_computers",
+      "buildingType": "Public library",
+      "location": {
+        "lat": 33.9565,
+        "lng": -84.5455
+      },
+      "address": {
+        "street": "193 Sample Blvd",
+        "city": "Marietta",
+        "state": "GA",
+        "zip": "30060"
+      },
+      "county": "cobb",
+      "phone": "404-555-0139",
+      "hours": [
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 6,
+          "open": "10:00",
+          "close": "18:00"
+        },
+        {
+          "day": 0,
+          "open": "14:00",
+          "close": "18:00"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Free computers and internet",
+        "Printing and copies",
+        "Help with online forms",
+        "Quiet place to read"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": false,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": "sample-courts-1b",
+      "name": "SAMPLE — Atlanta State Court (same building)",
+      "categoryId": "courts",
+      "buildingType": "County courthouse",
+      "location": {
+        "lat": 33.7265,
+        "lng": -84.415
+      },
+      "address": {
+        "street": "100 Sample St",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30303"
+      },
+      "county": "fulton",
+      "phone": "404-555-0140",
+      "hours": [
+        {
+          "day": 1,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 2,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 3,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 4,
+          "open": "08:00",
+          "close": "16:30"
+        },
+        {
+          "day": 5,
+          "open": "08:00",
+          "close": "16:30"
+        }
+      ],
+      "hoursExceptions": [
+        {
+          "date": "2026-11-11",
+          "closed": true,
+          "note": "Veterans Day"
+        },
+        {
+          "date": "2026-11-26",
+          "closed": true,
+          "note": "Thanksgiving"
+        },
+        {
+          "date": "2026-11-27",
+          "closed": true,
+          "note": "Day after Thanksgiving"
+        },
+        {
+          "date": "2026-12-25",
+          "closed": true,
+          "note": "Christmas"
+        }
+      ],
+      "services": [
+        "Traffic tickets",
+        "Misdemeanor cases",
+        "Pay fines and fees"
+      ],
+      "whatToBring": [
+        "Photo ID",
+        "Case number"
+      ],
+      "languages": [
+        "en"
+      ],
+      "wheelchairAccessible": true,
+      "status": "open",
+      "lastVerified": "2026-10-01",
+      "isSample": true,
+      "updatedAt": "2026-10-01T12:00:00Z"
+    }
+  ]
+}
