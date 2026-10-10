@@ -7,12 +7,14 @@ export type ResourceRead = Resource;
 /**
  * ResourceQuery as a query string. Lists repeat their key (`categories=food&categories=jobs`),
  * which is how FastAPI reads `list[str]` params; `origin` is split into `origin_lat` / `origin_lng`.
- * Unset and false-y filters are left out, so `near_transit: false` means "don't filter".
+ * Unset and empty filters are left out. `false` is left out too unless `keepFalse` is set:
+ * in a search it means "don't filter", but in overrides it turns off a filter the profile set.
  */
-export function toSearchParams(query: ResourceQuery): string {
+export function toSearchParams(query: ResourceQuery, { keepFalse = false } = {}): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query) as [keyof ResourceQuery, unknown][]) {
-    if (value === undefined || value === null || value === "" || value === false) continue;
+    if (value === undefined || value === null || value === "") continue;
+    if (value === false && !keepFalse) continue;
     if (key === "origin") {
       const { lat, lng } = value as { lat: number; lng: number };
       params.set("origin_lat", String(lat));
@@ -39,12 +41,15 @@ export function createResourcesApi(http: Http) {
   };
 }
 
-/** Staff only: filters pre-set from one of my assigned clients' profile (404 if not mine). */
+/**
+ * Staff only: filters pre-set from one of my assigned clients' profile (404 if not mine).
+ * `overrides` replace the profile's value for each key they set; the rest still come from the profile.
+ */
 export function createClientResourcesApi(http: Http) {
   return {
     /** GET /clients/{id}/resources */
-    matchesFor: (clientId: string): Promise<ClientResourceMatch> =>
-      http.get<ClientResourceMatch>(`/clients/${clientId}/resources`),
+    matchesFor: (clientId: string, overrides: ResourceQuery = {}): Promise<ClientResourceMatch> =>
+      http.get<ClientResourceMatch>(`/clients/${clientId}/resources${toSearchParams(overrides, { keepFalse: true })}`),
   };
 }
 
@@ -52,7 +57,8 @@ export function createClientResourcesApi(http: Http) {
 export function createMyResourcesApi(http: Http) {
   return {
     /** GET /me/resources */
-    mine: (): Promise<ClientResourceMatch> => http.get<ClientResourceMatch>("/me/resources"),
+    mine: (overrides: ResourceQuery = {}): Promise<ClientResourceMatch> =>
+      http.get<ClientResourceMatch>(`/me/resources${toSearchParams(overrides, { keepFalse: true })}`),
   };
 }
 

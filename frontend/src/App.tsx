@@ -8,9 +8,18 @@ import ClientHome from "./components/client-portal/ClientHome";
 import ClientLoginPage from "./components/client-portal/ClientLoginPage";
 import ClientPage from "./components/client/ClientPage";
 import Dashboard from "./components/dashboard/Dashboard";
+import type { AppNav } from "./components/layout/AppBar";
 import NewClientFlow from "./components/new-client/NewClientFlow";
+import ResourcesPage from "./components/resources/ResourcesPage";
 import { useClientSession } from "./hooks/useClientSession";
 import { toStaffSignup, type StaffRead } from "./schemas";
+
+/** Which staff screen is showing. */
+type View =
+  | { name: "clients" }
+  | { name: "client"; clientId: string }
+  | { name: "new-client" }
+  | { name: "resources" };
 
 export default function App() {
   const { isLoading, isAuthenticated, user, error, loginWithRedirect, logout } = useAuth0();
@@ -19,8 +28,7 @@ export default function App() {
   const [stage, setStage] = useState<"checking" | "needs-signup" | "ready" | "error">("checking");
   const [staff, setStaff] = useState<StaffRead | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [creatingClient, setCreatingClient] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [view, setView] = useState<View>({ name: "clients" });
   const [listVersion, setListVersion] = useState(0); // bump to reload the client list
 
   const [showClientLogin, setShowClientLogin] = useState(false);
@@ -85,41 +93,44 @@ export default function App() {
     );
   }
 
-  if (stage === "ready" && staff && !creatingClient && !selectedClientId) {
-    return (
-      <Dashboard
-        key={listVersion}
-        staff={staff}
-        onNewClient={() => setCreatingClient(true)}
-        onSelectClient={setSelectedClientId}
-        onLogout={doLogout}
-      />
-    );
-  }
+  if (stage === "ready" && staff) {
+    const toClients = () => setView({ name: "clients" });
+    // A client's page and the new-client flow both sit under "My clients".
+    const nav: AppNav = {
+      section: view.name === "resources" ? "resources" : "clients",
+      go: (section) => setView(section === "resources" ? { name: "resources" } : { name: "clients" }),
+    };
 
-  if (stage === "ready" && staff && selectedClientId && !creatingClient) {
-    return (
-      <ClientPage
-        clientId={selectedClientId}
-        staff={staff}
-        onBack={() => setSelectedClientId(null)}
-        onLogout={doLogout}
-      />
-    );
-  }
-
-  if (stage === "ready" && staff && creatingClient) {
-    return (
-      <NewClientFlow
-        staff={staff}
-        onLogout={doLogout}
-        onCancel={() => setCreatingClient(false)}
-        onCreated={() => {
-          setCreatingClient(false);
-          setListVersion((v) => v + 1);
-        }}
-      />
-    );
+    switch (view.name) {
+      case "clients":
+        return (
+          <Dashboard
+            key={listVersion}
+            staff={staff}
+            nav={nav}
+            onNewClient={() => setView({ name: "new-client" })}
+            onSelectClient={(clientId) => setView({ name: "client", clientId })}
+            onLogout={doLogout}
+          />
+        );
+      case "client":
+        return <ClientPage clientId={view.clientId} staff={staff} nav={nav} onBack={toClients} onLogout={doLogout} />;
+      case "new-client":
+        return (
+          <NewClientFlow
+            staff={staff}
+            nav={nav}
+            onLogout={doLogout}
+            onCancel={toClients}
+            onCreated={() => {
+              toClients();
+              setListVersion((v) => v + 1);
+            }}
+          />
+        );
+      case "resources":
+        return <ResourcesPage staff={staff} nav={nav} onLogout={doLogout} />;
+    }
   }
 
   if (stage === "needs-signup" && user) {
