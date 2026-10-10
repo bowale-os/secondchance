@@ -555,3 +555,51 @@ class Appointment(IdMixin, TimestampMixin, Base):
 
     client: Mapped["Client"] = relationship(back_populates="appointments")
     obligation: Mapped[Optional["ClientObligation"]] = relationship(back_populates="appointments")
+
+
+# ============================================================
+# Resources (shelters, food, fair-chance jobs, recovery, classes, events)
+# Shapes mirror frontend/src/types/resource.types.ts. Enum-like fields are plain
+# strings (validated on ingest) so adding a value doesn't need a Postgres enum migration.
+# ============================================================
+
+class Resource(IdMixin, TimestampMixin, Base):
+    __tablename__ = "resources"
+
+    # Stable key from the source (seed file or scraper) so re-ingest updates in place.
+    source_key: Mapped[str] = mapped_column(String(200), unique=True)
+    category: Mapped[str] = mapped_column(String(20), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+
+    address: Mapped[Optional[dict]] = mapped_column(JSON)      # {street, city, state, zip}
+    lat: Mapped[Optional[float]] = mapped_column()
+    lng: Mapped[Optional[float]] = mapped_column()
+    phone: Mapped[Optional[str]] = mapped_column(String(20))   # E.164
+    website: Mapped[Optional[str]] = mapped_column(String(500))
+
+    hours: Mapped[list] = mapped_column(JSON, default=list)    # [{day, opens, closes, label}]
+    hours_note: Mapped[Optional[str]] = mapped_column(String(300))
+
+    gender: Mapped[str] = mapped_column(String(10), default="unknown")
+    families_welcome: Mapped[str] = mapped_column(String(10), default="unknown")
+    records_policy: Mapped[str] = mapped_column(String(20), default="unknown")
+    restrictions_note: Mapped[Optional[str]] = mapped_column(String(500))
+    languages: Mapped[list] = mapped_column(JSON, default=list)
+    cost_type: Mapped[str] = mapped_column(String(20), default="unknown")
+
+    access_methods: Mapped[list] = mapped_column(JSON, default=list)
+    required_documents: Mapped[list] = mapped_column(JSON, default=list)
+    details: Mapped[dict] = mapped_column(JSON, default=dict)  # per-category, see types
+
+    # Computed at ingest from location + transit stops.
+    near_transit: Mapped[Optional[bool]] = mapped_column(Boolean)
+    nearest_stops: Mapped[list] = mapped_column(JSON, default=list)
+
+    verification: Mapped[str] = mapped_column(String(20), default="unverified")
+    source_url: Mapped[Optional[str]] = mapped_column(String(500))
+    last_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    field_meta: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

@@ -1,0 +1,642 @@
+{
+  "_note": "SAMPLE DATA FOR TESTING ONLY. Every listing is made up: names, phones (555-01xx) and addresses are not real services. Replace with the hand-checked RESOURCES_FILE before any pilot.",
+  "resources": [
+    {
+      "key": "sample-shelter-men-downtown",
+      "category": "shelter",
+      "name": "SAMPLE Downtown Men's Shelter",
+      "description": "Test listing, not a real service. Overnight beds for men.",
+      "address": {
+        "street": "100 Sample St SW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30303"
+      },
+      "location": {
+        "lat": 33.753,
+        "lng": -84.393
+      },
+      "phone": "+14045550101",
+      "hours": [
+        {
+          "day": 0,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 1,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 2,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 3,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 4,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 5,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        },
+        {
+          "day": 6,
+          "opens": "18:00",
+          "closes": "07:00",
+          "label": "Bed check-in"
+        }
+      ],
+      "hours_note": "Usually full by 7 PM",
+      "gender": "men",
+      "families_welcome": "no",
+      "records_policy": "accepted",
+      "languages": [
+        "en"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in"
+      ],
+      "required_documents": [],
+      "details": {
+        "check_in_time": "18:00",
+        "curfew": "22:00",
+        "max_stay_days": 30,
+        "sober_required": "yes"
+      },
+      "verification": "verified"
+    },
+    {
+      "key": "sample-shelter-women-families",
+      "category": "shelter",
+      "name": "SAMPLE Westside Women & Families Shelter",
+      "description": "Test listing, not a real service. Rooms for women and families with children.",
+      "address": {
+        "street": "200 Sample Ave SW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30310"
+      },
+      "location": {
+        "lat": 33.7375,
+        "lng": -84.411
+      },
+      "phone": "+14045550102",
+      "hours": [
+        {
+          "day": 0,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 1,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 2,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 4,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 5,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        },
+        {
+          "day": 6,
+          "opens": "17:00",
+          "closes": "08:00",
+          "label": null
+        }
+      ],
+      "gender": "women",
+      "families_welcome": "yes",
+      "records_policy": "case_by_case",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in",
+        "referral_required"
+      ],
+      "required_documents": [
+        "photo_id",
+        "birth_certificate"
+      ],
+      "details": {
+        "check_in_time": "17:00",
+        "curfew": null,
+        "max_stay_days": 90,
+        "sober_required": "unknown"
+      },
+      "verification": "unverified"
+    },
+    {
+      "key": "sample-shelter-east",
+      "category": "shelter",
+      "name": "SAMPLE Eastside Shelter (far from rail)",
+      "description": "Test listing, not a real service.",
+      "address": {
+        "street": "300 Sample Rd",
+        "city": "Decatur",
+        "state": "GA",
+        "zip": "30030"
+      },
+      "location": {
+        "lat": 33.7748,
+        "lng": -84.2963
+      },
+      "phone": "+14045550103",
+      "hours": [],
+      "hours_note": "Call for hours",
+      "gender": "any",
+      "families_welcome": "unknown",
+      "records_policy": "unknown",
+      "languages": [],
+      "cost_type": "unknown",
+      "access_methods": [
+        "phone_only"
+      ],
+      "required_documents": [],
+      "details": {
+        "check_in_time": null,
+        "curfew": null,
+        "max_stay_days": null,
+        "sober_required": "unknown"
+      },
+      "verification": "unverified"
+    },
+    {
+      "key": "sample-food-pantry-garnett",
+      "category": "food",
+      "name": "SAMPLE Garnett Community Pantry",
+      "description": "Test listing, not a real service. Groceries twice a week.",
+      "address": {
+        "street": "400 Sample St SW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30303"
+      },
+      "location": {
+        "lat": 33.7478,
+        "lng": -84.3965
+      },
+      "phone": "+14045550104",
+      "hours": [
+        {
+          "day": 1,
+          "opens": "10:00",
+          "closes": "14:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "10:00",
+          "closes": "14:00",
+          "label": null
+        }
+      ],
+      "gender": "any",
+      "families_welcome": "yes",
+      "records_policy": "accepted",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in"
+      ],
+      "required_documents": [
+        "proof_of_address"
+      ],
+      "details": {
+        "kind": [
+          "pantry",
+          "snap_help"
+        ],
+        "visit_limit": "Once per week"
+      },
+      "verification": "verified"
+    },
+    {
+      "key": "sample-food-hot-meal",
+      "category": "food",
+      "name": "SAMPLE Midtown Hot Meal",
+      "description": "Test listing, not a real service. Free lunch every day, no ID needed.",
+      "address": {
+        "street": "500 Sample Blvd NE",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30308"
+      },
+      "location": {
+        "lat": 33.77,
+        "lng": -84.386
+      },
+      "phone": null,
+      "hours": [
+        {
+          "day": 0,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 1,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 2,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 4,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 5,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        },
+        {
+          "day": 6,
+          "opens": "11:30",
+          "closes": "13:00",
+          "label": null
+        }
+      ],
+      "gender": "any",
+      "families_welcome": "yes",
+      "records_policy": "accepted",
+      "languages": [
+        "en"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in"
+      ],
+      "required_documents": [],
+      "details": {
+        "kind": [
+          "hot_meal"
+        ],
+        "visit_limit": null
+      },
+      "verification": "unverified"
+    },
+    {
+      "key": "sample-food-phone-only",
+      "category": "food",
+      "name": "SAMPLE Food Delivery Line",
+      "description": "Test listing, not a real service. Phone-only grocery delivery for people without transport.",
+      "address": null,
+      "location": null,
+      "phone": "+14045550105",
+      "hours": [
+        {
+          "day": 0,
+          "opens": "09:00",
+          "closes": "17:00",
+          "label": null
+        },
+        {
+          "day": 1,
+          "opens": "09:00",
+          "closes": "17:00",
+          "label": null
+        },
+        {
+          "day": 2,
+          "opens": "09:00",
+          "closes": "17:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "09:00",
+          "closes": "17:00",
+          "label": null
+        },
+        {
+          "day": 4,
+          "opens": "09:00",
+          "closes": "17:00",
+          "label": null
+        }
+      ],
+      "gender": "any",
+      "families_welcome": "yes",
+      "records_policy": "unknown",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "phone_only"
+      ],
+      "required_documents": [
+        "photo_id"
+      ],
+      "details": {
+        "kind": [
+          "pantry"
+        ],
+        "visit_limit": "Twice a month"
+      },
+      "verification": "unverified"
+    },
+    {
+      "key": "sample-job-warehouse",
+      "category": "jobs",
+      "name": "SAMPLE Fair-Chance Warehouse",
+      "description": "Test listing, not a real service. Hiring warehouse associates; records considered case by case.",
+      "address": {
+        "street": "600 Sample Pkwy",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30318"
+      },
+      "location": {
+        "lat": 33.772,
+        "lng": -84.42
+      },
+      "phone": "+14045550106",
+      "website": "https://example.org/sample-jobs",
+      "hours": [
+        {
+          "day": 0,
+          "opens": "08:00",
+          "closes": "16:00",
+          "label": null
+        },
+        {
+          "day": 1,
+          "opens": "08:00",
+          "closes": "16:00",
+          "label": null
+        },
+        {
+          "day": 2,
+          "opens": "08:00",
+          "closes": "16:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "08:00",
+          "closes": "16:00",
+          "label": null
+        },
+        {
+          "day": 4,
+          "opens": "08:00",
+          "closes": "16:00",
+          "label": null
+        }
+      ],
+      "gender": "any",
+      "families_welcome": "unknown",
+      "records_policy": "case_by_case",
+      "languages": [
+        "en"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "appointment"
+      ],
+      "required_documents": [
+        "photo_id",
+        "ssn_card"
+      ],
+      "details": {
+        "employer": "SAMPLE Logistics Co",
+        "pay_note": "$16-18/hr",
+        "shift_note": "Early mornings",
+        "apply_url": "https://example.org/sample-apply",
+        "steps": [
+          {
+            "title": "Check eligibility",
+            "detail": "You must be 18 or older and able to lift 50 lbs."
+          },
+          {
+            "title": "Gather documents",
+            "detail": "Bring a state ID and your Social Security card.",
+            "documents": [
+              "photo_id",
+              "ssn_card"
+            ]
+          },
+          {
+            "title": "Apply",
+            "detail": "Apply online or walk in Monday to Friday, 8 AM to 4 PM."
+          },
+          {
+            "title": "Prepare for the interview",
+            "detail": "Interviews are 15 minutes. Be ready to talk about past work."
+          },
+          {
+            "title": "Follow up",
+            "detail": "Call after 3 days if you haven't heard back."
+          }
+        ]
+      },
+      "verification": "verified"
+    },
+    {
+      "key": "sample-addiction-outpatient",
+      "category": "addiction",
+      "name": "SAMPLE Recovery Clinic",
+      "description": "Test listing, not a real service. Outpatient treatment and peer support.",
+      "address": {
+        "street": "700 Sample St NE",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30308"
+      },
+      "location": {
+        "lat": 33.76,
+        "lng": -84.385
+      },
+      "phone": "+14045550107",
+      "hours": [
+        {
+          "day": 0,
+          "opens": "08:00",
+          "closes": "18:00",
+          "label": null
+        },
+        {
+          "day": 1,
+          "opens": "08:00",
+          "closes": "18:00",
+          "label": null
+        },
+        {
+          "day": 2,
+          "opens": "08:00",
+          "closes": "18:00",
+          "label": null
+        },
+        {
+          "day": 3,
+          "opens": "08:00",
+          "closes": "18:00",
+          "label": null
+        },
+        {
+          "day": 4,
+          "opens": "08:00",
+          "closes": "18:00",
+          "label": null
+        }
+      ],
+      "gender": "any",
+      "families_welcome": "unknown",
+      "records_policy": "accepted",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "cost_type": "sliding_scale",
+      "access_methods": [
+        "walk_in",
+        "appointment"
+      ],
+      "required_documents": [
+        "photo_id"
+      ],
+      "details": {
+        "setting": [
+          "outpatient",
+          "support_group"
+        ],
+        "medication_assisted": "yes"
+      },
+      "verification": "verified"
+    },
+    {
+      "key": "sample-class-ged",
+      "category": "classes",
+      "name": "SAMPLE GED Prep Class",
+      "description": "Test listing, not a real service. Free GED prep, weekly.",
+      "address": {
+        "street": "800 Sample St SW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30303"
+      },
+      "location": {
+        "lat": 33.7505,
+        "lng": -84.387
+      },
+      "phone": "+14045550108",
+      "hours": [],
+      "gender": "any",
+      "families_welcome": "unknown",
+      "records_policy": "accepted",
+      "languages": [
+        "en"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in"
+      ],
+      "required_documents": [],
+      "details": {
+        "starts_at": "2026-10-15T18:00:00-04:00",
+        "ends_at": "2026-10-15T20:00:00-04:00",
+        "recurrence": "Every Thursday",
+        "signup_required": "no"
+      },
+      "verification": "unverified"
+    },
+    {
+      "key": "sample-event-job-fair",
+      "category": "events",
+      "name": "SAMPLE Second-Chance Job Fair",
+      "description": "Test listing, not a real service. Employers who hire people with records.",
+      "address": {
+        "street": "900 Sample Ave SW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30310"
+      },
+      "location": {
+        "lat": 33.7365,
+        "lng": -84.414
+      },
+      "phone": null,
+      "hours": [],
+      "gender": "any",
+      "families_welcome": "unknown",
+      "records_policy": "accepted",
+      "languages": [
+        "en",
+        "es"
+      ],
+      "cost_type": "free",
+      "access_methods": [
+        "walk_in"
+      ],
+      "required_documents": [
+        "photo_id"
+      ],
+      "details": {
+        "starts_at": "2026-10-17T10:00:00-04:00",
+        "ends_at": "2026-10-17T14:00:00-04:00",
+        "recurrence": null,
+        "signup_required": "unknown"
+      },
+      "verification": "unverified"
+    }
+  ]
+}
