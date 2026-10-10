@@ -1,0 +1,26 @@
+{
+  "name": "@scr/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^2.0.0",
+    "@noble/hashes": "^2.0.0",
+    "@scr/shared": "*",
+    "expo": "~57.0.27",
+    "expo-file-system": "~57.0.7",
+    "expo-secure-store": "~57.0.4",
+    "expo-sqlite": "~57.0.4",
+    "react": "^19.2.3",
+    "react-native": "^0.86.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "fake-indexeddb": "^6.2.0",
+    "vitest": "^4.0.0"
+  }
+}
