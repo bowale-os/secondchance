@@ -142,7 +142,7 @@ export default function App() {
       case "resources":
         return <ResourcesPage staff={staff} nav={nav} onLogout={doLogout} />;
       case "calendar":
-        return <CalendarPage staff={staff} nav={nav} onLogout={doLogout} />;
+        return <CalendarPage staff={staff} nav={nav} onSelectClient={(clientId) => setView({ name: "client", clientId })} onLogout={doLogout} />;
       case "learn":
         return <LearnPage staff={staff} nav={nav} onLogout={doLogout} />;
     }

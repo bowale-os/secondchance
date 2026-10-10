@@ -1,0 +1,82 @@
+/* Calendar (case worker page and client tab). Lives inside .dash, so it uses those colour tokens. */
+
+.dash .cal, .dash .cal-modal { --c-check_in: #3b4fb8; --c-court_date: #7a2f6a; --c-fee: #8a5300; --c-report: #1d7a4f; --c-other: #4b5563; --c-late: #b42318; }
+.ct-check_in { --tc: var(--c-check_in); }
+.ct-court_date { --tc: var(--c-court_date); }
+.ct-fee { --tc: var(--c-fee); }
+.ct-report { --tc: var(--c-report); }
+.ct-other { --tc: var(--c-other); }
+
+.cal { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.cal-side { display: grid; gap: 1rem; position: sticky; top: 1rem; }
+.cal-main { display: grid; gap: 1.25rem; min-width: 0; }
+@media (max-width: 56rem) {
+  .cal { grid-template-columns: 1fr; }
+  .cal-side { position: static; }
+}
+
+/* Month */
+.cal-month { display: grid; gap: .5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; }
+.cal-month-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.cal-month-head strong { font-size: 1.125rem; }
+.cal-month-head .dash-btn { min-width: 3rem; padding: 0; font-size: 1.5rem; line-height: 1; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal-dow { text-align: center; font-size: .8rem; font-weight: 700; color: var(--muted); padding-bottom: .25rem; }
+.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 3rem; padding: .25rem 0; border: 2px solid transparent; border-radius: .75rem; background: transparent; color: var(--ink); font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
+.cal-cell:hover { background: var(--brand-tint); }
+.cal-cell.out { color: var(--muted); font-weight: 400; }
+.cal-cell.today { border-color: var(--brand); }
+.cal-cell[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.cal-dots { display: flex; gap: 3px; min-height: 7px; }
+.cal-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--tc); }
+.cal-dots i.late { background: var(--c-late); }
+.cal-cell[aria-pressed="true"] .cal-dots i { box-shadow: 0 0 0 1.5px #fff; }
+.cal-today { justify-self: center; min-height: 2.5rem; }
+
+/* Filters */
+.cal-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cal-chip { min-height: 2.75rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.cal-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.cal-chip.ct-check_in[aria-pressed="false"], .cal-chip.ct-court_date[aria-pressed="false"], .cal-chip.ct-fee[aria-pressed="false"], .cal-chip.ct-report[aria-pressed="false"], .cal-chip.ct-other[aria-pressed="false"] { border-left: 6px solid var(--tc); }
+
+/* Lists */
+.cal-group { display: grid; gap: .75rem; }
+.cal-group h2 { margin: 0; font-size: 1.375rem; }
+.cal-group h3 { margin: 0; font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.cal-group-late h3 { color: var(--attn-ink); }
+.cal-part { display: grid; gap: .5rem; }
+.cal-list { display: grid; gap: .5rem; }
+.cal-empty { padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; color: var(--muted); }
+
+.cal-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; box-sizing: border-box; min-height: 4.5rem; padding: .75rem 1rem; text-align: left; border: 1px solid var(--line); border-left: 6px solid var(--tc, var(--line)); border-radius: 1rem; background: var(--surface); color: inherit; font: inherit; cursor: pointer; }
+.cal-row:hover { background: var(--brand-tint); }
+.cal-row.done { opacity: .7; }
+.cal-row.done .cal-row-title { text-decoration: line-through; }
+.cal-row-main { flex: 1; min-width: 0; display: grid; gap: .1rem; }
+.cal-row-type { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tc, var(--muted)); }
+.cal-row-client { font-size: .9rem; color: var(--muted); font-weight: 600; }
+.cal-row-title { font-weight: 600; overflow-wrap: anywhere; }
+.cal-row-sub { color: var(--muted); font-size: .95rem; overflow-wrap: anywhere; }
+.cal-row-side { flex: none; display: grid; justify-items: end; gap: .25rem; text-align: right; }
+.cal-row-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-row-note { color: var(--muted); font-size: .85rem; }
+
+/* Dialog */
+.cal-modal { width: min(100% - 2rem, 34rem); max-height: calc(100vh - 2rem); padding: 0; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); color: var(--ink); font-size: 1.0625rem; line-height: 1.5; }
+.cal-modal::backdrop { background: rgba(17, 24, 39, .55); }
+.cal-modal-body { display: grid; gap: 1rem; padding: 1.5rem; }
+.cal-modal h2 { margin: 0; font-size: 1.5rem; line-height: 1.25; overflow-wrap: anywhere; }
+.cal-modal :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.cal-facts { margin: 0; display: grid; gap: .75rem; }
+.cal-facts .fact { display: grid; grid-template-columns: 7rem 1fr; gap: .75rem; }
+.cal-facts dt { color: var(--muted); font-size: .95rem; }
+.cal-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.cal-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cal-danger { background: var(--error-ink); border-color: var(--error-ink); }
+.cal-modal .hint { color: var(--muted); font-size: .95rem; margin: 0; }
+
+.cal-form { display: grid; gap: 1rem; }
+.cal-form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 30rem) { .cal-form-two { grid-template-columns: 1fr; } }
+.dash .field, .cal-modal .field { display: grid; gap: .35rem; font-weight: 600; }
+.dash .field input, .dash .field select, .cal-modal .field input, .cal-modal .field select { width: 100%; box-sizing: border-box; min-height: 3rem; margin: 0; padding: 0 1rem; border: 2px solid var(--line); border-radius: .75rem; font: inherit; font-weight: 400; color: var(--ink); background: var(--surface); }
