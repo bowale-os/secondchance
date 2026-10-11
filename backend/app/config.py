@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-opus-5-5"
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = ""
+    reader_ai: str = "gemini"  # gemini | fake (document reader; fake needs no key)
 
     # ---------- Twilio ----------
     twilio_account_sid: str = ""
