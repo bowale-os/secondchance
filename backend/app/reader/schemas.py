@@ -177,6 +177,8 @@ class ActionItem(CamelModel):
     confidence: float
     completed: bool = False
     completed_at: Optional[str] = None
+    # A case worker added it to the schedule (kept papers only).
+    checked_by_case_worker: bool = False
     # What the model said before the urgency rules ran; kept for saving, never sent.
     model_priority: Optional[Priority] = Field(default=None, exclude=True)
 

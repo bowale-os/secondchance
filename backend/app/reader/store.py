@@ -220,6 +220,7 @@ def load_reading(reading: DocumentReading, client: Client, today: str) -> Readin
         a.model_copy(update={
             "completed": by_id[a.id].completed_at is not None,
             "completed_at": by_id[a.id].completed_at.isoformat() if by_id[a.id].completed_at else None,
+            "checked_by_case_worker": by_id[a.id].obligation_id is not None,
         })
         for a in actions
     ]

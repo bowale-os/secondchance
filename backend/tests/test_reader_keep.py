@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 from sqlalchemy.pool import StaticPool
 
-from app.auth import get_staff_or_client
+from app.auth import get_current_client, get_staff_or_client
 from app.db import get_session
 from app.main import app
 from app.reader import receipt
@@ -64,6 +64,7 @@ async def env(monkeypatch):
 
     app.dependency_overrides[get_session] = session_override
     app.dependency_overrides[get_staff_or_client] = lambda: who["user"]
+    app.dependency_overrides[get_current_client] = lambda: who["user"]
     ai = {"client": FakeAiClient()}
     monkeypatch.setattr(reader_router, "get_ai_client", lambda: ai["client"])
     monkeypatch.setattr(reader_router, "_today", lambda: "2026-10-09")

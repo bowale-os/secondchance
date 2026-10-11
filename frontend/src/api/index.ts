@@ -7,6 +7,7 @@ import { createClientsApi } from "./clients";
 import { createDocumentsApi } from "./documents";
 import { createClientEventsApi, createEventsApi } from "./events";
 import { createHttp, type GetToken } from "./http";
+import { createReaderApi } from "./reader";
 import { createClientResourcesApi, createMyResourcesApi, createResourcesApi } from "./resources";
 import { createTextingApi } from "./texting";
 
@@ -36,6 +37,7 @@ export function createClientApi(getToken: GetToken) {
     documents: createDocumentsApi(http),
     events: createClientEventsApi(http),
     resources: { ...createResourcesApi(http), ...createMyResourcesApi(http) },
+    reader: createReaderApi(http, getToken),
   };
 }
 
