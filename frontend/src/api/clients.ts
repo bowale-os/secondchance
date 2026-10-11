@@ -1,10 +1,13 @@
-import type { ClientCreate, ClientDetail, ClientDraft, ClientRead } from "../types";
+import type { ClientAttention, ClientCreate, ClientDetail, ClientDraft, ClientRead } from "../types";
 import type { Http } from "./http";
 
 export function createClientsApi(http: Http) {
   return {
     /** GET /clients: active clients assigned to the logged-in case worker ([] if none). */
     listMine: (): Promise<ClientRead[]> => http.get<ClientRead[]>("/clients"),
+
+    /** GET /clients/attention: my clients with unchecked records, ID problems or medication refills due. */
+    attention: (): Promise<ClientAttention[]> => http.get<ClientAttention[]>("/clients/attention"),
 
     /** GET /clients/{id}: one of my clients with all profile rows and documents (404 if not mine). */
     get: (clientId: string): Promise<ClientDetail> => http.get<ClientDetail>(`/clients/${clientId}`),

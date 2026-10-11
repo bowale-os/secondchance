@@ -12,7 +12,6 @@ import type {
 export const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   shelter: "Shelter",
   food: "Food",
-  jobs: "Fair-chance employers",
   addiction: "Recovery",
   classes: "Classes",
   events: "Community events",

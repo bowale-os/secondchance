@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import type { ClientDraft, ClientRead, StaffRead } from "../../types";
-import AppBar, { type AppNav } from "../layout/AppBar";
+import AppShell, { staffUser } from "../layout/AppShell";
+import type { AppNav } from "../layout/nav";
 import "../dashboard/dashboard.css";
 import "./new-client.css";
 import ReadingStep from "./ReadingStep";
@@ -65,15 +66,13 @@ export default function NewClientFlow({ staff, nav, onLogout, onCreated, onCance
   }
 
   return (
-    <div className="dash">
-      <a className="skip-link" href="#nc-main">Skip to main content</a>
-      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
-      <main id="nc-main" className="dash-main nc-main">
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
+      <main id="dash-main" className="dash-main nc-main">
         <div>
-          <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ My clients</button>
+          <button type="button" className="dash-btn dash-btn-quiet" onClick={onCancel}>‹ Home</button>
         </div>
         {content}
       </main>
-    </div>
+    </AppShell>
   );
 }

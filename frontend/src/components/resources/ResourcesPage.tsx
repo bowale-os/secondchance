@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import type { LatLng, ResourceQuery, ResourceSummary, StaffRead } from "../../types";
-import AppBar, { type AppNav } from "../layout/AppBar";
+import AppShell, { staffUser } from "../layout/AppShell";
+import type { AppNav } from "../layout/nav";
 import ResourceDrawer from "./ResourceDrawer";
 import ResourceFilters from "./ResourceFilters";
 import ResourceResults from "./ResourceResults";
@@ -66,10 +67,7 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
   const count = results ? `${results.total} ${results.total === 1 ? "resource" : "resources"} found` : "";
 
   return (
-    <div className="dash">
-      <a className="skip-link" href="#dash-main">Skip to main content</a>
-      <AppBar staff={staff} nav={nav} onLogout={onLogout} />
-
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div className="dash-title">
           <h1>Resources</h1>
@@ -114,6 +112,6 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
       </main>
 
       {selectedId && <ResourceDrawer resourceId={selectedId} load={loadResource} onClose={() => setSelectedId(null)} mapGestures />}
-    </div>
+    </AppShell>
   );
 }

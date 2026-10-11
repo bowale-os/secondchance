@@ -6,3 +6,16 @@
 .login-field { display: grid; gap: .35rem; margin: 0; font-size: 1rem; font-weight: 600; }
 .login-field input { width: 100%; min-height: 3rem; margin: 0; padding: 0 1rem; box-sizing: border-box; border: 2px solid var(--line); border-radius: .75rem; font: inherit; font-weight: 400; color: var(--ink); background: var(--surface); }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Client Home cards. Inside .dash, so they use its colour tokens. */
+.today-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 40rem) { .today-grid { grid-template-columns: minmax(0, 1fr); } }
+.today-card { padding: 1.25rem; display: grid; gap: .5rem; align-content: start; overflow: visible; }
+.today-card h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.today-card p { margin: 0; }
+.today-card .dash-btn { justify-self: start; display: inline-flex; align-items: center; text-decoration: none; margin-top: .25rem; }
+.today-big { font-size: 1.25rem; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.today-type { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--brand); }
+.today-phone { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.today-late { margin-top: .5rem; padding: .75rem 1rem; background: var(--attn-bg); color: var(--attn-ink); border: 1px solid var(--attn-ink); border-radius: .75rem; }
+.dash .hint { color: var(--muted); }

@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.db import engine
 from app.ingest.scheduler import run_forever
-from app.routers import auth, clients, documents, health, resources
+from app.routers import auth, clients, events, documents, health, resources
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -54,6 +54,7 @@ async def unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(events.router)
 app.include_router(clients.router)
 app.include_router(documents.router)
 app.include_router(resources.router)

@@ -4,6 +4,7 @@ import { createAuthApi } from "./auth";
 import { createClientAuthApi } from "./clientAuth";
 import { createClientsApi } from "./clients";
 import { createDocumentsApi } from "./documents";
+import { createClientEventsApi, createEventsApi } from "./events";
 import { createHttp, type GetToken } from "./http";
 import { createClientResourcesApi, createMyResourcesApi, createResourcesApi } from "./resources";
 
@@ -16,6 +17,7 @@ export function createApi(getToken: GetToken) {
     auth: createAuthApi(http),
     clients: createClientsApi(http),
     documents: createDocumentsApi(http),
+    events: createEventsApi(http),
     resources: { ...createResourcesApi(http), ...createClientResourcesApi(http) },
   };
 }
@@ -28,6 +30,7 @@ export function createClientApi(getToken: GetToken) {
   return {
     auth: createClientAuthApi(http),
     documents: createDocumentsApi(http),
+    events: createClientEventsApi(http),
     resources: { ...createResourcesApi(http), ...createMyResourcesApi(http) },
   };
 }

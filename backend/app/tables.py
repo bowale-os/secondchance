@@ -7,7 +7,7 @@ Install:  pip install sqlalchemy psycopg[binary]
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Optional
 
@@ -24,6 +24,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    Time,
     UniqueConstraint,
     func,
 )
@@ -137,6 +138,7 @@ class ObligationType(enum.Enum):
     COURT_DATE = "court_date"
     CHECK_IN = "check_in"
     REPORT = "report"
+    OTHER = "other"  # anything else a client adds to their own calendar
 
 
 class ObligationStatus(enum.Enum):
@@ -522,7 +524,13 @@ class ClientObligation(IdMixin, TimestampMixin, ProvenanceMixin, Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
     amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2))
     due_date: Mapped[Optional[date]] = mapped_column(Date)
+    due_time: Mapped[Optional[time]] = mapped_column(Time)
+    location: Mapped[Optional[str]] = mapped_column(String(300))
     status: Mapped[ObligationStatus] = mapped_column(default=ObligationStatus.OPEN)
+    # Events the client adds themselves after registration. The case worker is told
+    # about them (added_by_client with staff_seen_at empty) but does not edit them.
+    added_by_client: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    staff_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     client: Mapped["Client"] = relationship(back_populates="obligations")
 

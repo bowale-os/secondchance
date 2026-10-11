@@ -29,7 +29,6 @@ interface Props {
   /** GET /clients/{id}/resources or GET /me/resources, with overrides. */
   loadMatches: (overrides: ResourceQuery) => Promise<ClientResourceMatch>;
   loadResource: (id: string) => Promise<Resource>;
-  progressScope: string;
   /** Staff can drag and scroll the map; clients use the buttons. */
   mapGestures: boolean;
   copy: MatchCopy;
@@ -42,7 +41,7 @@ const BOOLEAN_KEYS = new Set<keyof ResourceQuery>(["near_transit", "open_now", "
  * Resources matched to one client's needs (Option C). Filters start from their profile;
  * every change is sent back as overrides so the server stays the one place the mapping lives.
  */
-export default function MatchedResources({ client, loadMatches, loadResource, progressScope, mapGestures, copy }: Props) {
+export default function MatchedResources({ client, loadMatches, loadResource, mapGestures, copy }: Props) {
   const [overrides, setOverrides] = useState<ResourceQuery>({});
   const [match, setMatch] = useState<ClientResourceMatch | null>(null);
   // What the chips show: the change right away, then the server's answer.
@@ -159,7 +158,6 @@ export default function MatchedResources({ client, loadMatches, loadResource, pr
           resourceId={selectedId}
           load={loadResource}
           onClose={() => setSelectedId(null)}
-          progressScope={progressScope}
           mapGestures={mapGestures}
         />
       )}

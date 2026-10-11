@@ -89,6 +89,7 @@ export const ObligationType = {
   COURT_DATE: "court_date",
   CHECK_IN: "check_in",
   REPORT: "report",
+  OTHER: "other",
 } as const;
 export type ObligationType = ValueOf<typeof ObligationType>;
 

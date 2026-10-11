@@ -1,0 +1,105 @@
+/* Calendar (case worker page and client tab). Lives inside .dash, so it uses those colour tokens. */
+
+.dash .cal, .dash .cal-modal { --c-check_in: #3b4fb8; --c-court_date: #7a2f6a; --c-fee: #8a5300; --c-report: #1d7a4f; --c-other: #4b5563; --c-late: #b42318; }
+.ct-check_in { --tc: var(--c-check_in); }
+.ct-court_date { --tc: var(--c-court_date); }
+.ct-fee { --tc: var(--c-fee); }
+.ct-report { --tc: var(--c-report); }
+.ct-other { --tc: var(--c-other); }
+
+.cal { display: grid; grid-template-columns: 20rem minmax(0, 46rem); gap: 2rem; align-items: start; }
+.cal-side { display: grid; gap: 1rem; position: sticky; top: 1rem; }
+.cal-main { display: grid; gap: 1.5rem; min-width: 0; align-content: start; min-height: 40rem; }
+.cal-nomatch { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; color: var(--muted); }
+@media (max-width: 56rem) {
+  .cal { grid-template-columns: minmax(0, 1fr); }
+  .cal-side { position: static; }
+}
+
+/* Month */
+.cal-month { display: grid; gap: .5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; }
+.cal-month-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.cal-month-head strong { font-size: 1.125rem; }
+.cal-month-head .dash-btn { min-width: 3rem; padding: 0; font-size: 1.5rem; line-height: 1; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal-dow { text-align: center; font-size: .8rem; font-weight: 700; color: var(--muted); padding-bottom: .25rem; }
+.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 3rem; padding: .25rem 0; border: 2px solid transparent; border-radius: .75rem; background: transparent; color: var(--ink); font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
+.cal-cell:hover { background: var(--brand-tint); }
+.cal-cell.out { color: var(--muted); font-weight: 400; }
+.cal-cell.today { border-color: var(--brand); }
+.cal-cell[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.cal-dots { display: flex; gap: 3px; min-height: 7px; }
+.cal-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--tc); }
+.cal-dots i.late { background: var(--c-late); }
+.cal-cell[aria-pressed="true"] .cal-dots i { box-shadow: 0 0 0 1.5px #fff; }
+.cal-today { justify-self: center; min-height: 2.5rem; }
+
+/* Filters */
+.cal-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cal-chip { min-height: 2.75rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.cal-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+/* Right side: summary, the picked day, then lists grouped by day */
+.cal-summary { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.cal-summary li { padding: .5rem 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+.cal-summary strong { color: var(--ink); font-size: 1.125rem; font-variant-numeric: tabular-nums; }
+.cal-summary li.late { background: var(--attn-bg); border-color: var(--attn-ink); color: var(--attn-ink); }
+.cal-summary li.late strong { color: var(--attn-ink); }
+
+.cal-today-card { display: grid; gap: .75rem; padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; }
+.cal-today-card h2 { margin: 0; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; font-size: 1.375rem; }
+.cal-now { padding: .15rem .65rem; border-radius: 999px; background: var(--brand); color: #fff; font-size: .85rem; font-weight: 700; }
+.cal-empty-day { margin: 0; color: var(--muted); }
+.cal-part { display: grid; gap: .5rem; }
+.cal-part h3 { margin: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+.cal-block { display: grid; gap: 1rem; }
+.cal-block h2 { margin: 0; font-size: 1.25rem; }
+.cal-block .hint { margin: -.5rem 0 0; color: var(--muted); font-size: .95rem; }
+.cal-block-late { padding: 1rem; background: var(--attn-bg); border: 1px solid var(--attn-ink); border-radius: 1rem; }
+.cal-block-late h2 { color: var(--attn-ink); }
+
+/* A day: date badge on the left, that day's cards on the right */
+.cal-dg { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: 1rem; align-items: start; }
+.cal-badge { display: grid; justify-items: center; padding: .5rem 0; background: var(--surface); border: 1px solid var(--line); border-radius: .75rem; line-height: 1.2; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+.cal-badge strong { font-size: 1.5rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cal-dg.late .cal-badge { border-color: var(--attn-ink); }
+.cal-dg.late .cal-badge strong { color: var(--attn-ink); }
+.cal-list { display: grid; gap: .5rem; min-width: 0; }
+@media (max-width: 30rem) { .cal-dg { grid-template-columns: 3.25rem minmax(0, 1fr); gap: .5rem; } }
+
+/* Event card */
+.cal-row { display: flex; align-items: stretch; gap: .5rem; padding-right: .5rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+.cal-row:hover { background: var(--brand-tint); }
+.cal-row.late { border-color: var(--attn-ink); }
+.cal-row.done { opacity: .7; }
+.cal-row.done .cal-row-title { text-decoration: line-through; }
+.cal-row-open { flex: 1; min-width: 0; display: grid; gap: .2rem; padding: .75rem .75rem .75rem 1rem; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: .75rem; }
+.cal-row-top { display: flex; align-items: center; gap: .5rem .75rem; flex-wrap: wrap; }
+.cal-row-type { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tc, var(--muted)); }
+.cal-row-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-row-note { color: var(--muted); font-size: .85rem; }
+.cal-row-title { font-weight: 600; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cal-row-sub { color: var(--muted); font-size: .95rem; overflow-wrap: anywhere; }
+.cal-row-sub strong { color: var(--ink); }
+.cal-row-done { align-self: center; flex: none; min-height: 2.75rem; padding: 0 1rem; }
+
+/* Dialog */
+.cal-modal { width: min(100% - 2rem, 34rem); max-height: calc(100vh - 2rem); padding: 0; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); color: var(--ink); font-size: 1.0625rem; line-height: 1.5; }
+.cal-modal::backdrop { background: rgba(17, 24, 39, .55); }
+.cal-modal-body { display: grid; gap: 1rem; padding: 1.5rem; }
+.cal-modal h2 { margin: 0; font-size: 1.5rem; line-height: 1.25; overflow-wrap: anywhere; }
+.cal-modal :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.cal-facts { margin: 0; display: grid; gap: .75rem; }
+.cal-facts .fact { display: grid; grid-template-columns: 7rem 1fr; gap: .75rem; }
+.cal-facts dt { color: var(--muted); font-size: .95rem; }
+.cal-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.cal-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cal-danger { background: var(--error-ink); border-color: var(--error-ink); }
+.cal-modal .hint { color: var(--muted); font-size: .95rem; margin: 0; }
+
+.cal-form { display: grid; gap: 1rem; }
+.cal-form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 30rem) { .cal-form-two { grid-template-columns: 1fr; } }
+.dash .field, .cal-modal .field { display: grid; gap: .35rem; font-weight: 600; }
+.dash .field input, .dash .field select, .cal-modal .field input, .cal-modal .field select { width: 100%; box-sizing: border-box; min-height: 3rem; margin: 0; padding: 0 1rem; border: 2px solid var(--line); border-radius: .75rem; font: inherit; font-weight: 400; color: var(--ink); background: var(--surface); }
