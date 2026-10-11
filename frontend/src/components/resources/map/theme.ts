@@ -9,6 +9,7 @@ export const CATEGORY_COLORS: Record<ResourceCategory, string> = {
   food: "#BE185D",
   addiction: "#047857",
   classes: "#6D28D9",
+  jobs: "#1D4ED8",
   events: "#A2080C",
 };
 
@@ -17,6 +18,7 @@ export const CATEGORY_LETTERS: Record<ResourceCategory, string> = {
   food: "F",
   addiction: "R",
   classes: "C",
+  jobs: "J",
   events: "E",
 };
 

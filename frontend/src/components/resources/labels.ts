@@ -14,6 +14,7 @@ export const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   food: "Food",
   addiction: "Recovery",
   classes: "Classes",
+  jobs: "Jobs",
   events: "Community events",
 };
 
