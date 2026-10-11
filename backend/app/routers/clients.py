@@ -1,6 +1,6 @@
 import uuid
 from dataclasses import fields
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select, update
@@ -21,6 +21,7 @@ from app.extraction import (
 from app.schemas import (
     ClientBenefitCreate,
     ClientBenefitRead,
+    ClientAttention,
     ClientContactRead,
     ClientDetail,
     ClientIdRead,
@@ -50,6 +51,8 @@ from app.tables import (
     Document,
     DocumentStatus,
     DocumentType,
+    IdStatus,
+    IdType,
     Staff,
 )
 
@@ -75,6 +78,87 @@ async def list_my_clients(
     )
     clients = (await session.scalars(stmt)).all()
     return [from_row(ClientRead, c) for c in clients]
+
+
+ID_WARNING_DAYS = 30
+REFILL_WARNING_DAYS = 7
+
+
+ID_NAMES = {
+    IdType.STATE_ID: "State ID",
+    IdType.SSN_CARD: "Social Security card",
+    IdType.BIRTH_CERTIFICATE: "Birth certificate",
+    IdType.OTHER: "ID",
+}
+
+
+def _day(d: date) -> str:
+    return f"{d:%b} {d.day}"
+
+
+def _id_problems(client: Client, today: date) -> list[str]:
+    """Lost, expired or soon-to-expire IDs, and a missing state ID."""
+    problems = []
+    for row in client.ids:
+        name = ID_NAMES[row.id_type]
+        if row.status == IdStatus.LOST:
+            problems.append(f"{name} is lost")
+        elif row.status == IdStatus.EXPIRED or (row.expires_on and row.expires_on < today):
+            problems.append(f"{name} has expired")
+        elif row.expires_on and (row.expires_on - today).days <= ID_WARNING_DAYS:
+            problems.append(f"{name} expires {_day(row.expires_on)}")
+    if not any(r.id_type == IdType.STATE_ID for r in client.ids):
+        problems.append("No state ID on file")
+    return problems
+
+
+def _refill_problems(client: Client, today: date) -> list[str]:
+    problems = []
+    for med in client.medications:
+        if med.next_refill_on and (med.next_refill_on - today).days <= REFILL_WARNING_DAYS:
+            when = "was due" if med.next_refill_on < today else "due"
+            problems.append(f"{med.name} refill {when} {_day(med.next_refill_on)}")
+    return problems
+
+
+@router.get("/attention", response_model=list[ClientAttention])
+async def clients_needing_attention(
+    staff: Staff = Depends(get_current_staff),
+    session: AsyncSession = Depends(get_session),
+) -> list[ClientAttention]:
+    """My clients with something to check: unverified records, ID problems, medication refills.
+    Clients with nothing to check are left out. Events the client added themselves are not
+    counted as unverified, since the case worker is only told about those."""
+    clients = (
+        await session.scalars(
+            select(Client)
+            .join(Assignment, Assignment.client_id == Client.id)
+            .where(
+                Assignment.staff_id == staff.id,
+                Assignment.is_active.is_(True),
+                Client.is_active.is_(True),
+            )
+            .options(
+                selectinload(Client.ids),
+                selectinload(Client.benefits),
+                selectinload(Client.medications),
+                selectinload(Client.obligations),
+                selectinload(Client.contacts),
+            )
+            .order_by(Client.last_name, Client.first_name)
+            .distinct()
+        )
+    ).all()
+    today = date.today()
+    result = []
+    for c in clients:
+        rows = [*c.ids, *c.benefits, *c.medications, *c.contacts, *(o for o in c.obligations if not o.added_by_client)]
+        unverified = sum(1 for r in rows if not r.verified)
+        problems = [*_id_problems(c, today), *_refill_problems(c, today)]
+        if unverified or problems:
+            name = f"{c.preferred_name or c.first_name} {c.last_name}"
+            result.append(ClientAttention(c.id, name, unverified, problems))
+    return result
 
 
 def _validate(payload: ClientCreate) -> None:

@@ -878,6 +878,15 @@ class EventStatusUpdate:
 
 
 @dataclass
+class ClientAttention:
+    """Why one of my clients needs a look: records nobody has checked, and ID or medication problems."""
+    client_id: uuid.UUID
+    client_name: str
+    unverified_records: int
+    problems: list[str]
+
+
+@dataclass
 class CaseWorkerRead:
     full_name: str
     phone: Optional[str]

@@ -40,6 +40,7 @@ export default function App() {
   const [staff, setStaff] = useState<StaffRead | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [view, setView] = useState<View>({ name: "clients" });
+  const [homeCount, setHomeCount] = useState(0); // to-do items, shown on the Home tab
   const [listVersion, setListVersion] = useState(0); // bump to reload the client list
 
   const [showClientLogin, setShowClientLogin] = useState(false);
@@ -110,6 +111,8 @@ export default function App() {
     const nav: AppNav = {
       section: view.name === "resources" || view.name === "calendar" || view.name === "learn" ? view.name : "home",
       go: (section: Section) => setView(VIEW_FOR[section]),
+      homeCount,
+      setHomeCount,
       onNewClient: () => setView({ name: "new-client" }),
     };
 

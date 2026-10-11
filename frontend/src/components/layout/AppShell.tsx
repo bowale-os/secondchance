@@ -79,6 +79,9 @@ export default function AppShell({ staff, nav, onLogout, children }: Props) {
               >
                 <Icon section={section} />
                 <span>{label}</span>
+                {section === "home" && nav.homeCount > 0 && (
+                  <span className="shell-count" aria-label={`${nav.homeCount} to do`}>{nav.homeCount}</span>
+                )}
               </a>
             </li>
           ))}

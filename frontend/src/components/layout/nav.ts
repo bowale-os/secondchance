@@ -5,6 +5,9 @@ export type Section = "home" | "resources" | "calendar" | "learn";
 export interface AppNav {
   section: Section;
   go: (section: Section) => void;
+  /** How many to-do items are waiting on Home. Shown as a badge on the Home tab. */
+  homeCount: number;
+  setHomeCount: (count: number) => void;
   /** Opens the create-a-client flow. Shown as a button in the rail on every screen. */
   onNewClient: () => void;
 }

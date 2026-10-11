@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import { buildTodo, type TodoItem } from "../../lib/todo";
-import type { ClientRead, StaffEventRead, StaffRead } from "../../types";
+import type { ClientAttention, ClientRead, StaffEventRead, StaffRead } from "../../types";
 import AppShell from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
 import ClientRows from "./ClientRows";
@@ -26,6 +26,7 @@ export default function Dashboard({ staff, nav, onSelectClient, onLogout }: Prop
   const api = useApi();
   const [clients, setClients] = useState<ClientRead[] | null>(null);
   const [events, setEvents] = useState<StaffEventRead[] | null>(null);
+  const [attention, setAttention] = useState<ClientAttention[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [todoError, setTodoError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -40,9 +41,21 @@ export default function Dashboard({ staff, nav, onSelectClient, onLogout }: Prop
       .list()
       .then(setEvents)
       .catch((e) => setTodoError(errorText(e)));
+    api.clients
+      .attention()
+      .then(setAttention)
+      .catch((e) => setTodoError(errorText(e)));
   }, [api]);
 
-  const todo = useMemo(() => (clients && events ? buildTodo(clients, events) : null), [clients, events]);
+  const todo = useMemo(
+    () => (clients && events && attention ? buildTodo(clients, events, attention) : null),
+    [clients, events, attention]
+  );
+
+  // Tell the Home tab how many things are waiting.
+  const { setHomeCount } = nav;
+  const todoCount = todo?.length ?? 0;
+  useEffect(() => setHomeCount(todoCount), [setHomeCount, todoCount]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
