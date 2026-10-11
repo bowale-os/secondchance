@@ -1,0 +1,30 @@
+/* Learn tab (case worker page and client tab). Lives inside .dash, so it uses those colour tokens. */
+
+.learn { display: grid; gap: 1.5rem; max-width: 60rem; }
+.learn h2 { font-size: 1.25rem; margin: 0 0 .75rem; }
+.learn-note { margin: 0; padding: 1rem 1.25rem; background: var(--attn-bg); color: var(--attn-ink); border: 1px solid var(--attn-ink); border-radius: 1rem; }
+.learn-count { margin: 0; color: var(--muted); }
+
+.learn-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.learn-chip { min-height: 2.75rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.learn-chip:hover { background: var(--brand-tint); }
+.learn-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+.learn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
+.learn-guides { display: grid; gap: .75rem; }
+
+.learn-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+.learn-card-body { display: grid; gap: .35rem; padding: 1rem; align-content: start; flex: 1; }
+.learn-card h3 { margin: 0; font-size: 1.125rem; line-height: 1.3; }
+.learn-card p { margin: 0; color: var(--muted); }
+.learn-topic { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--brand); }
+.learn-meta { font-size: .9rem; color: var(--muted); }
+.learn-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.learn-actions .dash-btn { min-height: 2.75rem; padding: 0 1rem; }
+.learn-actions .dash-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.learn-thumb { position: relative; aspect-ratio: 16 / 9; display: grid; place-items: center; background: linear-gradient(160deg, var(--brand), #10211f); color: #fff; }
+.learn-thumb span { position: absolute; right: .6rem; bottom: .5rem; padding: .1rem .5rem; border-radius: .4rem; background: rgba(0, 0, 0, .55); font-size: .85rem; font-weight: 600; }
+.learn-play { width: 3.5rem; height: 3.5rem; }
+.learn-play circle { fill: rgba(255, 255, 255, .92); }
+.learn-play path { fill: var(--brand); }

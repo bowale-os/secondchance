@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ClientApi } from "../../api";
 import type { ClientRead } from "../../types";
 import ReleaseBadge from "../dashboard/ReleaseBadge";
+import LearnView from "../learn/LearnView";
 import OverviewTab from "../client/OverviewTab";
 import MyCalendar from "./MyCalendar";
 import MyDocuments from "./MyDocuments";
@@ -15,11 +16,12 @@ interface Props {
   onLogout: () => void;
 }
 
-type Tab = "info" | "calendar" | "resources";
+type Tab = "info" | "calendar" | "resources" | "learn";
 const TABS: { id: Tab; label: string }[] = [
   { id: "info", label: "My information" },
   { id: "calendar", label: "My calendar" },
   { id: "resources", label: "Places that can help" },
+  { id: "learn", label: "Learn" },
 ];
 
 export default function ClientHome({ client, api, onLogout }: Props) {
@@ -70,6 +72,8 @@ export default function ClientHome({ client, api, onLogout }: Props) {
                 </>
               ) : tab === "calendar" ? (
                 <MyCalendar api={api} />
+              ) : tab === "learn" ? (
+                <LearnView role="client" />
               ) : (
                 <section className="dash-panel" aria-label="Places that can help you">
                   <MyResources client={client} api={api} />

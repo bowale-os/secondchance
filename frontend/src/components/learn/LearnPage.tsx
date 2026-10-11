@@ -1,6 +1,7 @@
 import type { StaffRead } from "../../types";
 import AppShell from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
+import LearnView from "./LearnView";
 import "../dashboard/dashboard.css";
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
   onLogout: () => void;
 }
 
-/** Short videos, guides and articles. Placeholder: there is no content or backend for this yet. */
+/** Short videos and guides to share with clients. Sample content until there is a backend for it. */
 export default function LearnPage({ staff, nav, onLogout }: Props) {
   return (
     <AppShell staff={staff} nav={nav} onLogout={onLogout}>
@@ -17,9 +18,7 @@ export default function LearnPage({ staff, nav, onLogout }: Props) {
         <div className="dash-title">
           <h1>Learn</h1>
         </div>
-        <section className="dash-panel" aria-label="Learn">
-          <p className="dash-empty">Short videos and plain-language guides for your clients are coming soon.</p>
-        </section>
+        <LearnView role="staff" />
       </main>
     </AppShell>
   );
