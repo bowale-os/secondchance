@@ -33,7 +33,9 @@ export interface HelpTopic {
   links: HelpLink[];
   /** Ties into the Resources tab. */
   related?: {
+    /** Opens Resources with these filters, from a button labelled `findLabel`. */
     resourceFilter?: Partial<ResourceQuery>;
+    findLabel?: string;
     document?: RequiredDocument;
   };
 }

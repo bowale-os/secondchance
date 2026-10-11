@@ -1,9 +1,11 @@
-import type { HelpLink, HelpTopic } from "../../types";
+import type { HelpLink, HelpTopic, ResourceQuery } from "../../types";
 import HelpLinkBadge from "./HelpLinkBadge";
 
 interface Props {
   topic: HelpTopic;
   role: "staff" | "client";
+  /** Opens Resources with the topic's filter. Leave out to hide the "Find ... nearby" button. */
+  onFindNearby?: (filters: ResourceQuery) => void;
 }
 
 /** "2026-10-10" -> "Oct 2026". */
@@ -13,8 +15,9 @@ function checkedLabel(iso: string): string {
 }
 
 /** One help topic: title, a plain-language summary, and its links. */
-export default function HelpTopicCard({ topic, role }: Props) {
+export default function HelpTopicCard({ topic, role, onFindNearby }: Props) {
   const headingId = `help-${topic.id}`;
+  const filter = topic.related?.resourceFilter;
   return (
     <article className="help-card" aria-labelledby={headingId}>
       <h3 id={headingId}>{topic.title.en}</h3>
@@ -26,6 +29,11 @@ export default function HelpTopicCard({ topic, role }: Props) {
           </li>
         ))}
       </ul>
+      {filter && onFindNearby && (
+        <button type="button" className="dash-btn help-find" onClick={() => onFindNearby(filter)}>
+          {topic.related?.findLabel ?? "Find help nearby"}
+        </button>
+      )}
     </article>
   );
 }

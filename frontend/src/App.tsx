@@ -15,13 +15,14 @@ import NewClientFlow from "./components/new-client/NewClientFlow";
 import ResourcesPage from "./components/resources/ResourcesPage";
 import { useClientSession } from "./hooks/useClientSession";
 import { toStaffSignup, type StaffRead } from "./schemas";
+import type { ResourceQuery } from "./types";
 
 /** Which staff screen is showing. */
 type View =
   | { name: "clients" }
   | { name: "client"; clientId: string }
   | { name: "new-client" }
-  | { name: "resources" }
+  | { name: "resources"; filters?: ResourceQuery } // filters: opened from a Learn guide
   | { name: "calendar" }
   | { name: "learn" };
 
@@ -143,11 +144,18 @@ export default function App() {
           />
         );
       case "resources":
-        return <ResourcesPage staff={staff} nav={nav} onLogout={doLogout} />;
+        return <ResourcesPage key={view.filters ? "guide" : "all"} staff={staff} nav={nav} initialFilters={view.filters} onLogout={doLogout} />;
       case "calendar":
         return <CalendarPage staff={staff} nav={nav} onSelectClient={(clientId) => setView({ name: "client", clientId })} onLogout={doLogout} />;
       case "learn":
-        return <LearnPage staff={staff} nav={nav} onLogout={doLogout} />;
+        return (
+          <LearnPage
+            staff={staff}
+            nav={nav}
+            onFindNearby={(filters) => setView({ name: "resources", filters })}
+            onLogout={doLogout}
+          />
+        );
     }
   }
 

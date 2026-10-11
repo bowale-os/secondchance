@@ -13,11 +13,18 @@ const COPY: MatchCopy = {
 };
 
 /** The client's own view of resources matched to them (GET /me/resources). */
-export default function MyResources({ client, api }: { client: ClientRead; api: ClientApi }) {
+interface Props {
+  client: ClientRead;
+  api: ClientApi;
+  /** Filters to start with, e.g. from "Find SNAP help nearby" on the Learn tab. */
+  initialOverrides?: ResourceQuery;
+}
+
+export default function MyResources({ client, api, initialOverrides }: Props) {
   const loadMatches = useCallback((o: ResourceQuery) => api.resources.mine(o), [api]);
   const loadResource = useCallback((id: string) => api.resources.get(id), [api]);
 
   return (
-    <MatchedResources client={client} loadMatches={loadMatches} loadResource={loadResource} mapGestures={false} copy={COPY} />
+    <MatchedResources client={client} loadMatches={loadMatches} loadResource={loadResource} mapGestures={false} copy={COPY} initialOverrides={initialOverrides} />
   );
 }

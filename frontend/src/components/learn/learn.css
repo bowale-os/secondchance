@@ -28,6 +28,14 @@
 .help-badge-official { background: var(--brand-tint); color: var(--brand); border-color: var(--brand); }
 .help-badge-pdf { background: var(--attn-bg); color: var(--attn-ink); border-color: var(--attn-ink); }
 
+.help-find { justify-self: start; margin-top: .25rem; }
+.help-crisis { margin: 1rem 0 0; padding: 1rem 1.25rem; background: var(--brand-tint); border-radius: 1rem; }
+.help-crisis a { font-weight: 700; color: var(--brand); }
+
+/* A guide shown in place elsewhere, e.g. in the resource drawer. */
+.guide-link { margin: .25rem 0 0; color: var(--ink); font-weight: normal; }
+.guide-link a { color: var(--brand); font-weight: 600; }
+
 .help-send { min-height: 3rem; justify-self: start; }
 .help-send:disabled { opacity: .55; cursor: not-allowed; }
 

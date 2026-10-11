@@ -3,6 +3,7 @@
  * Keep `last_checked` up to date when you open a link and confirm it still works.
  */
 import type { HelpSection, HelpTopic } from "../types/help.types";
+import type { RequiredDocument } from "../types/resource.types";
 
 export const HELP_SECTIONS: { section: HelpSection; label: string }[] = [
   { section: "getting_started", label: "Getting started" },
@@ -46,7 +47,8 @@ export const HELP_TOPICS: HelpTopic[] = [
         last_checked: CHECKED,
       },
     ],
-    related: { resourceFilter: { categories: ["food"] } },
+    // No filter for SNAP help alone, so search Food for "SNAP".
+    related: { resourceFilter: { categories: ["food"], q: "SNAP" }, findLabel: "Find SNAP help nearby" },
   },
   {
     id: "marta",
@@ -149,3 +151,12 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
 ];
+
+export function helpTopic(id: string): HelpTopic | undefined {
+  return HELP_TOPICS.find((t) => t.id === id);
+}
+
+/** The guide for getting a document, e.g. "How to get an ID" for photo_id. */
+export function helpForDocument(document: RequiredDocument): HelpTopic | undefined {
+  return HELP_TOPICS.find((t) => t.related?.document === document);
+}
