@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import type { LatLng, ResourceQuery, ResourceSummary, StaffRead } from "../../types";
-import AppShell from "../layout/AppShell";
+import AppShell, { staffUser } from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
 import ResourceDrawer from "./ResourceDrawer";
 import ResourceFilters from "./ResourceFilters";
@@ -67,7 +67,7 @@ export default function ResourcesPage({ staff, nav, onLogout }: Props) {
   const count = results ? `${results.total} ${results.total === 1 ? "resource" : "resources"} found` : "";
 
   return (
-    <AppShell staff={staff} nav={nav} onLogout={onLogout}>
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div className="dash-title">
           <h1>Resources</h1>

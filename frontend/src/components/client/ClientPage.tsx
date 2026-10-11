@@ -4,7 +4,7 @@ import { errorText } from "../../lib/errors";
 import type { ClientDetail, StaffRead } from "../../types";
 import { initials } from "../dashboard/ClientRows";
 import ReleaseBadge from "../dashboard/ReleaseBadge";
-import AppShell from "../layout/AppShell";
+import AppShell, { staffUser } from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
 import ClientResourcesTab from "../resources/ClientResourcesTab";
 import DocumentsTab from "./DocumentsTab";
@@ -61,7 +61,7 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
   ];
 
   return (
-    <AppShell staff={staff} nav={nav} onLogout={onLogout}>
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div>
           <button type="button" className="dash-btn dash-btn-quiet" onClick={onBack}>‹ Home</button>

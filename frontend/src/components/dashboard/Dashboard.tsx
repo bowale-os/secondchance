@@ -3,7 +3,7 @@ import { useApi } from "../../api";
 import { errorText } from "../../lib/errors";
 import { buildTodo, type TodoItem } from "../../lib/todo";
 import type { ClientAttention, ClientRead, StaffEventRead, StaffRead } from "../../types";
-import AppShell from "../layout/AppShell";
+import AppShell, { staffUser } from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
 import ClientRows from "./ClientRows";
 import TodoList from "./TodoList";
@@ -99,7 +99,7 @@ export default function Dashboard({ staff, nav, onSelectClient, onLogout }: Prop
   const firstName = staff.full_name.split(" ")[0];
 
   return (
-    <AppShell staff={staff} nav={nav} onLogout={onLogout}>
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div className="dash-title">
           <h1>{greeting()}, {firstName}</h1>

@@ -39,8 +39,16 @@ function Icon({ section }: { section: Section }) {
   );
 }
 
+/** Who is signed in, shown at the bottom of the rail. */
+export interface ShellUser {
+  name: string;
+  detail?: string | null;
+}
+
+export const staffUser = (staff: StaffRead): ShellUser => ({ name: staff.full_name, detail: staff.organization_name });
+
 interface Props {
-  staff: StaffRead;
+  user: ShellUser;
   nav: AppNav;
   onLogout: () => void;
   children: ReactNode;
@@ -50,7 +58,7 @@ interface Props {
  * Frame for every case worker screen: a side rail on laptops, a bottom bar on phones.
  * Screens render their own <main> inside it.
  */
-export default function AppShell({ staff, nav, onLogout, children }: Props) {
+export default function AppShell({ user, nav, onLogout, children }: Props) {
   return (
     <div className="dash shell">
       <a className="skip-link" href="#dash-main">Skip to main content</a>
@@ -58,13 +66,13 @@ export default function AppShell({ staff, nav, onLogout, children }: Props) {
       {/* Phones only: the rail's brand and user move up here, the tabs move to the bottom. */}
       <header className="shell-top">
         <span className="dash-logo">SecondChance</span>
-        <button className="dash-btn" onClick={nav.onNewClient}>+ New client</button>
+        {nav.onNewClient && <button className="dash-btn" onClick={nav.onNewClient}>+ New client</button>}
         <button className="dash-btn dash-btn-quiet" onClick={onLogout}>Log out</button>
       </header>
 
       <nav className="shell-rail" aria-label="Main">
         <span className="dash-logo shell-brand">SecondChance</span>
-        <button className="dash-btn shell-new" onClick={nav.onNewClient}>+ New client</button>
+        {nav.onNewClient && <button className="dash-btn shell-new" onClick={nav.onNewClient}>+ New client</button>}
         <ul className="shell-links">
           {SECTIONS.map(({ section, label }) => (
             <li key={section}>
@@ -87,8 +95,8 @@ export default function AppShell({ staff, nav, onLogout, children }: Props) {
           ))}
         </ul>
         <div className="shell-user">
-          <strong>{staff.full_name}</strong>
-          {staff.organization_name && <span className="dash-org">{staff.organization_name}</span>}
+          <strong>{user.name}</strong>
+          {user.detail && <span className="dash-org">{user.detail}</span>}
           <button className="dash-btn dash-btn-quiet" onClick={onLogout}>Log out</button>
         </div>
       </nav>

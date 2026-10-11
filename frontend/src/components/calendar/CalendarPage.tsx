@@ -3,7 +3,7 @@ import { useApi } from "../../api";
 import type { CalendarEvent } from "../../lib/calendar";
 import { errorText } from "../../lib/errors";
 import type { StaffEventRead, StaffRead } from "../../types";
-import AppShell from "../layout/AppShell";
+import AppShell, { staffUser } from "../layout/AppShell";
 import type { AppNav } from "../layout/nav";
 import CalendarView from "./CalendarView";
 import "../dashboard/dashboard.css";
@@ -35,7 +35,7 @@ export default function CalendarPage({ staff, nav, onSelectClient, onLogout }: P
   }
 
   return (
-    <AppShell staff={staff} nav={nav} onLogout={onLogout}>
+    <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
       <main id="dash-main" className="dash-main">
         <div className="dash-title">
           <h1>Calendar</h1>

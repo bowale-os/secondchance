@@ -41,7 +41,6 @@
 .dash-btn-quiet:hover { background: var(--brand-tint); border-color: var(--brand); }
 
 /* Top bar */
-.dash-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .75rem clamp(1rem, 5vw, 3rem); background: var(--surface); border-bottom: 1px solid var(--line); }
 .dash-logo { font-size: 1.25rem; font-weight: 700; color: var(--brand); }
 .dash-user { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .dash-org { color: var(--muted); }
