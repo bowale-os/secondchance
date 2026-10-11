@@ -1,61 +1,71 @@
-"""Photos over text: read with the portal's reader (fake AI), hold protocol, SAVE via keep."""
+"""Photos over text: sign-in prompts, simplify/translate, hold protocol, SAVE."""
 
-import base64
-import io
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
 import pytest
 import pytest_asyncio
-from PIL import Image
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.reader.ai import FakeAiClient
 from app.security import hash_pin
-from app.services import bot_conversation, bot_photos, photo_reader
+from app.services import bot_conversation, bot_photos, photo_reader, voice
 from app.services import bot_messages as msg
 from app.services.bot_conversation import Inbound, handle_inbound
-from app.services.photo_reader import Photo, PhotoError
+from app.services.bot_types import BotAudio
+from app.services.photo_reader import KeyDate, Photo, PhotoError, PhotoReading
 from app.services.phone import encrypt_phone, phone_lookup_hash
 from app.tables import (
     Base, BotAuditLog, BotEnrollment, BotEnrollmentStatus, BotSession, BotSessionState, Client,
-    DataSource, Document, DocumentAction, DocumentReading, DocumentStatus,
+    DataSource, Document, DocumentStatus,
 )
 
 PHONE = "+14045550100"
 NOW = datetime(2026, 10, 13, 16, 0, tzinfo=timezone.utc)
+JPG = Photo(b"\xff\xd8\xff fake jpeg", "image/jpeg", "IMG_1.jpg")
+READING = PhotoReading(
+    readable=True, document_kind="court notice", legal_or_court=True,
+    summary="You have to go to court about a missed payment.",
+    key_dates=[KeyDate(date="Nov 3, 2026", what="Hearing at 9 AM, Fulton County Courthouse")],
+    next_steps=["Go to the hearing", "Bring this letter"],
+)
 
 
-def jpeg(color: str) -> bytes:
-    buf = io.BytesIO()
-    Image.new("RGB", (60, 80), color).save(buf, "JPEG")
-    return buf.getvalue()
-
-
-JPG = Photo(jpeg("white"), "image/jpeg", "IMG_1.jpg")
-OTHER_JPG = Photo(jpeg("gray"), "image/jpeg", "IMG_2.jpg")
+class _Calls(list):
+    spoken: list
 
 
 @pytest_asyncio.fixture
 async def env(monkeypatch):
     monkeypatch.setattr(bot_conversation, "_now", lambda: NOW)
-    ai = FakeAiClient()
-    monkeypatch.setattr(photo_reader, "get_ai_client", lambda: ai)
-    monkeypatch.setattr(photo_reader, "configured", lambda: True)
+    calls = _Calls()
+
+    async def fake_read(photos, mode, target_language):
+        calls.append((len(photos), mode, target_language))
+        return READING
+
+    monkeypatch.setattr(photo_reader, "read_photos", fake_read)
+    spoken_calls = []
+
+    async def fake_voice(text, language="English", http=None):
+        spoken_calls.append((text, language))
+        return None  # voice off by default; tests below turn it on
+
+    monkeypatch.setattr(voice, "synthesize", fake_voice)
     engine = create_async_engine("sqlite+aiosqlite://")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     Session = async_sessionmaker(engine, expire_on_commit=False)
     async with Session() as s:
         c = Client(first_name="Maria", last_name="Lopez", pin_hash=hash_pin("4821"),
-                   pin_failed_attempts=0, is_active=True, language="en", release_date=date(2026, 10, 9))
+                   pin_failed_attempts=0, is_active=True, language="en")
         s.add(c)
         await s.flush()
         s.add(BotEnrollment(client_id=c.id, phone_encrypted=encrypt_phone(PHONE), phone_hash=phone_lookup_hash(PHONE),
                             phone_last4="0100", status=BotEnrollmentStatus.ACTIVE, consent_at=NOW))
         await s.commit()
     async with Session() as s:
-        yield s, ai.calls
+        calls.spoken = spoken_calls
+        yield s, calls
     await engine.dispose()
 
 
@@ -68,6 +78,15 @@ async def send(db, text="", images=(), held=False, count=None):
 async def sign_in(db):
     for t in ("hi", "Maria Lopez", "4821"):
         await send(db, t)
+
+
+def test_parse_mode():
+    assert bot_photos.parse_mode("1") == ("simplify", None)
+    assert bot_photos.parse_mode("what does this say?") == ("simplify", None)
+    assert bot_photos.parse_mode("2") == ("translate", None)
+    assert bot_photos.parse_mode("2 Vietnamese") == ("translate", "Vietnamese")
+    assert bot_photos.parse_mode("translate to english") == ("translate", "english")
+    assert bot_photos.parse_mode("FOOD") is None
 
 
 # ---------- before sign-in ----------
@@ -96,60 +115,55 @@ async def test_images_sent_too_early_are_held_not_read(env):
 # ---------- signed in ----------
 
 @pytest.mark.asyncio
-async def test_photo_is_read_right_away_with_to_dos_and_save_offer(env):
+async def test_no_caption_asks_mode_then_translates(env):
     db, calls = env
     await sign_in(db)
     out = await send(db, images=[JPG])
-    assert {c.step for c in calls} == {"extract", "classify", "simplify", "actions"}
+    assert out.replies == [bot_photos.ASK_MODE] and out.hold_images
+    out = await send(db, "2", images=[JPG], held=True)
+    assert calls == [(1, "translate", "English")]
     reply = out.replies[0]
-    assert reply.startswith("This paper: Parole conditions.")
-    assert "What to do:\n- Meet your parole officer (Oct 12)" in reply   # 72 hours after the Oct 9 release
-    assert "And 2 more." in reply
-    assert bot_photos.LEGAL_NOTE in reply
-    assert reply.endswith(msg.EN["PH_SAVE_OFFER"])
-    assert out.hold_images   # held for SAVE
+    assert "This looks like a court notice." in reply
+    assert "- Nov 3, 2026: Hearing at 9 AM" in reply
+    assert bot_photos.LEGAL_NOTE in reply and reply.endswith("Reply SAVE to keep a copy in your documents.")
+    assert out.hold_images  # held again for SAVE
 
 
 @pytest.mark.asyncio
-async def test_any_caption_still_just_reads(env):
+async def test_caption_picks_mode_directly(env):
     db, calls = env
     await sign_in(db)
-    out = await send(db, "translate to Vietnamese", images=[JPG, OTHER_JPG])
-    assert out.replies[0].startswith("This paper:")
-    assert [c.page for c in calls if c.step == "extract"] == [1, 2]
+    await send(db, "translate to Vietnamese", images=[JPG, JPG])
+    assert calls == [(2, "translate", "Vietnamese")]
 
 
 @pytest.mark.asyncio
-async def test_save_goes_through_the_keep_path(env):
+async def test_other_caption_means_simplify(env):
+    db, calls = env
+    await sign_in(db)
+    await send(db, "what is this letter?", images=[JPG])
+    assert calls[0][1] == "simplify"
+
+
+@pytest.mark.asyncio
+async def test_save_creates_reviewable_client_document(env):
     db, _ = env
     await sign_in(db)
-    await send(db, images=[JPG, OTHER_JPG])
-    out = await send(db, "save", images=[JPG, OTHER_JPG], held=True)
+    await send(db, "1", images=[JPG])
+    out = await send(db, "save", images=[JPG], held=True)
     assert out.replies == [bot_photos.SAVED]
     doc = await db.scalar(select(Document))
-    assert (doc.source, doc.status, doc.mime_type) == (DataSource.CLIENT, DocumentStatus.READ, "application/pdf")
-    reading = await db.scalar(select(DocumentReading))
-    assert reading.document_id == doc.id and reading.created_by_staff_id is None
-    assert len((await db.scalars(select(DocumentAction))).all()) == 5
+    assert doc.source == DataSource.CLIENT and doc.status == DocumentStatus.READ
+    assert doc.ai_summary.startswith("You have to go to court") and doc.ai_warnings[0].startswith("Nov 3, 2026")
     s = await db.scalar(select(BotSession))
     assert s.pending_attachment_ref is None and s.last_results is None
-
-
-@pytest.mark.asyncio
-async def test_save_with_different_photos_is_refused(env):
-    db, _ = env
-    await sign_in(db)
-    await send(db, images=[JPG])
-    out = await send(db, "save", images=[OTHER_JPG], held=True)
-    assert out.replies == [bot_photos.PHOTO_GONE]
-    assert await db.scalar(select(Document)) is None
 
 
 @pytest.mark.asyncio
 async def test_moving_on_drops_photos_and_reading(env):
     db, _ = env
     await sign_in(db)
-    await send(db, images=[JPG])
+    await send(db, "1", images=[JPG])
     out = await send(db, "menu", images=[JPG], held=True)
     assert out.replies == [msg.MENU] and not out.hold_images
     assert await db.scalar(select(Document)) is None
@@ -158,11 +172,20 @@ async def test_moving_on_drops_photos_and_reading(env):
 
 
 @pytest.mark.asyncio
+async def test_number_after_mode_question_is_a_mode_not_a_list_item(env):
+    db, calls = env
+    await sign_in(db)
+    await send(db, images=[JPG])
+    await send(db, "1", images=[JPG], held=True)
+    assert calls == [(1, "simplify", "English")]
+
+
+@pytest.mark.asyncio
 async def test_sidecar_copy_expired(env):
     db, _ = env
     await sign_in(db)
     await send(db, images=[JPG])
-    assert (await send(db, "save")).replies == [bot_photos.PHOTO_GONE]
+    assert (await send(db, "2")).replies == [bot_photos.PHOTO_GONE]
 
 
 @pytest.mark.asyncio
@@ -170,25 +193,16 @@ async def test_reader_errors(env, monkeypatch):
     db, _ = env
     await sign_in(db)
 
-    async def boom(photos, client, now):
+    async def boom(photos, mode, target_language):
         raise PhotoError("model_error")
-    real = photo_reader.read_photos
     monkeypatch.setattr(photo_reader, "read_photos", boom)
-    out = await send(db, images=[JPG])
+    out = await send(db, "1", images=[JPG])
     assert out.replies == [bot_photos.NOT_AVAILABLE] and not out.hold_images
 
-    monkeypatch.setattr(photo_reader, "read_photos", real)
-    bad = Photo(b"not an image", "image/jpeg")
-    assert (await send(db, images=[bad])).replies == [bot_photos.UNREADABLE]
-
-
-@pytest.mark.asyncio
-async def test_slow_reading_times_out_with_a_plain_reply(env, monkeypatch):
-    db, _ = env
-    await sign_in(db)
-    monkeypatch.setattr(photo_reader, "TIMEOUT_S", 0.01)
-    monkeypatch.setattr(photo_reader, "get_ai_client", lambda: FakeAiClient(delay_s=1))
-    assert (await send(db, images=[JPG])).replies == [bot_photos.NOT_AVAILABLE]
+    async def unreadable(photos, mode, target_language):
+        return PhotoReading(readable=False)
+    monkeypatch.setattr(photo_reader, "read_photos", unreadable)
+    assert (await send(db, "1", images=[JPG])).replies == [bot_photos.UNREADABLE]
 
 
 def test_check_photos_filters_types_and_size():
@@ -203,20 +217,50 @@ def test_check_photos_filters_types_and_size():
 async def test_audit_has_no_content(env):
     db, _ = env
     await sign_in(db)
-    await send(db, images=[JPG])
+    await send(db, "1", images=[JPG])
     blob = " ".join(r.intent + r.outcome for r in (await db.scalars(select(BotAuditLog))).all())
-    assert "photo.read" in blob and "parole" not in blob.lower()
+    assert "photo.simplify" in blob and "court" not in blob
 
 
 @pytest.mark.asyncio
 async def test_router_decodes_images_and_returns_hold(env):
-    db, _ = env
+    db, calls = env
+    import base64
     from app.routers import bot as bot_router
     from app.schemas import BotImageIn, BotInbound
     await sign_in(db)
     result = await bot_router.inbound(BotInbound(
         sender=PHONE, images=[BotImageIn(base64.b64encode(JPG.data).decode(), "image/jpeg")]), db)
-    assert result.hold_images is True and result.replies[0].text.startswith("This paper:")
+    assert result.hold_images is True and result.replies[0].text == bot_photos.ASK_MODE
+
+
+@pytest.mark.asyncio
+async def test_read_photos_builds_request(monkeypatch):
+    import io
+    from types import SimpleNamespace
+    from PIL import Image
+    from pydantic import SecretStr
+    from app.config import get_settings
+    import app.services.photo_reader as pr
+
+    monkeypatch.setattr(get_settings(), "gemini_api_key", SecretStr("k"))
+    monkeypatch.setattr(get_settings(), "gemini_model", "test-model")
+    buf = io.BytesIO()
+    Image.new("RGB", (4000, 3000), "white").save(buf, "JPEG")
+    seen = {}
+
+    async def generate_content(model, contents, config):
+        seen.update(model=model, contents=contents)
+        return SimpleNamespace(parsed=READING)
+
+    fake = SimpleNamespace(aio=SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)))
+    monkeypatch.setattr(pr, "get_client", lambda: fake)
+    out = await pr.read_photos([Photo(buf.getvalue(), "image/jpeg")], "translate", "Spanish")
+    assert out is READING and seen["model"] == "test-model"
+    assert seen["contents"][0].startswith("MODE: translate. TARGET LANGUAGE: Spanish. 1 page(s)")
+    part = seen["contents"][1]
+    img = Image.open(io.BytesIO(part.inline_data.data))
+    assert max(img.size) < 4000  # downscaled before upload
 
 
 @pytest.mark.asyncio
@@ -227,3 +271,121 @@ async def test_withheld_photos_while_signed_in_get_no_reply(env):
     assert out.replies == [] and out.client_id  # session_active -> sidecar re-sends
     out = await handle_inbound(db, Inbound(sender=PHONE, attachment_count=1))
     assert out.replies == [msg.PHOTO_RESEND]  # e.g. a video or sticker
+
+
+# ---------- voice summary ----------
+
+@pytest.mark.asyncio
+async def test_photo_reply_adds_voice_summary(env, monkeypatch):
+    db, calls = env
+    audio = BotAudio(b"ID3fake")
+
+    async def fake_voice(text, language="English", http=None):
+        calls.spoken.append((text, language))
+        return audio
+
+    monkeypatch.setattr(voice, "synthesize", fake_voice)
+    await sign_in(db)
+    out = await send(db, "1", images=[JPG])
+    assert out.replies[1] is audio and len(out.replies) == 2
+    text, language = calls.spoken[0]
+    assert language == "English" and "missed payment" in text and "Nov 3, 2026" in text
+    assert "SAVE" not in text and "- " not in text  # nothing a voice shouldn't read out
+
+
+@pytest.mark.asyncio
+async def test_voice_failure_leaves_text_reply(env):
+    db, _ = env
+    await sign_in(db)
+    out = await send(db, "1", images=[JPG])  # fixture voice returns None
+    assert len(out.replies) == 1 and isinstance(out.replies[0], str)
+
+
+@pytest.mark.asyncio
+async def test_router_returns_audio_with_its_text(env, monkeypatch):
+    import base64
+    from app.routers import bot as bot_router
+    from app.schemas import BotImageIn, BotInbound
+    db, _ = env
+
+    async def fake_voice(text, language="English", http=None):
+        return BotAudio(b"ID3fake")
+
+    monkeypatch.setattr(voice, "synthesize", fake_voice)
+    await sign_in(db)
+    result = await bot_router.inbound(BotInbound(
+        sender=PHONE, text="1", images=[BotImageIn(base64.b64encode(JPG.data).decode(), "image/jpeg")]), db)
+    assert len(result.replies) == 1
+    assert result.replies[0].audio.mime_type == "audio/mpeg"
+    assert base64.b64decode(result.replies[0].audio.data_base64) == b"ID3fake"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_calls_elevenlabs(monkeypatch):
+    import httpx
+    from pydantic import SecretStr
+    from app.config import get_settings
+    s = get_settings()
+    monkeypatch.setattr(s, "elevenlabs_api_key", SecretStr("k"))
+    monkeypatch.setattr(s, "elevenlabs_voice_id_en", "EN")
+    monkeypatch.setattr(s, "elevenlabs_voice_id_es", "ES")
+    seen = []
+
+    def handler(req: httpx.Request):
+        seen.append(req)
+        return httpx.Response(200, content=b"ID3mp3")
+
+    http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    out = await voice.synthesize("Hola", "Spanish", http)
+    assert out.data == b"ID3mp3" and out.mime_type == "audio/mpeg"
+    assert seen[0].url.path.endswith("/ES") and seen[0].headers["xi-api-key"] == "k"
+    await voice.synthesize("Hello", "Vietnamese", http)
+    assert seen[1].url.path.endswith("/EN")
+
+    monkeypatch.setattr(http, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectError("x")))
+    assert await voice.synthesize("Hello", "English", http) is None
+    monkeypatch.setattr(s, "elevenlabs_api_key", SecretStr(""))
+    assert await voice.synthesize("Hello", "English", http) is None
+
+
+@pytest.mark.asyncio
+async def test_voice_after_summary_sends_audio_and_keeps_save(env, monkeypatch):
+    db, calls = env
+    await sign_in(db)
+    await send(db, "1", images=[JPG])  # fixture voice returns None: no audio with the first reply
+    audio = BotAudio(b"ID3fake")
+
+    async def fake_voice(text, language="English", http=None):
+        calls.spoken.append((text, language))
+        return audio
+
+    monkeypatch.setattr(voice, "synthesize", fake_voice)
+    out = await send(db, "read it to me", images=[JPG], held=True)
+    assert out.replies == [audio] and out.hold_images
+    assert "missed payment" in calls.spoken[-1][0]
+    out = await send(db, "SAVE", images=[JPG], held=True)  # SAVE still works afterwards
+    assert out.replies == [bot_photos.SAVED]
+
+
+@pytest.mark.asyncio
+async def test_voice_when_tts_down_apologizes(env):
+    db, _ = env
+    await sign_in(db)
+    await send(db, "1", images=[JPG])
+    out = await send(db, "VOICE", images=[JPG], held=True)
+    assert out.replies == [msg.EN["PH_VOICE_UNAVAILABLE"]] and out.hold_images
+
+
+@pytest.mark.asyncio
+async def test_voice_without_a_photo_summary_is_not_special(env):
+    db, calls = env
+    await sign_in(db)
+    out = await send(db, "voice")
+    assert not any(isinstance(r, BotAudio) for r in out.replies) and not calls.spoken
+
+
+def test_is_voice_request():
+    for t in ("voice", "Voice!", "read it to me", "Léelo", "nota de voz", "audio"):
+        assert bot_photos.is_voice_request(t), t
+    for t in ("1", "SAVE", "voice mail near me", "food"):
+        assert not bot_photos.is_voice_request(t), t

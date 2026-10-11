@@ -12,8 +12,8 @@ from app.db import get_session
 import base64
 import binascii
 
-from app.schemas import BotImageOut, BotInbound, BotInboundResult, BotReply
-from app.services.bot_types import BotImage
+from app.schemas import BotAudioOut, BotImageOut, BotInbound, BotInboundResult, BotReply
+from app.services.bot_types import BotAudio, BotImage
 from app.services.photo_reader import MAX_PHOTOS, Photo
 from app.services.bot_conversation import Inbound, handle_inbound
 
@@ -60,6 +60,12 @@ async def inbound(
                 replies[-1].image = image
             else:
                 replies.append(BotReply(image=image))
+        elif isinstance(item, BotAudio):
+            audio = BotAudioOut(base64.b64encode(item.data).decode(), item.name, item.mime_type)
+            if replies and replies[-1].audio is None:
+                replies[-1].audio = audio
+            else:
+                replies.append(BotReply(audio=audio))
         else:
             replies.append(BotReply(text=item))
     return BotInboundResult(

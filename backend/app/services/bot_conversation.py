@@ -70,7 +70,7 @@ class Inbound:
 
 @dataclass
 class Outcome:
-    # Text replies, optionally followed by a BotImage (sent after the text before it).
+    # Text replies, optionally followed by a BotImage or BotAudio (sent after the text before it).
     replies: list = field(default_factory=list)
     # Ask the sidecar to keep this turn's photos and re-send them with the next message.
     hold_images: bool = False
@@ -371,18 +371,35 @@ async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now
     """Photo flow, or None to continue with normal text handling."""
     L = msg.Strings(client.language)
     pending = s.pending_attachment_ref
-    if m.images and not m.images_held:  # new photos: read them right away (any caption is ignored)
+    if pending == "photo_save" and not (m.images and not m.images_held) and bot_photos.is_voice_request(text):
+        # Keep waiting for SAVE: the photos stay held (if the sidecar still has them) and the reading stays.
+        _audit(db, s.enrollment, "photo.voice", "sent")
+        return Replies(await bot_photos.voice_again(s, L), hold=m.images_held)
+    if m.images and not m.images_held:  # new photos
         s.pending_attachment_ref = None
-        reply, hold, outcome = await bot_photos.process(client, s, m.images, now, L)
-        _audit(db, s.enrollment, "photo.read", outcome)
-        return Replies([reply], hold=hold)
+        mode = bot_photos.parse_mode(text)
+        if mode is None and not text:
+            s.pending_attachment_ref = "photo_mode"
+            _audit(db, s.enrollment, "photo", "asked_mode")
+            return Replies([L.PH_ASK_MODE], hold=True)
+        mode = mode or ("simplify", None)  # any other caption, e.g. "what is this?"
+        reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
+        _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
+        return Replies(reply, hold=hold)
 
-    if m.images and m.images_held:  # photos we asked the sidecar to keep, for a SAVE
+    if m.images and m.images_held:  # photos we asked the sidecar to keep
+        mode = bot_photos.parse_mode(text)
+        if pending == "photo_mode" and mode:
+            reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
+            _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
+            return Replies(reply, hold=hold)
         if pending == "photo_save" and kw in SAVE_WORDS:
-            reply, outcome = await bot_photos.save(db, client, s, m.images, now, L)
-            _audit(db, s.enrollment, "photo.save", outcome)
+            reply = await bot_photos.save(db, client, s, m.images, now, L)
+            _audit(db, s.enrollment, "photo.save", "saved")
             return Replies([reply])
-    elif pending == "photo_save" and kw in SAVE_WORDS:
+    elif pending and (
+        (pending == "photo_mode" and bot_photos.parse_mode(text)) or (pending == "photo_save" and kw in SAVE_WORDS)
+    ):
         s.pending_attachment_ref = None  # the sidecar's copy expired
         return Replies([L.PH_GONE])
 

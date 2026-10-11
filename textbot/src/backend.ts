@@ -28,8 +28,8 @@ export interface ReplyImage {
 }
 
 export interface InboundResult {
-  /** Text, optionally followed by an image (e.g. the resource map). */
-  replies: { text: string; image?: ReplyImage | null }[];
+  /** Text, optionally followed by an image (the resource map) or a voice version of it. */
+  replies: { text: string; image?: ReplyImage | null; audio?: ReplyImage | null }[];
   session_active?: boolean;
   /** Keep this turn's photos and re-send them with the sender's next message. */
   hold_images?: boolean;

@@ -74,6 +74,16 @@ describe("prepare + deliver", () => {
     expect(typeof sent[1]).toBe("object");
   });
 
+  test("sends the voice summary after its text", async () => {
+    const { space, sent } = fakeSpace();
+    await deliver([prep(space, { type: "text", text: "1" })!], config, {}, async () => ({
+      replies: [{ text: "Summary", audio: { data_base64: Buffer.from("ID3fake").toString("base64"), name: "summary.mp3", mime_type: "audio/mpeg" } }],
+    }));
+    expect(sent[0]).toBe("Summary");
+    expect(sent.length).toBe(2);
+    expect(typeof sent[1]).toBe("object");
+  });
+
   test("backend down -> generic reply with no data", async () => {
     const { space, sent } = fakeSpace();
     await deliver([prep(space, { type: "text", text: "hi" })!], config, {}, async () => { throw new Error("down"); });

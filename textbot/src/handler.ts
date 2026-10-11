@@ -110,12 +110,10 @@ export async function deliver(
   for (const reply of result.replies) {
     // Plain text so SMS/RCS read the same; markdown is opt-in later.
     if (reply.text) await last.space.send(toPlainText(reply.text));
-    if (reply.image) {
+    for (const file of [reply.image, reply.audio]) {
+      if (!file) continue;
       await last.space.send(
-        attachment(Buffer.from(reply.image.data_base64, "base64"), {
-          name: reply.image.name,
-          mimeType: reply.image.mime_type,
-        }),
+        attachment(Buffer.from(file.data_base64, "base64"), { name: file.name, mimeType: file.mime_type }),
       );
     }
   }

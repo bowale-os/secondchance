@@ -926,9 +926,17 @@ class BotImageOut:
 
 
 @dataclass
+class BotAudioOut:
+    data_base64: str
+    name: str
+    mime_type: str
+
+
+@dataclass
 class BotReply:
     text: str = ""
     image: Optional[BotImageOut] = None  # sent after `text` when both are set
+    audio: Optional[BotAudioOut] = None  # voice version of `text`, sent after it
 
 
 @dataclass

@@ -20,9 +20,7 @@ from app.services import bot_messages as msg
 from app.services.bot_conversation import Inbound, handle_inbound
 from app.services.bot_keywords import keyword, parse_nudge
 from app.services.bot_resources import parse_fast
-from app.services.photo_reader import Photo
-from app.reader import fake_fixtures as fx
-from app.reader.ai import FakeAiClient
+from app.services.photo_reader import KeyDate, Photo, PhotoReading
 from app.services.phone import encrypt_phone, phone_lookup_hash
 from app.tables import (
     Appointment, Base, BotEnrollment, BotEnrollmentStatus, Client, ClientId, ClientObligation,
@@ -83,8 +81,12 @@ def test_spanish_nudge_and_resources_parsing():
     assert parse_fast("albergue").category == "shelter"
 
 
-def test_spanish_question_marks():
+def test_spanish_photo_modes():
+    assert bot_photos.parse_mode("explicar") == ("simplify", None)
+    assert bot_photos.parse_mode("¿Qué dice?") == ("simplify", None)
     assert parse_fast("¿Comida?").category == "food"
+    assert bot_photos.parse_mode("traducir al inglés") == ("translate", "English")
+    assert bot_photos.parse_mode("2 vietnamita") == ("translate", "Vietnamese")
 
 
 # ---------- flows ----------
@@ -198,47 +200,29 @@ async def test_nudge_in_spanish(db):
     assert (await say(db, "aviso no")) == [ES.NUDGE_OFF]
 
 
-def _jpeg() -> bytes:
-    import io
-    from PIL import Image
-    buf = io.BytesIO()
-    Image.new("RGB", (60, 80), "white").save(buf, "JPEG")
-    return buf.getvalue()
-
-
-# What the reader writes for a Spanish-speaking client (the paper itself stays English).
-ES_ACTION = {
-    **fx.FAKE_ACTIONS["actions"][0],
-    "title": "Reúnase con su oficial de libertad condicional",
-    "details": "Vaya a la oficina en persona.",
-    "bring": ["Identificación con foto"],
-    "consequence": None,
-}
-
-
 @pytest.mark.asyncio
 async def test_photos_in_spanish(db, monkeypatch):
-    ai = FakeAiClient(overrides={
-        "classify": {**fx.FAKE_CLASSIFY, "title": "Condiciones de libertad condicional"},
-        "actions": {"actions": [ES_ACTION]},
-    })
-    monkeypatch.setattr(photo_reader, "get_ai_client", lambda: ai)
-    monkeypatch.setattr(photo_reader, "configured", lambda: True)
-    jpg = Photo(_jpeg(), "image/jpeg")
+    calls = []
+
+    async def fake_read(photos, mode, target_language):
+        calls.append((mode, target_language))
+        return PhotoReading(readable=True, document_kind="aviso de la corte", legal_or_court=True,
+                            summary="Tiene que ir a la corte.", key_dates=[KeyDate(date="3 nov", what="Audiencia")],
+                            next_steps=["Vaya a la audiencia"])
+    monkeypatch.setattr(photo_reader, "read_photos", fake_read)
+    jpg = Photo(b"\xff\xd8\xff", "image/jpeg")
     assert await say(db, attachment_count=1) == [ES.PHOTO_SIGN_IN]
     assert await say(db, "maria lopez") == [ES.ASK_PIN]  # already waiting for the name
     assert await say(db, "4821") == [ES.SIGNED_IN]
-    out = await handle_inbound(db, Inbound(sender=PHONE, images=[jpg], attachment_count=1))
-    reply = out.replies[0]
-    assert out.hold_images
-    assert [c.step for c in ai.calls if c.step == "simplify"] and "Spanish" in next(
-        c.system for c in ai.calls if c.step == "simplify")   # profile language
-    assert reply.startswith("Este papel: Condiciones de libertad condicional.")
-    assert "Qué hacer:" in reply and ES.PH_LEGAL in reply
-    # No release date on file: the to-do says what's missing, in Spanish.
-    assert "Agregue su fecha de salida" in reply
+    assert await say(db, images=[jpg], attachment_count=1) == [ES.PH_ASK_MODE]
+    reply = (await say(db, "1", images=[jpg], attachment_count=1, images_held=True))[0]
+    assert calls == [("simplify", "Spanish")]  # profile language
+    assert reply.startswith("Parece ser: aviso de la corte.")
+    assert "Fechas importantes:" in reply and "Qué hacer:" in reply and ES.PH_LEGAL in reply
     no_english(reply)
     assert await say(db, "guardar", images=[jpg], attachment_count=1, images_held=True) == [ES.PH_SAVED]
+    await say(db, "traducir al inglés", images=[jpg], attachment_count=1)
+    assert calls[-1] == ("translate", "English")
 
 
 @pytest.mark.asyncio
