@@ -29,8 +29,9 @@ export default function CalendarPage({ staff, nav, onSelectClient, onLogout }: P
   }, [api]);
 
   async function setDone(event: CalendarEvent, done: boolean) {
-    const updated = await api.events.setStatus(event.id, done ? "done" : "open");
-    setEvents((all) => all?.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)) ?? null);
+    const ids = event.merged_ids ?? [event.id];
+    const updated = await Promise.all(ids.map((id) => api.events.setStatus(id, done ? "done" : "open")));
+    setEvents((all) => all?.map((e) => (updated.find((u) => u.id === e.id) ? { ...e, status: done ? "done" : "open" } : e)) ?? null);
   }
 
   return (

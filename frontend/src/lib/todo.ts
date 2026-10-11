@@ -1,4 +1,5 @@
 import type { ClientRead, StaffEventRead } from "../types";
+import { mergeDuplicates } from "./calendar";
 import { daysUntil, formatWhen, humanize } from "./format";
 
 /** The groups of the case worker's to-do list, most urgent first. */
@@ -18,8 +19,8 @@ export interface TodoItem {
   clientName: string;
   title: string;
   detail: string;
-  /** Set for event items, so the row can offer "Mark done". */
-  eventId?: string;
+  /** Set for event items, so the row can offer "Mark done". Several when documents listed the same event. */
+  eventIds?: string[];
 }
 
 const SOON_DAYS = 7;
@@ -33,12 +34,12 @@ const eventTitle = (e: StaffEventRead) => e.description || humanize(e.obligation
  * An event the client added shows once under "New from clients" until I acknowledge it; after that it
  * flows into Overdue or Coming up like any other event.
  */
-export function buildTodo(clients: ClientRead[], events: StaffEventRead[]): TodoItem[] {
+export function buildTodo(clients: ClientRead[], allEvents: StaffEventRead[]): TodoItem[] {
   const items: TodoItem[] = [];
 
-  for (const e of events) {
+  for (const e of mergeDuplicates(allEvents)) {
     if (e.status === "done") continue;
-    const base = { clientId: e.client_id, clientName: e.client_name, eventId: e.id, title: eventTitle(e) };
+    const base = { clientId: e.client_id, clientName: e.client_name, eventIds: e.merged_ids ?? [e.id], title: eventTitle(e) };
     const when = e.due_date ? formatWhen(e.due_date, e.due_time) : "No date";
     const where = e.location ? ` · ${e.location}` : "";
 

@@ -2,7 +2,11 @@ import type { EventRead, ObligationType } from "../types";
 import { formatClock } from "./format";
 
 /** An event as the calendar shows it. Case workers also get the client's name. */
-export type CalendarEvent = EventRead & { client_name?: string };
+export type CalendarEvent = EventRead & {
+  client_name?: string;
+  /** Ids of every identical event this one stands for (see mergeDuplicates). */
+  merged_ids?: string[];
+};
 
 /** Plain-language names for the event types, in the order the filter shows them. */
 export const TYPE_LABEL: Record<ObligationType, string> = {
@@ -72,4 +76,30 @@ export function groupByDay(events: CalendarEvent[]): Map<string, CalendarEvent[]
     map.set(e.due_date, [...(map.get(e.due_date) ?? []), e]);
   }
   return map;
+}
+
+/**
+ * Two documents often list the same obligation, so a client can end up with the same court date twice.
+ * Events with the same client, type, date, time and status (and who added them) show as one. The wording
+ * with more detail wins, and `merged_ids` keeps every id so "Mark done" updates them all.
+ */
+export function mergeDuplicates<T extends CalendarEvent>(events: T[]): (T & { merged_ids: string[] })[] {
+  const merged = new Map<string, T & { merged_ids: string[] }>();
+  for (const e of events) {
+    const key = [e.client_id, e.obligation_type, e.due_date, e.due_time, e.status, e.added_by_client].join("|");
+    const seen = merged.get(key);
+    if (!seen) {
+      merged.set(key, { ...e, merged_ids: [e.id] });
+    } else {
+      seen.merged_ids = [...seen.merged_ids, e.id];
+      if ((e.description ?? "").length > (seen.description ?? "").length) seen.description = e.description;
+      if (!seen.location && e.location) seen.location = e.location;
+    }
+  }
+  return [...merged.values()];
+}
+
+/** Events grouped by day, earliest day first. Events with no date are left out. */
+export function groupDays(events: CalendarEvent[]): [string, CalendarEvent[]][] {
+  return [...groupByDay(events)].sort((a, b) => a[0].localeCompare(b[0])).map(([iso, list]) => [iso, [...list].sort(byTime)]);
 }

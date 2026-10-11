@@ -53,12 +53,12 @@ export default function Dashboard({ staff, nav, onSelectClient, onLogout }: Prop
   }, [clients, query]);
 
   async function markDone(item: TodoItem) {
-    if (!item.eventId) return;
+    if (!item.eventIds) return;
     setTodoError(null);
     setBusyKey(item.key);
     try {
-      const updated = await api.events.setStatus(item.eventId, "done");
-      setEvents((all) => all?.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)) ?? null);
+      const updated = await Promise.all(item.eventIds.map((id) => api.events.setStatus(id, "done")));
+      setEvents((all) => all?.map((e) => updated.find((u) => u.id === e.id) ? { ...e, status: "done" } : e) ?? null);
     } catch (e) {
       setTodoError(errorText(e));
     } finally {
