@@ -150,6 +150,15 @@ export default function CalendarView({ role, events: rawEvents, onSetDone, onOpe
 
         {error && <p className="dash-error" role="alert">{error}</p>}
 
+        {events.length > 0 && visible.length === 0 && (
+          <p className="cal-nomatch" role="status">
+            Nothing matches these filters.
+            <button type="button" className="text-link" onClick={() => { setType("all"); setClientId("all"); }}>
+              Show everything
+            </button>
+          </p>
+        )}
+
         <section className="cal-today-card" aria-label={heading}>
           <h2>{heading}{selected === today && <span className="cal-now">Today</span>}</h2>
           {dayEvents.length === 0 ? (

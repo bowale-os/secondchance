@@ -9,7 +9,8 @@
 
 .cal { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .cal-side { display: grid; gap: 1rem; position: sticky; top: 1rem; }
-.cal-main { display: grid; gap: 1.5rem; min-width: 0; }
+.cal-main { display: grid; gap: 1.5rem; min-width: 0; align-content: start; min-height: 40rem; }
+.cal-nomatch { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; color: var(--muted); }
 @media (max-width: 56rem) {
   .cal { grid-template-columns: 1fr; }
   .cal-side { position: static; }
