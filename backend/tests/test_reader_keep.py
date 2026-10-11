@@ -26,7 +26,7 @@ from app.routers import reader as reader_router
 from app.security import hash_pin
 from app.tables import (
     Assignment, Base, Client, DataSource, Document, DocumentAction, DocumentReading, DocumentStatus,
-    DocumentType, Staff,
+    DocumentType, ReaderUsage, Staff,
 )
 
 
@@ -67,7 +67,6 @@ async def env(monkeypatch):
     ai = {"client": FakeAiClient()}
     monkeypatch.setattr(reader_router, "get_ai_client", lambda: ai["client"])
     monkeypatch.setattr(reader_router, "_today", lambda: "2026-10-09")
-    reader_router._hits.clear()
 
     http = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
     yield {"http": http, "Session": Session, "who": who, "ai": ai,
@@ -130,11 +129,45 @@ async def test_internal_errors_never_show_or_log_document_text(env, caplog):
 
 
 @pytest.mark.asyncio
-async def test_rate_limit(env):
+async def test_rate_limit_is_shared_and_per_person(env):
     for _ in range(reader_router.RATE_LIMIT):
         await process(env, PAGE_1)
     r = await env["http"].post("/reader/process", files=pages(PAGE_1))
     assert r.status_code == 429
+    async with env["Session"]() as s:   # the count lives in the database, not one process
+        assert await s.scalar(select(func.count()).select_from(ReaderUsage)) == reader_router.RATE_LIMIT
+    env["who"]["user"] = env["other"]   # someone else isn't affected
+    r = await env["http"].post("/reader/process", files=pages(PAGE_1))
+    assert r.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_old_usage_rows_expire(env, monkeypatch):
+    clock = {"t": 1_000_000.0}
+    monkeypatch.setattr(reader_router.time, "time", lambda: clock["t"])
+    for _ in range(reader_router.RATE_LIMIT):
+        await process(env, PAGE_1)
+    clock["t"] += reader_router.RATE_WINDOW_S + 1
+    await process(env, PAGE_1)
+    async with env["Session"]() as s:
+        assert await s.scalar(select(func.count()).select_from(ReaderUsage)) == 1
+
+
+@pytest.mark.asyncio
+async def test_messages_follow_the_clients_language(env):
+    env["who"]["user"] = env["other"]   # Ana reads in Spanish
+    r = await env["http"].post("/reader/process", files=[("files", ("x.zip", b"\0", "application/zip"))])
+    assert json.loads(r.text) == {"stage": "error", "message":
+        '"x.zip" no es un tipo de archivo que podamos leer. Use una foto, un PDF o un archivo de Word.'}
+
+    async with env["Session"]() as s:
+        s.add(Assignment(client_id=env["other"].id, staff_id=env["staff"].id))
+        await s.commit()
+    env["who"]["user"] = env["staff"]   # a case worker reading with Ana still gets her language
+    token = (await process(env, PAGE_1, data={"client_id": str(env["other"].id)}))[-1]["receipt"]
+    env["who"]["user"] = env["other"]
+    r = await env["http"].post("/reader/keep", files=pages(PAGE_2), data={"receipt": token})
+    assert r.json()["detail"] == "Estas no son las mismas páginas que se leyeron. Lea el papel otra vez."
 
 
 # ---------- keep ----------

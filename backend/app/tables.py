@@ -825,3 +825,13 @@ class DocumentAction(IdMixin, TimestampMixin, Base):
     )
 
     reading: Mapped["DocumentReading"] = relationship(back_populates="actions")
+
+
+class ReaderUsage(Base):
+    """One row per document reading, for the shared rate limit across API workers.
+    Holds only who and when (epoch seconds); rows older than the window are deleted."""
+    __tablename__ = "reader_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    actor: Mapped[str] = mapped_column(String(60), index=True)   # "client:<id>" or "staff:<id>"
+    at: Mapped[float] = mapped_column(Float, index=True)

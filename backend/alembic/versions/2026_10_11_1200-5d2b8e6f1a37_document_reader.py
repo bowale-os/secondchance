@@ -1,4 +1,4 @@
-"""document reader: readings and to-dos for kept papers
+"""document reader: readings and to-dos for kept papers, shared rate limit
 
 Revision ID: 5d2b8e6f1a37
 Revises: 7c3f5a2e8d41
@@ -80,8 +80,20 @@ def upgrade() -> None:
     op.create_index(op.f('ix_document_actions_reading_id'), 'document_actions', ['reading_id'], unique=False)
     op.create_index(op.f('ix_document_actions_client_id'), 'document_actions', ['client_id'], unique=False)
 
+    op.create_table('reader_usage',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('actor', sa.String(length=60), nullable=False),
+    sa.Column('at', sa.Float(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    )
+    op.create_index(op.f('ix_reader_usage_actor'), 'reader_usage', ['actor'], unique=False)
+    op.create_index(op.f('ix_reader_usage_at'), 'reader_usage', ['at'], unique=False)
+
 
 def downgrade() -> None:
+    op.drop_index(op.f('ix_reader_usage_at'), table_name='reader_usage')
+    op.drop_index(op.f('ix_reader_usage_actor'), table_name='reader_usage')
+    op.drop_table('reader_usage')
     op.drop_index(op.f('ix_document_actions_client_id'), table_name='document_actions')
     op.drop_index(op.f('ix_document_actions_reading_id'), table_name='document_actions')
     op.drop_table('document_actions')

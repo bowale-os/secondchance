@@ -15,7 +15,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
 from app.extraction import ExtractionError, downscale
-from app.reader.ai import UserFacingError
+from app.reader.messages import UserFacingError
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MAX_PAGES = 30
@@ -42,18 +42,16 @@ class Page:
 
 
 def _too_many() -> UserFacingError:
-    return UserFacingError(
-        f"That's more than {MAX_PAGES} pages. Please send {MAX_PAGES} pages or fewer at a time."
-    )
+    return UserFacingError("too_many", max=MAX_PAGES)
 
 
 async def preprocess(files: list[UploadFile]) -> list[Page]:
     if not files:
-        raise UserFacingError("No pages were sent. Please take a photo or pick a file.")
+        raise UserFacingError("no_pages")
     if len(files) > 1 and any(f.mime_type == DOCX for f in files):
-        raise UserFacingError("Please send a Word file by itself, without photos or other files.")
+        raise UserFacingError("word_alone")
     if sum(len(f.data) for f in files) > MAX_UPLOAD_BYTES:
-        raise UserFacingError("These files are too big. Please send less than 20 MB at a time.")
+        raise UserFacingError("too_big")
 
     pages: list[Page] = []
     for f in files:
@@ -61,9 +59,7 @@ async def preprocess(files: list[UploadFile]) -> list[Page]:
             try:
                 data, mime = await asyncio.to_thread(downscale, f.data, f.mime_type)
             except ExtractionError:
-                raise UserFacingError(
-                    f'We couldn\'t open "{f.name}". Try taking the photo again.'
-                ) from None
+                raise UserFacingError("bad_image", name=f.name) from None
             pages.append(Page(n=len(pages) + 1, kind="image", mime_type=mime, data=data))
         elif f.mime_type == "application/pdf":
             for data in await asyncio.to_thread(split_pdf, f.data, MAX_PAGES - len(pages)):
@@ -73,14 +69,12 @@ async def preprocess(files: list[UploadFile]) -> list[Page]:
             if text:
                 pages.append(Page(n=len(pages) + 1, kind="text", text=text))
         else:
-            raise UserFacingError(
-                f'"{f.name}" is not a file type we can read. Use a photo, PDF, or Word file.'
-            )
+            raise UserFacingError("bad_type", name=f.name)
         if len(pages) > MAX_PAGES:
             raise _too_many()
 
     if not pages:
-        raise UserFacingError("These files look empty. Please try a photo of the paper.")
+        raise UserFacingError("empty")
     return pages
 
 
@@ -91,9 +85,7 @@ def split_pdf(data: bytes, max_pages: int) -> list[bytes]:
             raise PdfReadError("encrypted")
         count = len(src.pages)
     except Exception:
-        raise UserFacingError(
-            "We couldn't open this PDF. If it has a password, take photos of the pages instead."
-        ) from None
+        raise UserFacingError("bad_pdf") from None
     if count > max_pages:
         raise _too_many()
 
@@ -112,6 +104,4 @@ def docx_text(f: UploadFile) -> str:
     try:
         return mammoth.extract_raw_text(io.BytesIO(f.data)).value
     except Exception:
-        raise UserFacingError(
-            f'We couldn\'t open "{f.name}". Try taking a photo of the paper instead.'
-        ) from None
+        raise UserFacingError("bad_word", name=f.name) from None

@@ -14,8 +14,8 @@ from typing import Optional
 import jwt
 
 from app.config import get_settings
-from app.reader.ai import UserFacingError
 from app.reader.dates import to_raw
+from app.reader.messages import UserFacingError
 from app.reader.schemas import CamelModel, DocumentMeta, Flag, RawAction, SimplifiedDocument
 
 RECEIPT_TTL = timedelta(minutes=30)
@@ -90,12 +90,12 @@ def check(token: str, *, client_id: str, files: list[bytes]) -> ReceiptBody:
     try:
         claims = jwt.decode(token, _secret(), algorithms=[ALGORITHM], audience=AUDIENCE)
     except jwt.ExpiredSignatureError:
-        raise ReceiptError("This reading has expired. Please read the paper again to keep it.") from None
+        raise ReceiptError("expired") from None
     except jwt.PyJWTError:
-        raise ReceiptError("We couldn't save this paper. Please read it again.") from None
+        raise ReceiptError("cant_save") from None
     body = ReceiptBody.model_validate(claims["body"])
     if body.client_id != client_id:
-        raise ReceiptError("We couldn't save this paper. Please read it again.")
+        raise ReceiptError("cant_save")
     if body.file_hashes != [file_hash(b) for b in files]:
-        raise ReceiptError("These aren't the same pages that were read. Please read the paper again.")
+        raise ReceiptError("wrong_pages")
     return body

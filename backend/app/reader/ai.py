@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
 from app.reader import fake_fixtures as fx
+from app.reader.messages import UserFacingError
 
 logger = logging.getLogger(__name__)
 
@@ -38,19 +39,15 @@ class AiClient(Protocol):
     async def generate(self, req: AiRequest) -> Any: ...
 
 
-class UserFacingError(Exception):
-    """An error whose message is safe to show a client. Never includes document text."""
-
-
 class AiRefusalError(UserFacingError):
     def __init__(self, step: AiStep):
-        super().__init__("We couldn't finish this paper; please show it to your case manager.")
+        super().__init__("refused")
         self.step = step
 
 
 class AiOutputError(UserFacingError):
     def __init__(self, step: AiStep):
-        super().__init__("Something went wrong reading this paper. Please try again.")
+        super().__init__("failed")
         self.step = step
 
 
