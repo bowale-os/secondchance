@@ -371,31 +371,18 @@ async def _photos(db, client, s: BotSession, text: str, kw: str, m: Inbound, now
     """Photo flow, or None to continue with normal text handling."""
     L = msg.Strings(client.language)
     pending = s.pending_attachment_ref
-    if m.images and not m.images_held:  # new photos
+    if m.images and not m.images_held:  # new photos: read them right away (any caption is ignored)
         s.pending_attachment_ref = None
-        mode = bot_photos.parse_mode(text)
-        if mode is None and not text:
-            s.pending_attachment_ref = "photo_mode"
-            _audit(db, s.enrollment, "photo", "asked_mode")
-            return Replies([L.PH_ASK_MODE], hold=True)
-        mode = mode or ("simplify", None)  # any other caption, e.g. "what is this?"
-        reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
-        _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
+        reply, hold, outcome = await bot_photos.process(client, s, m.images, now, L)
+        _audit(db, s.enrollment, "photo.read", outcome)
         return Replies([reply], hold=hold)
 
-    if m.images and m.images_held:  # photos we asked the sidecar to keep
-        mode = bot_photos.parse_mode(text)
-        if pending == "photo_mode" and mode:
-            reply, hold, outcome = await bot_photos.process(client, s, m.images, *mode, L)
-            _audit(db, s.enrollment, f"photo.{mode[0]}", outcome)
-            return Replies([reply], hold=hold)
+    if m.images and m.images_held:  # photos we asked the sidecar to keep, for a SAVE
         if pending == "photo_save" and kw in SAVE_WORDS:
-            reply = await bot_photos.save(db, client, s, m.images, now, L)
-            _audit(db, s.enrollment, "photo.save", "saved")
+            reply, outcome = await bot_photos.save(db, client, s, m.images, now, L)
+            _audit(db, s.enrollment, "photo.save", outcome)
             return Replies([reply])
-    elif pending and (
-        (pending == "photo_mode" and bot_photos.parse_mode(text)) or (pending == "photo_save" and kw in SAVE_WORDS)
-    ):
+    elif pending == "photo_save" and kw in SAVE_WORDS:
         s.pending_attachment_ref = None  # the sidecar's copy expired
         return Replies([L.PH_GONE])
 

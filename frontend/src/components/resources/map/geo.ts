@@ -1,4 +1,4 @@
-// Ported from second-chance-reader/apps/mobile/src/map/geo (bounds.ts, viewMath.ts, counties.ts).
+// Ported from archive/second-chance-reader/apps/mobile/src/map/geo (bounds.ts, viewMath.ts, counties.ts).
 // The map is locked to the five core metro Atlanta counties. All math is in Web Mercator
 // pixels (the projection MapLibre uses). Our zoom levels count 256-px tiles; MapLibre counts
 // 512-px tiles, so MapLibre's zoom is ours minus one.

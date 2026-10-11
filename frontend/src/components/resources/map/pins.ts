@@ -1,4 +1,4 @@
-// Ported from second-chance-reader/apps/mobile/src/map/logic/pins.ts.
+// Ported from archive/second-chance-reader/apps/mobile/src/map/logic/pins.ts.
 // Turns markers into what the map draws: one pin per building, and below zoom 13,
 // numbered circles for pins that would overlap.
 import type { ResourceCategory } from "../../../types";

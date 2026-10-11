@@ -136,17 +136,18 @@ EN: dict[str, str] = {
     "MAP_NONE": "None of these places have an address to map. Reply a number for details.",
     "MAP_NO_PICTURE": "(Map picture unavailable right now; links below.)",
     # ---------- photos ----------
-    "PH_ASK_MODE": "Got it. Reply 1 to explain it in plain words, or 2 to translate it.",
     "PH_GONE": "I don't have your photo anymore. Please send it again.",
     "PH_NOT_AVAILABLE": "I can't read photos right now. Please show it to your case worker.",
     "PH_UNREADABLE": "I couldn't read that. Try again in good light, with the whole page in the photo.",
     "PH_UNSUPPORTED": "I can only read photos (JPG, PNG, HEIC) or PDFs under 10 MB.",
     "PH_SAVED": "Saved to your documents. Your case worker will look it over.",
     "PH_LEGAL": "This looks like a legal or court paper. Check with your case worker before you act on it.",
-    "PH_LOOKS_LIKE": "This looks like a {kind}.",
-    "PH_KEY_DATES": "Key dates:",
+    "PH_TITLE": "This paper: {title}.",
     "PH_TODO": "What to do:",
-    "PH_SAVE_OFFER": "Reply SAVE to keep a copy in your documents.",
+    "PH_NOTHING_TO_DO": "This paper doesn't ask you to do anything.",
+    "PH_MORE": "And {n} more.",
+    "PH_CHECK": "Double-check:",
+    "PH_SAVE_OFFER": "Reply SAVE to keep it. Your to-dos will be in your portal and your case worker can see it.",
 }
 
 ES: dict[str, str] = {
@@ -265,17 +266,18 @@ ES: dict[str, str] = {
     "MAP_FIRST_N": "Se muestran los primeros {n}.",
     "MAP_NONE": "Ninguno de estos lugares tiene dirección para el mapa. Responda un número para ver detalles.",
     "MAP_NO_PICTURE": "(El mapa no está disponible ahora; abajo están los enlaces.)",
-    "PH_ASK_MODE": "Entendido. Responda 1 para explicarlo en palabras sencillas o 2 para traducirlo.",
     "PH_GONE": "Ya no tengo su foto. Por favor, envíela otra vez.",
     "PH_NOT_AVAILABLE": "No puedo leer fotos en este momento. Por favor, muéstresela a su trabajador social.",
     "PH_UNREADABLE": "No pude leerla. Intente otra vez con buena luz y con toda la página en la foto.",
     "PH_UNSUPPORTED": "Solo puedo leer fotos (JPG, PNG, HEIC) o PDF de menos de 10 MB.",
     "PH_SAVED": "Se guardó en sus documentos. Su trabajador social lo revisará.",
     "PH_LEGAL": "Parece un papel legal o de la corte. Consúltelo con su trabajador social antes de hacer algo.",
-    "PH_LOOKS_LIKE": "Parece ser: {kind}.",
-    "PH_KEY_DATES": "Fechas importantes:",
+    "PH_TITLE": "Este papel: {title}.",
     "PH_TODO": "Qué hacer:",
-    "PH_SAVE_OFFER": "Responda GUARDAR para guardar una copia en sus documentos.",
+    "PH_NOTHING_TO_DO": "Este papel no le pide hacer nada.",
+    "PH_MORE": "Y {n} más.",
+    "PH_CHECK": "Revise:",
+    "PH_SAVE_OFFER": "Responda GUARDAR para guardarlo. Sus tareas estarán en su portal y su trabajador social podrá verlo.",
 }
 
 _DAYS = {
