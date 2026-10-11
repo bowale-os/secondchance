@@ -10,7 +10,6 @@
 /* Client Home cards. Inside .dash, so they use its colour tokens. */
 .today-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 @media (max-width: 40rem) { .today-grid { grid-template-columns: minmax(0, 1fr); } }
-.today-wide { grid-column: 1 / -1; }
 .today-card { padding: 1.25rem; display: grid; gap: .5rem; align-content: start; overflow: visible; }
 .today-card h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .today-card p { margin: 0; }
@@ -19,6 +18,4 @@
 .today-type { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--brand); }
 .today-phone { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .today-late { margin-top: .5rem; padding: .75rem 1rem; background: var(--attn-bg); color: var(--attn-ink); border: 1px solid var(--attn-ink); border-radius: .75rem; }
-.today-places { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
-.today-places li { display: grid; gap: .1rem; }
 .dash .hint { color: var(--muted); }

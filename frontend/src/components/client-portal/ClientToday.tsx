@@ -2,34 +2,28 @@ import { useEffect, useState } from "react";
 import type { ClientApi } from "../../api";
 import { TYPE_LABEL, eventTitle, isoDate, mergeDuplicates, timeText, type CalendarEvent } from "../../lib/calendar";
 import { formatWhen } from "../../lib/format";
-import type { CaseWorkerRead, ClientRead, ResourceSummary } from "../../types";
+import type { CaseWorkerRead, ClientRead } from "../../types";
 import ReleaseBadge from "../dashboard/ReleaseBadge";
 import OverviewTab from "../client/OverviewTab";
-import { CATEGORY_LABELS } from "../resources/labels";
 import MyDocuments from "./MyDocuments";
 import "./portal.css";
 
 interface Props {
   client: ClientRead;
   api: ClientApi;
-  /** Jump to another tab (Calendar, Resources). */
-  go: (section: "resources" | "calendar") => void;
+  /** Jump to the Calendar tab. */
+  go: (section: "calendar") => void;
 }
 
-/** The client's Home: what is next, who to call, places open now, then their information and documents. */
+/** The client's Home: what is next, who to call, then their information and documents. */
 export default function ClientToday({ client, api, go }: Props) {
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [caseWorker, setCaseWorker] = useState<CaseWorkerRead | null>(null);
-  const [places, setPlaces] = useState<ResourceSummary[] | null>(null);
 
   // Each card loads on its own, so one failing never blanks the page.
   useEffect(() => {
     api.events.list().then((all) => setEvents(mergeDuplicates(all))).catch(() => setEvents([]));
     api.auth.caseWorker().then(setCaseWorker).catch(() => setCaseWorker(null));
-    api.resources
-      .mine()
-      .then((m) => setPlaces(m.results.items.filter((r) => r.open_now !== false).slice(0, 3)))
-      .catch(() => setPlaces([]));
   }, [api]);
 
   const today = isoDate(new Date());
@@ -93,25 +87,6 @@ export default function ClientToday({ client, api, go }: Props) {
           ) : (
             <p className="hint">Your case worker's details will show here.</p>
           )}
-        </section>
-
-        <section className="dash-panel today-card today-wide" aria-labelledby="near-heading">
-          <h2 id="near-heading">Open near you</h2>
-          {!places ? (
-            <p className="hint" role="status">Loading…</p>
-          ) : places.length === 0 ? (
-            <p className="hint">No places to show right now.</p>
-          ) : (
-            <ul className="today-places">
-              {places.map((p) => (
-                <li key={p.id}>
-                  <span className="today-big">{p.name}</span>
-                  <span className="hint">{CATEGORY_LABELS[p.category]}{p.open_now ? " · Open now" : ""}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <button type="button" className="dash-btn dash-btn-quiet" onClick={() => go("resources")}>See all places that can help</button>
         </section>
       </div>
 
