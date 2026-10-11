@@ -2,13 +2,13 @@
 
 Two kinds of model live here:
 
-- AI outputs (ExtractOutput ... ActionsOutput) are handed to Gemini as the response schema
-  and checked again on our side. Every field is required-but-nullable, and format rules
+- AI outputs (ExtractOutput ... ActionsOutput) are sent to Claude as the structured-output
+  schema and checked again on our side. Every field is required-but-nullable, and format rules
   (ISO dates, 0-1 confidence, non-empty strings) are validators rather than schema
-  constraints, so the schema Gemini sees stays plain types.
+  constraints, so the schema Claude sees stays plain types.
 - App shapes (ActionItem, Flag, ProgressEvent ...) are what the API streams to the browser.
 
-Python names are snake_case. On the wire (both to Gemini and to the browser) every model
+Python names are snake_case. On the wire (both to Claude and to the browser) every model
 uses the reader's camelCase names, so the prompts and the frontend types map one-to-one.
 Dump app shapes with `wire()` to match the reader's optional fields.
 """

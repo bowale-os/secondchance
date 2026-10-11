@@ -1,4 +1,4 @@
-"""The pipeline talks to the AI only through AiClient, so the Gemini client and the fake one
+"""The pipeline talks to the AI only through AiClient, so the Claude client and the fake one
 used for development and tests are interchangeable.
 
 Errors: UserFacingError messages are safe to show a client and never include document
@@ -10,8 +10,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Optional, Protocol, Union
 
-from google import genai
-from google.genai import errors, types
+import anthropic
 from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
@@ -26,7 +25,7 @@ AiStep = Literal["extract", "classify", "simplify", "actions"]
 class AiRequest:
     step: AiStep
     system: str
-    parts: list[Union[str, types.Part]]
+    content: list[dict]           # Anthropic content blocks (image / document / text)
     schema: type[BaseModel]
     # Which page an extract call is for, and how many pages there are (used by the fake client).
     page: Optional[int] = None
@@ -55,72 +54,78 @@ class AiOutputError(UserFacingError):
         self.step = step
 
 
-# ---------- Gemini ----------
+# ---------- Claude ----------
 
-# Thinking off everywhere for speed. If test_docs/ shows missed deadlines, give "actions"
-# a small budget (e.g. 1024) before anything else.
-THINKING_BUDGET: dict[AiStep, int] = {"extract": 0, "classify": 0, "simplify": 0, "actions": 0}
+@dataclass(frozen=True)
+class StepSettings:
+    model: str
+    effort: Literal["low", "medium", "high", "xhigh", "max"]
+    # Re-run on another model server-side if a safety classifier declines (Opus 5.5 only).
+    fallbacks: bool
 
-RETRY_CODES = (429, 500, 503)   # Gemini load spikes; anything else will not fix itself
-API_ATTEMPTS = 4
-OUTPUT_ATTEMPTS = 2             # one retry if the output fails our checks
 
-BLOCKED_FINISH = {
-    types.FinishReason.SAFETY, types.FinishReason.PROHIBITED_CONTENT, types.FinishReason.BLOCKLIST,
-    types.FinishReason.SPII, types.FinishReason.RECITATION,
+# Claude Opus 5.5 reads the page images (messy photos are where accuracy matters most);
+# Claude Haiku 5.5 handles the text-only steps. Same settings as the reader.
+STEP_SETTINGS: dict[AiStep, StepSettings] = {
+    "extract": StepSettings("claude-opus-5-5", "medium", fallbacks=True),
+    "classify": StepSettings("claude-haiku-5-5", "low", fallbacks=False),
+    "simplify": StepSettings("claude-haiku-5-5", "medium", fallbacks=False),
+    # Deadlines are the product: give the action list the most thinking.
+    "actions": StepSettings("claude-haiku-5-5", "high", fallbacks=False),
 }
 
+FALLBACK_BETA = "server-side-fallback-2026-07-01"
+MAX_TOKENS = 16000
+OUTPUT_ATTEMPTS = 2   # one retry if the output fails our checks
 
-class GeminiAiClient:
-    name = "gemini"
 
-    def __init__(self, client: Optional[genai.Client] = None, model: Optional[str] = None):
-        settings = get_settings()
-        self.client = client or genai.Client(api_key=settings.gemini_api_key.get_secret_value())
-        self.model = model or settings.gemini_model
+class ClaudeAiClient:
+    name = "claude"
+
+    def __init__(self, client: Optional[anthropic.AsyncAnthropic] = None):
+        # The SDK itself retries 429 / 5xx / connection errors with backoff.
+        self.client = client or anthropic.AsyncAnthropic(
+            api_key=get_settings().anthropic_api_key.get_secret_value() or None, max_retries=3,
+        )
 
     async def generate(self, req: AiRequest) -> Any:
-        config = types.GenerateContentConfig(
-            system_instruction=req.system,
-            response_mime_type="application/json",
-            response_schema=req.schema,
-            temperature=0,
-            thinking_config=types.ThinkingConfig(thinking_budget=THINKING_BUDGET[req.step]),
+        s = STEP_SETTINGS[req.step]
+        params: dict[str, Any] = dict(
+            model=s.model,
+            max_tokens=MAX_TOKENS,
+            system=req.system,
+            messages=[{"role": "user", "content": req.content}],
+            output_config={
+                "effort": s.effort,
+                "format": {"type": "json_schema", "schema": anthropic.transform_schema(req.schema.model_json_schema())},
+            },
         )
-        for _ in range(OUTPUT_ATTEMPTS):
-            resp = await self._call(req, config)
-            if _blocked(resp):
-                raise AiRefusalError(req.step)
-            try:
-                return req.schema.model_validate_json(resp.text or "")
-            except ValidationError:
-                # Never log the error itself: it quotes the model's output, i.e. document text.
-                logger.warning("reader %s: output failed schema checks", req.step)
-        raise AiOutputError(req.step)
+        if s.fallbacks:
+            params.update(betas=[FALLBACK_BETA], fallbacks="default")
 
-    async def _call(self, req: AiRequest, config: types.GenerateContentConfig):
-        for attempt in range(API_ATTEMPTS):
+        for _ in range(OUTPUT_ATTEMPTS):
             try:
-                return await self.client.aio.models.generate_content(
-                    model=self.model, contents=req.parts, config=config
-                )
-            except errors.APIError as exc:
-                if exc.code in RETRY_CODES and attempt < API_ATTEMPTS - 1:
-                    await asyncio.sleep(2 * 2**attempt)
-                    continue
-                logger.warning("reader %s: Gemini error %s", req.step, exc.code)
+                resp = await self.client.beta.messages.create(**params)
+            except anthropic.APIStatusError as exc:
+                logger.warning("reader %s: Claude error %s", req.step, exc.status_code)
+                raise AiOutputError(req.step) from None
+            except anthropic.APIConnectionError:
+                logger.warning("reader %s: could not reach Claude", req.step)
                 raise AiOutputError(req.step) from None
 
-
-def _blocked(resp: types.GenerateContentResponse) -> bool:
-    """A safety block or an empty answer: the paper can't be finished by retrying."""
-    if resp.prompt_feedback and resp.prompt_feedback.block_reason:
-        return True
-    if not resp.candidates:
-        return True
-    if resp.candidates[0].finish_reason in BLOCKED_FINISH:
-        return True
-    return not (resp.text or "").strip()
+            if resp.stop_reason == "refusal":
+                raise AiRefusalError(req.step)
+            text = next((b.text for b in resp.content if b.type == "text"), "")
+            if not text.strip():
+                raise AiRefusalError(req.step)
+            if resp.stop_reason == "end_turn":
+                try:
+                    return req.schema.model_validate_json(text)
+                except ValidationError:
+                    pass
+            # Never log the output or the validation error: both quote document text.
+            logger.warning("reader %s: output failed checks (stop_reason=%s)", req.step, resp.stop_reason)
+        raise AiOutputError(req.step)
 
 
 # ---------- Fake ----------
@@ -129,7 +134,7 @@ Override = Union[dict, Callable[[AiRequest], Any]]
 
 
 class FakeAiClient:
-    """Stand-in for Gemini with no API key. Returns the sample parole letter for any upload,
+    """Stand-in for Claude with no API key. Returns the sample parole letter for any upload,
     after an optional delay, and checks its own answers against the same schemas real
     responses must pass. It does not look at the uploaded pages."""
 
@@ -165,6 +170,5 @@ class FakeAiClient:
 
 
 def get_ai_client() -> AiClient:
-    """READER_AI=fake gives the fake client; otherwise Gemini."""
-    return FakeAiClient(delay_s=0.4) if get_settings().reader_ai == "fake" else GeminiAiClient()
-
+    """READER_AI=fake gives the fake client; otherwise Claude."""
+    return FakeAiClient(delay_s=0.4) if get_settings().reader_ai == "fake" else ClaudeAiClient()

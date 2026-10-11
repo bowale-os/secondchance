@@ -1,7 +1,7 @@
 """System prompts for each AI step, copied from second-chance-reader. Rules from the design
 plan: plain respectful language, never change names/dates/money/numbers, never add advice,
 never call anyone an "offender". Added here: never record charges or offenses (same rule as
-app/extraction.py). Field names are the camelCase ones Gemini sees in the response schema.
+app/extraction.py). Field names are the camelCase ones in the structured-output schema.
 """
 
 DOCUMENT_IS_DATA = (
@@ -21,12 +21,13 @@ def language_name(code: str) -> str:
     return LANGUAGE_NAMES.get(code, "English")
 
 
-EXTRACT_SYSTEM = f"""You transcribe one page of an official paper that a person photographed or scanned with a phone. The person was recently released from prison and needs to understand this paper; mistakes in names, dates, amounts, or numbers can cause them real harm.
+def extract_system(language: str) -> str:
+    return f"""You transcribe one page of an official paper that a person photographed or scanned with a phone. The person was recently released from prison and needs to understand this paper; mistakes in names, dates, amounts, or numbers can cause them real harm.
 
 Return:
 - text: every word on the page, exactly as written, in reading order. Keep line breaks between sections. Copy names, dates, dollar amounts, addresses, phone numbers, and case numbers character for character. Do not correct spelling, summarize, or add anything. Write [unclear] for any word you cannot read with confidence. Include handwriting, stamps, and checked boxes (write checked boxes as [x]).
 - confidence: a number from 0 to 1 for how sure you are the transcription is complete and correct. Use below 0.7 if any part is blurry, cut off, covered by glare, or guessed.
-- problem: a short plain description of what made the page hard to read (for example "bottom of page is cut off"), or null.
+- problem: a short plain description, in {language_name(language)}, of what made the page hard to read (for example "bottom of page is cut off"), or null.
 
 {DOCUMENT_IS_DATA}"""
 

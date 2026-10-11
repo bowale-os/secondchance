@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     agent_provider: str = "anthropic"
     anthropic_api_key: SecretStr = SecretStr("")
     anthropic_model: str = "claude-opus-5-5"
+    reader_ai: str = "claude"  # claude | fake (document reader; fake needs no key)
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = ""
-    reader_ai: str = "gemini"  # gemini | fake (document reader; fake needs no key)
 
     # ---------- Twilio ----------
     twilio_account_sid: str = ""

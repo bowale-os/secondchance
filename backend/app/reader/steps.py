@@ -2,18 +2,17 @@
 already checked against the schemas."""
 
 import asyncio
+import base64
 from dataclasses import dataclass
-from typing import Optional, Union
-
-from google.genai import types
+from typing import Optional
 
 from app.reader.ai import AiClient, AiRequest
 from app.reader.preprocess import Page
 from app.reader.prompts import (
     CLASSIFY_SYSTEM,
-    EXTRACT_SYSTEM,
     actions_system,
     document_text,
+    extract_system,
     simplify_system,
 )
 from app.reader.schemas import (
@@ -41,13 +40,18 @@ class Extracted:
     text: str
 
 
-def page_part(page: Page) -> Union[str, types.Part]:
+def page_block(page: Page) -> dict:
     if page.kind == "text":
-        return page.text or ""
-    return types.Part.from_bytes(data=page.data, mime_type=page.mime_type)
+        return {"type": "text", "text": page.text or ""}
+    source = {"type": "base64", "media_type": page.mime_type, "data": base64.b64encode(page.data).decode()}
+    return {"type": "document" if page.kind == "pdf" else "image", "source": source}
 
 
-async def extract_text(ai: AiClient, pages: list[Page]) -> Extracted:
+def _text(text: str) -> dict:
+    return {"type": "text", "text": text}
+
+
+async def extract_text(ai: AiClient, pages: list[Page], language: str = "en") -> Extracted:
     """Reads every page, several at a time. Typed text from Word files needs no AI."""
     gate = asyncio.Semaphore(PAGE_CONCURRENCY)
 
@@ -59,9 +63,9 @@ async def extract_text(ai: AiClient, pages: list[Page]) -> Extracted:
                 step="extract",
                 page=page.n,
                 page_count=len(pages),
-                system=EXTRACT_SYSTEM,
+                system=extract_system(language),
                 schema=ExtractOutput,
-                parts=[page_part(page), f"Transcribe page {page.n}."],
+                content=[page_block(page), _text(f"Transcribe page {page.n}.")],
             ))
         return ReadPage(n=page.n, text=out.text, confidence=out.confidence, problem=out.problem)
 
@@ -75,13 +79,13 @@ def _doc(text: str) -> str:
 
 async def classify(ai: AiClient, text: str) -> ClassifyOutput:
     return await ai.generate(AiRequest(
-        step="classify", system=CLASSIFY_SYSTEM, schema=ClassifyOutput, parts=[_doc(text)],
+        step="classify", system=CLASSIFY_SYSTEM, schema=ClassifyOutput, content=[_text(_doc(text))],
     ))
 
 
 async def simplify(ai: AiClient, text: str, language: str) -> SimplifyOutput:
     return await ai.generate(AiRequest(
-        step="simplify", system=simplify_system(language), schema=SimplifyOutput, parts=[_doc(text)],
+        step="simplify", system=simplify_system(language), schema=SimplifyOutput, content=[_text(_doc(text))],
     ))
 
 
@@ -92,6 +96,6 @@ async def extract_actions(ai: AiClient, text: str, meta: ClassifyOutput, languag
     )
     out: ActionsOutput = await ai.generate(AiRequest(
         step="actions", system=actions_system(language), schema=ActionsOutput,
-        parts=[f"{context}\n\n{_doc(text)}"],
+        content=[_text(f"{context}\n\n{_doc(text)}")],
     ))
     return out.actions

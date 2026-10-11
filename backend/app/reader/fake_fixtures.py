@@ -1,6 +1,6 @@
 """Canned AI output for development: a made-up Georgia parole letter. All names, numbers and
 addresses are fictional (555 phone numbers are reserved for fiction). Keys are the camelCase
-names Gemini returns."""
+names the AI returns."""
 
 FAKE_PAGES: list[dict] = [
     {

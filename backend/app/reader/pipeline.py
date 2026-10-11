@@ -31,7 +31,7 @@ from app.reader.schemas import (
     SimplifyingEvent,
 )
 from app.reader.steps import Extracted, classify, extract_actions, extract_text, simplify
-from app.reader.verify import verify
+from app.reader.verify import flag_text, verify
 
 
 @dataclass
@@ -58,7 +58,7 @@ async def process_document(
     pages = await preprocess(inp.files)
 
     emit(ReadingEvent())
-    extracted = await extract_text(ai, pages)
+    extracted = await extract_text(ai, pages, inp.language)
     emit(ExtractedEvent(
         pages=[ExtractedPage(n=p.n, text=p.text, confidence=p.confidence) for p in extracted.pages],
         text=extracted.text,
@@ -103,14 +103,14 @@ async def process_document(
         language=inp.language,
     )
 
+    page_text = flag_text(inp.language)["page"]
     flags = [
         *(Flag(
             kind="low_confidence_page",
             page=p.n,
-            detail=f"Page {p.n} was hard to read{f' ({p.problem.lower()})' if p.problem else ''}. "
-                   "Check it against your paper, or retake the photo.",
+            detail=page_text.format(n=p.n, problem=f" ({p.problem.lower()})" if p.problem else ""),
         ) for p in low_conf),
-        *verify(extracted.text, simplified, actions),
+        *verify(extracted.text, simplified, actions, inp.language),
     ]
     emit(ActionsEvent(actions=actions, flags=flags))
     emit(DoneEvent())

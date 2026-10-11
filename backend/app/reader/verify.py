@@ -130,9 +130,29 @@ MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "
                "September", "October", "November", "December"]
 
 
-def _human_date(iso: str) -> str:
-    """2026-10-30 -> "October 30, 2026" """
-    return f"{MONTH_NAMES[int(iso[5:7]) - 1]} {int(iso[8:10])}, {iso[:4]}"
+def _human_date(iso: str, lang: str = "en") -> str:
+    """2026-10-30 -> "October 30, 2026" / "30 de octubre de 2026" """
+    y, m, d = iso[:4], int(iso[5:7]), int(iso[8:10])
+    return f"{d} de {MONTHS_ES[m - 1]} de {y}" if lang == "es" else f"{MONTH_NAMES[m - 1]} {d}, {y}"
+
+
+# Flag sentences shown to the client, in their language.
+FLAG_TEXT = {
+    "en": {
+        "value": '"{value}" is not on the original paper. Double-check this.',
+        "source": "We couldn't find where this step is on the paper. Double-check this.",
+        "page": "Page {n} was hard to read{problem}. Check it against your paper, or retake the photo.",
+    },
+    "es": {
+        "value": '"{value}" no está en el papel original. Revíselo.',
+        "source": "No encontramos en qué parte del papel está este paso. Revíselo.",
+        "page": "La página {n} era difícil de leer{problem}. Compárela con su papel o vuelva a tomar la foto.",
+    },
+}
+
+
+def flag_text(lang: Optional[str]) -> dict[str, str]:
+    return FLAG_TEXT["es" if lang == "es" else "en"]
 
 
 def _unverified_values(text: str, idx: _Index) -> list[str]:
@@ -155,13 +175,17 @@ def _unverified_values(text: str, idx: _Index) -> list[str]:
     return list(missing)
 
 
-def verify(original: str, simplified: SimplifiedDocument, actions: list[ActionItem]) -> list[Flag]:
+def verify(
+    original: str, simplified: SimplifiedDocument, actions: list[ActionItem], lang: Optional[str] = "en",
+) -> list[Flag]:
     idx = _index(original)
+    msgs = flag_text(lang)
+    date_lang = "es" if lang == "es" else "en"
     flags: list[Flag] = []
 
     def flag_value(value: str, action_id: Optional[str] = None) -> None:
         flags.append(Flag(kind="unverified_value", value=value, action_id=action_id,
-                          detail=f'"{value}" is not on the original paper. Double-check this.'))
+                          detail=msgs["value"].format(value=value)))
 
     simplified_text = "\n".join([simplified.markdown, *(f"{g.term} {g.meaning}" for g in simplified.glossary)])
     for v in _unverified_values(simplified_text, idx):
@@ -175,10 +199,10 @@ def verify(original: str, simplified: SimplifiedDocument, actions: list[ActionIt
         if a.due.type == "exact" and a.due.resolved_date:
             r = a.due.resolved_date
             if r not in idx.iso_dates and r[5:] not in idx.yearless_month_days:
-                flag_value(_human_date(r), a.id)   # "October 30, 2026", not 2026-10-30
+                flag_value(_human_date(r, date_lang), a.id)   # "October 30, 2026", not 2026-10-30
 
         quote = normalize_quote(a.source_quote)
         if not quote or quote not in idx.quote_text:
             flags.append(Flag(kind="unverified_source", action_id=a.id,
-                              detail="We couldn't find where this step is on the paper. Double-check this."))
+                              detail=msgs["source"]))
     return flags
