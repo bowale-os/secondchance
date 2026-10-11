@@ -35,9 +35,10 @@ export default function ClientToday({ client, api, go }: Props) {
   const today = isoDate(new Date());
   const open = (events ?? []).filter((e) => e.status !== "done");
   const pastDue = open.filter((e) => e.status === "overdue").length;
-  const next = open
+  const upcoming = open
     .filter((e) => e.status === "open" && e.due_date && e.due_date >= today)
-    .sort((a, b) => (a.due_date! + (a.due_time ?? "99")).localeCompare(b.due_date! + (b.due_time ?? "99")))[0];
+    .sort((a, b) => (a.due_date! + (a.due_time ?? "99")).localeCompare(b.due_date! + (b.due_time ?? "99")));
+  const [next, ...later] = upcoming;
 
   return (
     <>
@@ -60,6 +61,19 @@ export default function ClientToday({ client, api, go }: Props) {
               <p className="today-big">{eventTitle(next)}</p>
               <p>{formatWhen(next.due_date!, next.due_time)}{next.due_time ? "" : ` · ${timeText(next)}`}</p>
               {next.location && <p className="hint">{next.location}</p>}
+              {later.length > 0 && (
+                <div className="today-later">
+                  <h3>After that</h3>
+                  <ul>
+                    {later.slice(0, 2).map((e) => (
+                      <li key={e.id}>
+                        <span className="today-later-when">{formatWhen(e.due_date!, e.due_time)}</span>
+                        <span>{eventTitle(e)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <button type="button" className="dash-btn dash-btn-quiet" onClick={() => go("calendar")}>See my calendar</button>
             </>
           ) : (
@@ -87,8 +101,9 @@ export default function ClientToday({ client, api, go }: Props) {
                   <a className="dash-btn today-call" href={`tel:${caseWorker.phone.replace(/[^\d+]/g, "")}`}>Call {caseWorker.full_name.split(" ")[0]}</a>
                 </>
               ) : (
-                <p className="hint">{caseWorker.email}</p>
+                <p className="hint">No phone number on file.</p>
               )}
+              <p className="today-email"><span className="hint">Email</span> {caseWorker.email}</p>
             </>
           ) : (
             <p className="hint">Your case worker's details will show here.</p>
