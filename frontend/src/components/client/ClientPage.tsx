@@ -54,6 +54,8 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
 
   const rows = client ? recordGroups(client).flatMap((g) => g.rows) : [];
   const unverified = rows.filter((r) => !r.verified).length;
+  // Kept papers (and texted photos) wait for review until a case worker marks them reviewed.
+  const papersToReview = client?.documents.filter((d) => d.status === "read").length ?? 0;
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "schedule", label: "Schedule" },
@@ -101,7 +103,18 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
                 </button>
               </div>
             ) : (
-              rows.length > 0 && <p className="all-verified">✓ All records verified</p>
+              rows.length > 0 && papersToReview === 0 && <p className="all-verified">✓ All records verified</p>
+            )}
+            {papersToReview > 0 && (
+              <div className="review-banner" role="status">
+                <span>
+                  <strong>{papersToReview} {papersToReview === 1 ? "paper needs" : "papers need"} review.</strong>{" "}
+                  Check the reading and to-dos, then mark each paper reviewed.
+                </span>
+                <button type="button" className="dash-btn dash-btn-quiet" onClick={() => setTab("documents")}>
+                  Open documents
+                </button>
+              </div>
             )}
 
             <section className="dash-panel">
@@ -132,6 +145,7 @@ export default function ClientPage({ clientId, staff, nav, onBack, onLogout }: P
                     client={client}
                     onOpen={(id) => run(() => api.documents.open(id))}
                     onDownload={(id, name) => run(() => api.documents.download(id, name))}
+                    onChanged={load}
                   />
                 )}
                 {tab === "resources" && <ClientResourcesTab client={client} />}

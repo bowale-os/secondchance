@@ -748,3 +748,90 @@ class Appointment(IdMixin, TimestampMixin, Base):
 
     client: Mapped["Client"] = relationship(back_populates="appointments")
     obligation: Mapped[Optional["ClientObligation"]] = relationship(back_populates="appointments")
+
+
+# ============================================================
+# Document reader (written only when a paper is kept)
+# ============================================================
+
+class DocumentReading(IdMixin, TimestampMixin, Base):
+    """The reader's result for one kept paper. The raw transcription is never stored:
+    it can name charges, and the original file is kept on the Document anyway."""
+    __tablename__ = "document_readings"
+
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), unique=True
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    language: Mapped[str] = mapped_column(String(10))
+    doc_type: Mapped[str] = mapped_column(String(40))   # reader type, e.g. "parole_conditions"
+    title: Mapped[str] = mapped_column(String(200))
+    issuer: Mapped[Optional[str]] = mapped_column(String(300))
+    document_date: Mapped[Optional[date]] = mapped_column(Date)
+    received_date: Mapped[date] = mapped_column(Date)   # the day it was read, local time
+    simplified_encrypted: Mapped[str] = mapped_column(Text)   # Fernet, DATA_ENCRYPTION_KEY
+    glossary: Mapped[list] = mapped_column(JSON)
+    flags: Mapped[list] = mapped_column(JSON)   # flags not tied to one to-do
+    reader_version: Mapped[str] = mapped_column(String(40))
+    created_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )   # NULL: the client read it themselves
+
+    document: Mapped["Document"] = relationship()
+    actions: Mapped[list["DocumentAction"]] = relationship(
+        back_populates="reading", cascade="all, delete-orphan", order_by="DocumentAction.position"
+    )
+
+
+class DocumentAction(IdMixin, TimestampMixin, Base):
+    """One to-do from a kept paper, as the model read it. Due dates are resolved each time
+    actions are read, so a release date added later updates every paper."""
+    __tablename__ = "document_actions"
+
+    reading_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("document_readings.id", ondelete="CASCADE"), index=True
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    details: Mapped[str] = mapped_column(Text)
+    due_type: Mapped[str] = mapped_column(String(10))   # exact | relative | none
+    due_text: Mapped[Optional[str]] = mapped_column(Text)
+    due_exact_date: Mapped[Optional[date]] = mapped_column(Date)
+    due_anchor: Mapped[Optional[str]] = mapped_column(String(20))
+    due_offset_hours: Mapped[Optional[float]] = mapped_column(Float)
+    due_offset_days: Mapped[Optional[int]] = mapped_column(Integer)
+    due_business_days: Mapped[Optional[bool]] = mapped_column(Boolean)
+    priority: Mapped[str] = mapped_column(String(10))   # the model's; urgency rules run on read
+    consequence: Mapped[Optional[str]] = mapped_column(Text)
+    location: Mapped[Optional[str]] = mapped_column(Text)
+    contact: Mapped[Optional[dict]] = mapped_column(JSON)
+    bring: Mapped[list] = mapped_column(JSON)
+    source_quote: Mapped[str] = mapped_column(Text)
+    source_page: Mapped[int] = mapped_column(Integer)
+    confidence: Mapped[float] = mapped_column(Float)
+    flags: Mapped[list] = mapped_column(JSON)   # flags for this to-do
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    completed_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )   # NULL with completed_at set: the client checked it off
+    # Set when a case worker adds the to-do to the schedule.
+    obligation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("client_obligations.id", ondelete="SET NULL")
+    )
+
+    reading: Mapped["DocumentReading"] = relationship(back_populates="actions")
+
+
+class ReaderUsage(Base):
+    """One row per document reading, for the shared rate limit across API workers.
+    Holds only who and when (epoch seconds); rows older than the window are deleted."""
+    __tablename__ = "reader_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    actor: Mapped[str] = mapped_column(String(60), index=True)   # "client:<id>" or "staff:<id>"
+    at: Mapped[float] = mapped_column(Float, index=True)

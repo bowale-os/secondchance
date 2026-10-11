@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     session_secret: SecretStr = SecretStr("change-me")
     pin_pepper: SecretStr = SecretStr("change-me")
     data_encryption_key: SecretStr = SecretStr("change-me")
+    # Signs document-reader receipts; separate from session_secret so each can rotate alone.
+    reader_receipt_secret: SecretStr = SecretStr("")
     session_timeout_minutes: int = 10
     pin_max_attempts: int = 5
     pin_lockout_minutes: int = 15
@@ -38,6 +40,7 @@ class Settings(BaseSettings):
     agent_provider: str = "anthropic"
     anthropic_api_key: SecretStr = SecretStr("")
     anthropic_model: str = "claude-opus-5-5"
+    reader_ai: str = "claude"  # claude | fake (document reader; fake needs no key)
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = ""
 

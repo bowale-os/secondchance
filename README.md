@@ -10,7 +10,7 @@ and clients can find nearby shelters, food and treatment programs.
 |---|---|
 | `backend/` | FastAPI + async SQLAlchemy on PostgreSQL (Neon). Auth, clients, documents, resources, ingestion. |
 | `frontend/` | React 18 + Vite + TypeScript, Auth0 login. |
-| `second-chance-reader/` | Separate Node workspace (`apps/`, `packages/`) for the document reader. |
+| `archive/second-chance-reader/` | The original document reader (Node, Expo app). Archived: the reader now lives in `backend/app/reader/` and the web portal. |
 | `appointment-tracker*.html` | Standalone prototype pages. |
 
 ## Run the backend

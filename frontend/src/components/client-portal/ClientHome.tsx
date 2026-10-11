@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ClientApi } from "../../api";
 import type { ClientRead, ResourceQuery } from "../../types";
 import LearnView from "../learn/LearnView";
 import AppShell from "../layout/AppShell";
+import ReadFlow, { LEAVE_WARNING } from "../reader/ReadFlow";
 import type { AppNav, Section } from "../layout/nav";
 import ClientToday from "./ClientToday";
 import MyCalendar from "./MyCalendar";
@@ -27,12 +28,20 @@ export default function ClientHome({ client, api, onLogout }: Props) {
   const [section, setSection] = useState<Section>("home");
   // Set by "Find SNAP help nearby" on Learn; cleared when the client picks a tab themselves.
   const [resourceStart, setResourceStart] = useState<ResourceQuery | undefined>();
+  // The read flow replaces the page content; leaving with an unkept result asks first.
+  const [reading, setReading] = useState(false);
+  const [papersVersion, setPapersVersion] = useState(0);
+  const unsaved = useRef(false);
+  const onUnsavedChange = useCallback((u: boolean) => { unsaved.current = u; }, []);
 
   // Clients have no "new client" button and no to-do count.
   const nav = useMemo<AppNav>(
     () => ({
       section,
       go: (s: Section) => {
+        if (unsaved.current && !window.confirm(LEAVE_WARNING)) return;
+        unsaved.current = false;
+        setReading(false);
         setResourceStart(undefined);
         setSection(s);
       },
@@ -41,6 +50,14 @@ export default function ClientHome({ client, api, onLogout }: Props) {
     }),
     [section],
   );
+
+  function closeReader(kept: boolean) {
+    unsaved.current = false;
+    setReading(false);
+    if (kept) setPapersVersion((v) => v + 1);
+  }
+
+  const startReading = () => setReading(true);
 
   function findNearby(filters: ResourceQuery) {
     setResourceStart(filters);
@@ -54,12 +71,17 @@ export default function ClientHome({ client, api, onLogout }: Props) {
       <main id="dash-main" className="dash-main">
         {!client ? (
           <p className="dash-empty" role="status">Loading your information…</p>
+        ) : reading ? (
+          <ReadFlow reader={api.reader} language={client.language} onClose={closeReader} onUnsavedChange={onUnsavedChange} />
         ) : section === "home" ? (
-          <ClientToday client={client} api={api} go={nav.go} />
+          <ClientToday client={client} api={api} go={nav.go} onRead={startReading} papersVersion={papersVersion} />
         ) : (
           <>
             <div className="dash-title">
               <h1>{TITLES[section]}</h1>
+              {section === "calendar" && (
+                <button type="button" className="dash-btn" onClick={startReading}>Read a paper</button>
+              )}
             </div>
             {section === "calendar" && <MyCalendar api={api} />}
             {section === "learn" && <LearnView role="client" client={client} onFindNearby={findNearby} />}
