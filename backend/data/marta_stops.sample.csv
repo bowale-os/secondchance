@@ -1,0 +1,7 @@
+stop_id,stop_name,stop_lat,stop_lon,routes
+S1,SAMPLE Five Points Station,33.7539,-84.3916,Red|Gold|Blue|Green
+S2,SAMPLE Peachtree Center Station,33.7597,-84.3875,Red|Gold
+S3,SAMPLE Garnett Station,33.7484,-84.3955,Red|Gold
+S4,SAMPLE West End Station,33.7360,-84.4130,Red|Gold
+S5,SAMPLE North Avenue Station,33.7716,-84.3870,Red|Gold
+S6,SAMPLE Georgia State Station,33.7500,-84.3860,Blue|Green

@@ -1,6 +1,7 @@
 import { formatDate, formatMoney, humanize } from "../../lib/format";
 import type { ClientDetail, ClientRead } from "../../types";
 import SuggestedGuides from "../learn/SuggestedGuides";
+import TextingCard from "./TextingCard";
 
 export default function OverviewTab({ client }: { client: ClientRead | ClientDetail }) {
   const facts: [string, string | null][] = [
@@ -27,6 +28,7 @@ export default function OverviewTab({ client }: { client: ClientRead | ClientDet
           </div>
         ))}
       </dl>
+      <TextingCard client={client} />
       <div className="notes">
         <h3>Notes</h3>
         <p className={client.notes ? undefined : "fact-missing"}>{client.notes ?? "No notes."}</p>

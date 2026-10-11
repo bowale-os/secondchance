@@ -49,6 +49,7 @@ from app.tables import (
     ResourceCategory,
     Staff,
     Tri,
+    VerificationStatus,
 )
 
 router = APIRouter(tags=["resources"])
@@ -178,11 +179,22 @@ def _decode_cursor(cursor: Optional[str]) -> int:
         raise _bad("cursor")
 
 
-async def run_search(session: AsyncSession, query: ResourceQuery) -> ResourceSearchResponse:
-    now = datetime.now(timezone.utc)
+async def run_search(
+    session: AsyncSession,
+    query: ResourceQuery,
+    *,
+    limit: int = PAGE_SIZE,
+    now: Optional[datetime] = None,
+    hide_flagged: bool = False,
+) -> ResourceSearchResponse:
+    """`limit`, `now` and `hide_flagged` are for the text bot (small pages, a clock for tests,
+    nothing reported wrong); the web routes use the defaults."""
+    now = now or datetime.now(timezone.utc)
     now_local = now.astimezone(LOCAL_TZ)
 
     stmt = select(Resource)
+    if hide_flagged:
+        stmt = stmt.where(Resource.verification != VerificationStatus.FLAGGED)
     if query.categories:
         stmt = stmt.where(Resource.category.in_(query.categories))
     if query.q:
@@ -230,11 +242,11 @@ async def run_search(session: AsyncSession, query: ResourceQuery) -> ResourceSea
     matches.sort(key=lambda m: (m[1] is None, m[1] or 0.0, m[0].name.lower(), str(m[0].id)))
 
     offset = _decode_cursor(query.cursor)
-    page = matches[offset : offset + PAGE_SIZE]
+    page = matches[offset : offset + limit]
     return ResourceSearchResponse(
         items=[resource_summary(r, distance_m=d, open_now=o) for r, d, o in page],
         total=len(matches),
-        next_cursor=_encode_cursor(offset + PAGE_SIZE) if offset + PAGE_SIZE < len(matches) else None,
+        next_cursor=_encode_cursor(offset + limit) if offset + limit < len(matches) else None,
     )
 
 
