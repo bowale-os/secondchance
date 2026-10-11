@@ -29,5 +29,5 @@ async def send_text(to_e164: str, text: str) -> bool:
             r.raise_for_status()
             return True
     except httpx.HTTPError as exc:
-        logger.warning("Proactive text failed: %s", type(exc).__name__)
+        logger.warning("Proactive text failed (%s): %s", s.textbot_url, type(exc).__name__)
         return False

@@ -103,7 +103,7 @@ export async function deliver(
       }),
     );
   } catch (err) {
-    console.error(`[textbot] backend unavailable: ${(err as Error).message}`);
+    console.error(`[textbot] backend unavailable at ${config.backendUrl}: ${(err as Error).message}`);
     await last.space.send(FALLBACK);
     return { active: false, hold: false };
   }

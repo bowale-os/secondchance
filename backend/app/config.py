@@ -111,7 +111,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def cors_origins(self) -> list[str]:
-        return [self.app_base_url.rstrip("/")]
+        return [o.strip().rstrip("/") for o in self.app_base_url.split(",") if o.strip()]
 
     @computed_field
     @property
