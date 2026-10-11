@@ -1,87 +1,58 @@
 import { useState } from "react";
-import { LEARN_ITEMS, LEARN_TOPICS, type LearnItem, type LearnTopic } from "../../lib/learnContent";
+import { HELP_SECTIONS, HELP_TOPICS } from "../../lib/commonHelp";
+import type { HelpTopic } from "../../types";
+import HelpTopicCard from "./HelpTopicCard";
 import "./learn.css";
 
 interface Props {
   role: "staff" | "client";
 }
 
-function PlayIcon() {
-  return (
-    <svg className="learn-play" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" />
-      <path d="M10 8l6 4-6 4z" />
-    </svg>
-  );
+/** Everything a search can match on: title, summary, and each link's label and source. */
+function searchText(topic: HelpTopic): string {
+  return [topic.title.en, topic.summary.en, ...topic.links.flatMap((l) => [l.label, l.source])].join(" ").toLowerCase();
 }
 
-/** Videos and guides by topic. Sample content for now: the buttons do nothing until the content exists. */
+function matches(topic: HelpTopic, words: string[]): boolean {
+  const text = searchText(topic);
+  return words.every((w) => text.includes(w));
+}
+
+/** Common Help: hand-picked how-to guides, grouped into sections, with a search box. */
 export default function LearnView({ role }: Props) {
-  const [topic, setTopic] = useState<LearnTopic | "all">("all");
-  const shown = LEARN_ITEMS.filter((i) => topic === "all" || i.topic === topic);
-  const videos = shown.filter((i) => i.kind === "video");
-  const guides = shown.filter((i) => i.kind === "guide");
-  const action = role === "staff" ? "Send to a client" : "Save for later";
+  const [query, setQuery] = useState("");
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = HELP_TOPICS.filter((t) => matches(t, words));
 
   return (
     <div className="learn">
-      <p className="learn-note" role="note">
-        <strong>Coming soon.</strong> These are examples of how this page will look. Real videos and guides will be added.
+      <input
+        type="search"
+        className="dash-search learn-search"
+        placeholder="Search guides, like ID or SNAP"
+        aria-label="Search guides"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+
+      <p className="learn-count" role="status" aria-live="polite">
+        {words.length > 0 && `${shown.length} ${shown.length === 1 ? "guide matches" : "guides match"} your search`}
       </p>
 
-      <div className="learn-chips" role="group" aria-label="Topic">
-        <button type="button" className="learn-chip" aria-pressed={topic === "all"} onClick={() => setTopic("all")}>All</button>
-        {LEARN_TOPICS.map((t) => (
-          <button key={t} type="button" className="learn-chip" aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>
-        ))}
-      </div>
+      {HELP_SECTIONS.map(({ section, label }) => {
+        const topics = shown.filter((t) => t.section === section);
+        if (topics.length === 0) return null;
+        return (
+          <section key={section} aria-labelledby={`learn-${section}`}>
+            <h2 id={`learn-${section}`}>{label}</h2>
+            <div className="learn-grid">
+              {topics.map((t) => <HelpTopicCard key={t.id} topic={t} role={role} />)}
+            </div>
+          </section>
+        );
+      })}
 
-      <p className="learn-count" role="status">{shown.length} {shown.length === 1 ? "item" : "items"}</p>
-
-      {videos.length > 0 && (
-        <section aria-labelledby="learn-videos">
-          <h2 id="learn-videos">Short videos</h2>
-          <div className="learn-grid">
-            {videos.map((v) => <Card key={v.id} item={v} action={action} />)}
-          </div>
-        </section>
-      )}
-
-      {guides.length > 0 && (
-        <section aria-labelledby="learn-guides">
-          <h2 id="learn-guides">Guides</h2>
-          <div className="learn-guides">
-            {guides.map((g) => <Card key={g.id} item={g} action={action} />)}
-          </div>
-        </section>
-      )}
-
-      {shown.length === 0 && <p className="learn-note">Nothing here yet.</p>}
+      {shown.length === 0 && <p className="learn-empty">No guides match. Try a different word.</p>}
     </div>
-  );
-}
-
-function Card({ item, action }: { item: LearnItem; action: string }) {
-  const video = item.kind === "video";
-  return (
-    <article className={`learn-card${video ? " video" : ""}`}>
-      {video && (
-        <div className="learn-thumb" aria-hidden="true">
-          <PlayIcon />
-          <span>{item.minutes} min</span>
-        </div>
-      )}
-      <div className="learn-card-body">
-        <span className="learn-topic">{item.topic}</span>
-        <h3>{item.title}</h3>
-        <p>{item.summary}</p>
-        <span className="learn-meta">{video ? `Video · ${item.minutes} min · captions` : `Guide · ${item.minutes} min read`}</span>
-        <div className="learn-actions">
-          <button type="button" className="dash-btn" disabled>{video ? "Watch" : "Read"}</button>
-          {video && <button type="button" className="dash-btn dash-btn-quiet" disabled>Read instead</button>}
-          <button type="button" className="dash-btn dash-btn-quiet" disabled>{action}</button>
-        </div>
-      </div>
-    </article>
   );
 }

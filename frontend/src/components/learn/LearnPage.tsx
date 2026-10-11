@@ -10,7 +10,7 @@ interface Props {
   onLogout: () => void;
 }
 
-/** Short videos and guides to share with clients. Sample content until there is a backend for it. */
+/** Common Help: hand-picked how-to guides to share with clients. */
 export default function LearnPage({ staff, nav, onLogout }: Props) {
   return (
     <AppShell user={staffUser(staff)} nav={nav} onLogout={onLogout}>
