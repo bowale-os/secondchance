@@ -36,6 +36,11 @@
 .guide-link { margin: .25rem 0 0; color: var(--ink); font-weight: normal; }
 .guide-link a { color: var(--brand); font-weight: 600; }
 
+/* Suggested guides: ClientPage Overview and the client's Learn tab. */
+.suggested-guides h2 { font-size: 1.125rem; margin: 0 0 .5rem; }
+.suggested-guides ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.panel-body > .suggested-guides { padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+
 .help-send { min-height: 3rem; justify-self: start; }
 .help-send:disabled { opacity: .55; cursor: not-allowed; }
 

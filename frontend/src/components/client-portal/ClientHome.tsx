@@ -62,7 +62,7 @@ export default function ClientHome({ client, api, onLogout }: Props) {
               <h1>{TITLES[section]}</h1>
             </div>
             {section === "calendar" && <MyCalendar api={api} />}
-            {section === "learn" && <LearnView role="client" onFindNearby={findNearby} />}
+            {section === "learn" && <LearnView role="client" client={client} onFindNearby={findNearby} />}
             {section === "resources" && (
               <section className="dash-panel" aria-label="Places that can help you">
                 <MyResources key={resourceStart ? "guide" : "mine"} client={client} api={api} initialOverrides={resourceStart} />
