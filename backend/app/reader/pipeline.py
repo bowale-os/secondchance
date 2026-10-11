@@ -2,7 +2,8 @@
 calculate dates -> verify. Results stream back through `emit` as each stage finishes.
 
 Nothing is stored or logged here: no document text, no images. Saving happens only when
-the client chooses to keep the paper (phase 2: signed receipt + /reader/keep).
+the client chooses to keep the paper: `sign` turns the result into a signed receipt that
+rides on the final event, and /reader/keep checks it (see receipt.py).
 """
 
 import asyncio
@@ -53,7 +54,8 @@ class ProcessResult:
 
 
 async def process_document(
-    ai: AiClient, inp: ProcessInput, emit: Callable[[ProgressEvent], None]
+    ai: AiClient, inp: ProcessInput, emit: Callable[[ProgressEvent], None],
+    sign: Optional[Callable[["ProcessResult"], str]] = None,
 ) -> ProcessResult:
     pages = await preprocess(inp.files)
 
@@ -113,6 +115,6 @@ async def process_document(
         *verify(extracted.text, simplified, actions, inp.language),
     ]
     emit(ActionsEvent(actions=actions, flags=flags))
-    emit(DoneEvent())
-
-    return ProcessResult(extracted=extracted, meta=meta, simplified=simplified, actions=actions, flags=flags)
+    result = ProcessResult(extracted=extracted, meta=meta, simplified=simplified, actions=actions, flags=flags)
+    emit(DoneEvent(receipt=sign(result) if sign else None))
+    return result

@@ -50,6 +50,8 @@ def _too_many() -> UserFacingError:
 async def preprocess(files: list[UploadFile]) -> list[Page]:
     if not files:
         raise UserFacingError("No pages were sent. Please take a photo or pick a file.")
+    if len(files) > 1 and any(f.mime_type == DOCX for f in files):
+        raise UserFacingError("Please send a Word file by itself, without photos or other files.")
     if sum(len(f.data) for f in files) > MAX_UPLOAD_BYTES:
         raise UserFacingError("These files are too big. Please send less than 20 MB at a time.")
 

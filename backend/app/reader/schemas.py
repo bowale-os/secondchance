@@ -177,6 +177,8 @@ class ActionItem(CamelModel):
     confidence: float
     completed: bool = False
     completed_at: Optional[str] = None
+    # What the model said before the urgency rules ran; kept for saving, never sent.
+    model_priority: Optional[Priority] = Field(default=None, exclude=True)
 
 
 class SimplifiedDocument(CamelModel):
@@ -251,7 +253,7 @@ class ActionsEvent(CamelModel):
 
 class DoneEvent(CamelModel):
     stage: Literal["done"] = "done"
-    receipt: Optional[str] = None   # signed result for /reader/keep (phase 2)
+    receipt: Optional[str] = None   # signed result for /reader/keep
 
 
 class ErrorEvent(CamelModel):

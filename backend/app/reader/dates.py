@@ -15,6 +15,7 @@ from app.reader.schemas import (
     DocType,
     DueDate,
     RawAction,
+    RawContact,
     RawDue,
 )
 
@@ -136,16 +137,18 @@ RANK = {"urgent": 0, "normal": 1, "low": 2}
 
 def finalize_actions(
     raw: list[RawAction], *, anchors: DateAnchors, doc_type: DocType, today: str,
-    language: Optional[str] = None,
+    language: Optional[str] = None, ids: Optional[list[str]] = None,
 ) -> list[ActionItem]:
     """Raw AI actions -> app actions: resolves dates, raises priority where the rules say
-    urgent (never lowers what the model flagged), and orders urgent first, then soonest."""
+    urgent (never lowers what the model flagged), and orders urgent first, then soonest.
+
+    New actions are numbered a1, a2...; saved ones pass their database `ids` to keep them."""
     lang = _lang(language)
     items = []
-    for r in raw:
+    for i, r in enumerate(raw):
         due = resolve_due(r.due, anchors, lang)
         items.append(ActionItem(
-            id="",
+            id=ids[i] if ids else "",
             order=r.order,
             title=r.title,
             details=r.details,
@@ -158,10 +161,32 @@ def finalize_actions(
             source_quote=r.source_quote,
             source_page=r.source_page,
             confidence=r.confidence,
+            model_priority=r.priority,
         ))
 
     items.sort(key=lambda a: (RANK[a.priority], a.due.resolved_date or "9999", a.order))
-    return [a.model_copy(update={"id": f"a{i}", "order": i}) for i, a in enumerate(items, 1)]
+    return [a.model_copy(update={"id": a.id or f"a{i}", "order": i}) for i, a in enumerate(items, 1)]
+
+
+def to_raw(a: ActionItem) -> RawAction:
+    """The inverse of finalize_actions, for saving: what the model read, before date math."""
+    d = a.due
+    return RawAction(
+        order=a.order, title=a.title, details=a.details,
+        due=RawDue(
+            type=d.type, text=d.text, exact_date=d.resolved_date if d.type == "exact" else None,
+            anchor=d.anchor, offset_hours=d.offset_hours, offset_days=d.offset_days,
+            business_days=d.business_days,
+        ),
+        location=a.location,
+        contact=RawContact(**a.contact.model_dump()) if a.contact else None,
+        bring=a.bring or [],
+        priority=a.model_priority or a.priority,
+        consequence=a.consequence,
+        source_quote=a.source_quote,
+        source_page=a.source_page,
+        confidence=a.confidence,
+    )
 
 
 def reresolve_actions(
