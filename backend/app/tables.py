@@ -377,6 +377,9 @@ class Client(IdMixin, TimestampMixin, Base):
     contacts: Mapped[list["ClientContact"]] = relationship(
         back_populates="client", cascade="all, delete-orphan"
     )
+    appointments: Mapped[list["Appointment"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )
 
     @property
     def display_name(self) -> str:
@@ -533,6 +536,7 @@ class ClientObligation(IdMixin, TimestampMixin, ProvenanceMixin, Base):
     staff_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     client: Mapped["Client"] = relationship(back_populates="obligations")
+    appointments: Mapped[list["Appointment"]] = relationship(back_populates="obligation")
 
 
 class ClientContact(IdMixin, TimestampMixin, ProvenanceMixin, Base):
@@ -617,3 +621,130 @@ class Resource(IdMixin, TimestampMixin, Base):
         ForeignKey("staff.id", ondelete="SET NULL")
     )
     field_meta: Mapped[dict] = mapped_column(JSON, default=dict)  # {field: {source, confidence, confirmed_at}}
+
+
+# ============================================================
+# Text bot (Photon Spectrum). See docs/text-bot-plan.md.
+# ============================================================
+
+class BotChannel(enum.Enum):
+    IMESSAGE = "imessage"
+    RCS = "rcs"
+    SMS = "sms"
+    WHATSAPP = "whatsapp"
+    TELEGRAM = "telegram"
+    OTHER = "other"
+
+
+class BotEnrollmentStatus(enum.Enum):
+    ACTIVE = "active"     # bot answers this number
+    STOPPED = "stopped"   # client texted STOP; only START/HELP are answered
+    LOCKED = "locked"     # too many failed sign-ins; case worker must unlock
+    REVOKED = "revoked"   # case worker turned texting off
+
+
+class BotSessionState(enum.Enum):
+    AWAITING_NAME = "awaiting_name"
+    AWAITING_PIN = "awaiting_pin"
+    ACTIVE = "active"
+    LOCKED = "locked"
+
+
+class BotEnrollment(IdMixin, TimestampMixin, Base):
+    """A client's opt-in to texting. The bot only engages with numbers that have an
+    ACTIVE row here; everyone else gets one generic reply."""
+    __tablename__ = "bot_enrollments"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), unique=True
+    )
+    # Phone in E.164. Stored encrypted; looked up by keyed hash (see services/phone.py).
+    phone_encrypted: Mapped[str] = mapped_column(Text)
+    phone_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    phone_last4: Mapped[str] = mapped_column(String(4))  # for case-worker display only
+    channel: Mapped[Optional[BotChannel]] = mapped_column()  # last channel seen
+    status: Mapped[BotEnrollmentStatus] = mapped_column(default=BotEnrollmentStatus.ACTIVE)
+    consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    enrolled_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+    locked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    # Morning nudge: the client opts in by texting NUDGE ON. The nudge itself never
+    # contains schedule details (it may show on a lock screen).
+    nudge_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    nudge_time: Mapped[time] = mapped_column(Time, default=time(8, 0), server_default="08:00:00")
+    last_nudged_on: Mapped[Optional[date]] = mapped_column(Date)  # local date; prevents repeats
+
+    session: Mapped[Optional["BotSession"]] = relationship(
+        back_populates="enrollment", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class BotSession(IdMixin, TimestampMixin, Base):
+    """Sign-in state for one enrolled number. Never stores the typed name or PIN."""
+    __tablename__ = "bot_sessions"
+
+    enrollment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("bot_enrollments.id", ondelete="CASCADE"), unique=True
+    )
+    state: Mapped[BotSessionState] = mapped_column(default=BotSessionState.AWAITING_NAME)
+    # Result of the name check, kept until the PIN arrives so the reply never reveals
+    # which part was wrong.
+    name_matched: Mapped[bool] = mapped_column(Boolean, default=False)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    authenticated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_activity_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # Last numbered list sent, so "2" / "MAP" / "MORE" can refer back to it.
+    last_results: Mapped[Optional[dict]] = mapped_column(JSON)
+    pending_attachment_ref: Mapped[Optional[str]] = mapped_column(String(255))
+
+    enrollment: Mapped["BotEnrollment"] = relationship(back_populates="session")
+
+
+class BotAuditLog(IdMixin, Base):
+    """What the bot did, never what was said."""
+    __tablename__ = "bot_audit_log"
+
+    enrollment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("bot_enrollments.id", ondelete="SET NULL"), index=True
+    )
+    intent: Mapped[str] = mapped_column(String(50))
+    outcome: Mapped[str] = mapped_column(String(50))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+
+# ============================================================
+# Appointments (what the client's daily/weekly schedule is built from)
+# ============================================================
+
+class Appointment(IdMixin, TimestampMixin, Base):
+    """A dated, timed thing the client must attend. Added by the case worker.
+    Open obligations (fees, court dates) also appear on the schedule by due date."""
+    __tablename__ = "appointments"
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(200))
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    location_name: Mapped[Optional[str]] = mapped_column(String(200))
+    address: Mapped[Optional[str]] = mapped_column(String(255))
+    # Typed by the case worker for now ("Five Points station, then the #3 bus").
+    # Filled automatically once geocoding + MARTA stops exist (Resources ingest).
+    transit_note: Mapped[Optional[str]] = mapped_column(String(255))
+    documents_to_bring: Mapped[Optional[list]] = mapped_column(JSON)  # ["State ID", ...]
+    # Optional link, e.g. the court date this appointment fulfils.
+    obligation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("client_obligations.id", ondelete="SET NULL")
+    )
+    cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("staff.id", ondelete="SET NULL")
+    )
+
+    client: Mapped["Client"] = relationship(back_populates="appointments")
+    obligation: Mapped[Optional["ClientObligation"]] = relationship(back_populates="appointments")

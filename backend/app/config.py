@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     port: int = 3000
     default_language: str = "en"
     supported_languages: str = "en,es"
+    local_timezone: str = "America/New_York"  # schedules are shown in this zone
 
     # ---------- Security ----------
     session_secret: SecretStr = SecretStr("change-me")
@@ -78,7 +79,6 @@ class Settings(BaseSettings):
 
     # ---------- Maps / resources / safety ----------
     maps_api_key: SecretStr = SecretStr("")
-    resources_file: str = "./data/resources.json"
 
     # ---------- Resource ingestion (python -m app.jobs.ingest_resources) ----------
     ingest_state: str = "GA"
@@ -89,6 +89,15 @@ class Settings(BaseSettings):
     ingest_user_agent: str = "SecondChanceResourceBot/1.0 (reentry resource directory)"
     crisis_line: str = "988"
     emergency_number: str = "911"
+    help_line: str = "211"
+
+    # ---------- Text bot (Photon Spectrum sidecar) ----------
+    # Shared secret the textbot sidecar sends as a bearer token, both directions.
+    bot_service_secret: SecretStr = SecretStr("")
+    textbot_url: str = "http://localhost:8787"  # sidecar's internal /send endpoint
+    bot_idle_minutes: int = 15
+    bot_session_max_hours: int = 3
+    bot_max_failed_attempts: int = 5
 
     # ---------- Derived ----------
     @computed_field
