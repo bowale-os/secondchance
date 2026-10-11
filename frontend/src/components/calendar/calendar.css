@@ -37,7 +37,6 @@
 .cal-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
 .cal-chip { min-height: 2.75rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
 .cal-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-.cal-chip.ct-check_in[aria-pressed="false"], .cal-chip.ct-court_date[aria-pressed="false"], .cal-chip.ct-fee[aria-pressed="false"], .cal-chip.ct-report[aria-pressed="false"], .cal-chip.ct-other[aria-pressed="false"] { border-left: 6px solid var(--tc); }
 
 /* Right side: summary, the picked day, then lists grouped by day */
 .cal-summary { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -46,7 +45,7 @@
 .cal-summary li.late { background: var(--attn-bg); border-color: var(--attn-ink); color: var(--attn-ink); }
 .cal-summary li.late strong { color: var(--attn-ink); }
 
-.cal-today-card { display: grid; gap: .75rem; padding: 1.25rem; background: var(--surface); border: 2px solid var(--brand); border-radius: 1rem; }
+.cal-today-card { display: grid; gap: .75rem; padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; }
 .cal-today-card h2 { margin: 0; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; font-size: 1.375rem; }
 .cal-now { padding: .15rem .65rem; border-radius: 999px; background: var(--brand); color: #fff; font-size: .85rem; font-weight: 700; }
 .cal-empty-day { margin: 0; color: var(--muted); }
@@ -69,9 +68,9 @@
 @media (max-width: 30rem) { .cal-dg { grid-template-columns: 3.25rem minmax(0, 1fr); gap: .5rem; } }
 
 /* Event card */
-.cal-row { display: flex; align-items: stretch; gap: .5rem; padding-right: .5rem; border: 1px solid var(--line); border-left: 6px solid var(--tc, var(--line)); border-radius: .75rem; background: var(--surface); }
+.cal-row { display: flex; align-items: stretch; gap: .5rem; padding-right: .5rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
 .cal-row:hover { background: var(--brand-tint); }
-.cal-row.late { border-color: var(--attn-ink); border-left-color: var(--c-late); }
+.cal-row.late { border-color: var(--attn-ink); }
 .cal-row.done { opacity: .7; }
 .cal-row.done .cal-row-title { text-decoration: line-through; }
 .cal-row-open { flex: 1; min-width: 0; display: grid; gap: .2rem; padding: .75rem .75rem .75rem 1rem; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: .75rem; }
