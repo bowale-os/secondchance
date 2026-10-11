@@ -7,7 +7,6 @@ import type { UpcomingItem } from "../../types/reader";
 import type { CaseWorkerRead, ClientRead } from "../../types";
 import ReleaseBadge from "../dashboard/ReleaseBadge";
 import OverviewTab from "../client/OverviewTab";
-import MyPapers from "../reader/MyPapers";
 import "./portal.css";
 
 interface Props {
@@ -122,9 +121,8 @@ export default function ClientToday({ client, api, go, onRead, papersVersion }: 
 
       <section className="dash-panel" aria-label="My information">
         <div className="dash-panel-head"><h2>My information</h2></div>
-        <OverviewTab client={client} />
+        <OverviewTab client={client} showTexting={false} />
       </section>
-      <MyPapers api={api} language={client.language} onRead={onRead} refreshKey={papersVersion} onChanged={loadTodos} />
     </>
   );
 }

@@ -3,7 +3,13 @@ import type { ClientDetail, ClientRead } from "../../types";
 import SuggestedGuides from "../learn/SuggestedGuides";
 import TextingCard from "./TextingCard";
 
-export default function OverviewTab({ client }: { client: ClientRead | ClientDetail }) {
+interface Props {
+  client: ClientRead | ClientDetail;
+  /** The texting card is for case workers; the client portal hides it. */
+  showTexting?: boolean;
+}
+
+export default function OverviewTab({ client, showTexting = true }: Props) {
   const facts: [string, string | null][] = [
     ["Phone", client.phone],
     ["Email", client.email],
@@ -28,7 +34,7 @@ export default function OverviewTab({ client }: { client: ClientRead | ClientDet
           </div>
         ))}
       </dl>
-      <TextingCard client={client} />
+      {showTexting && <TextingCard client={client} />}
       <div className="notes">
         <h3>Notes</h3>
         <p className={client.notes ? undefined : "fact-missing"}>{client.notes ?? "No notes."}</p>
