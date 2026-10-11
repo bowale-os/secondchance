@@ -892,3 +892,125 @@ class CaseWorkerRead:
     phone: Optional[str]
     email: str
     organization_name: Optional[str]
+
+
+# ============================================================
+# Text bot
+# ============================================================
+
+@dataclass
+class BotImageIn:
+    data_base64: str
+    mime_type: str
+    name: str = "photo.jpg"
+
+
+@dataclass
+class BotInbound:
+    """Sidecar -> backend: one (debounced) inbound message."""
+    sender: str
+    text: str = ""
+    channel: Optional[str] = None
+    attachment_count: int = 0
+    message_id: Optional[str] = None
+    images: list[BotImageIn] = field(default_factory=list)  # signed-in senders only
+    images_held: bool = False
+    images_withheld: bool = False
+
+
+@dataclass
+class BotImageOut:
+    data_base64: str
+    name: str
+    mime_type: str
+
+
+@dataclass
+class BotReply:
+    text: str = ""
+    image: Optional[BotImageOut] = None  # sent after `text` when both are set
+
+
+@dataclass
+class BotInboundResult:
+    replies: list[BotReply] = field(default_factory=list)
+    # True while the sender is signed in. The sidecar uses it only to decide whether
+    # to merge message bursts; it carries no client data.
+    session_active: bool = False
+    hold_images: bool = False  # sidecar: keep this turn's photos for the next message
+
+
+@dataclass
+class TextingEnroll:
+    phone: str
+    consent: bool  # case worker confirms the client agreed to texts
+
+
+@dataclass
+class TextingStatus:
+    enrolled: bool
+    status: Optional[str] = None       # active | stopped | locked | revoked
+    phone_last4: Optional[str] = None
+    channel: Optional[str] = None
+    consent_at: Optional[datetime] = None
+    locked_at: Optional[datetime] = None
+    welcome_sent: Optional[bool] = None
+    nudge_enabled: bool = False
+    nudge_time: Optional[str] = None   # "08:00", local time; set by the client by text
+
+
+# ============================================================
+# Appointments and schedule
+# ============================================================
+
+@dataclass
+class AppointmentWrite:
+    """Create or replace an appointment. Times without an offset are local time."""
+    title: str
+    starts_at: datetime
+    ends_at: Optional[datetime] = None
+    location_name: Optional[str] = None
+    address: Optional[str] = None
+    transit_note: Optional[str] = None
+    documents_to_bring: list[str] = field(default_factory=list)
+    obligation_id: Optional[uuid.UUID] = None
+
+
+@dataclass
+class AppointmentRead:
+    id: uuid.UUID
+    client_id: uuid.UUID
+    title: str
+    starts_at: datetime
+    ends_at: Optional[datetime]
+    location_name: Optional[str]
+    address: Optional[str]
+    transit_note: Optional[str]
+    documents_to_bring: Optional[list]
+    obligation_id: Optional[uuid.UUID]
+    cancelled: bool
+    created_by_staff_id: Optional[uuid.UUID]
+    created_at: datetime
+
+
+@dataclass
+class ScheduleItemRead:
+    kind: str
+    day: date
+    title: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    location_name: Optional[str] = None
+    address: Optional[str] = None
+    transit_note: Optional[str] = None
+    documents_to_bring: list[str] = field(default_factory=list)
+    amount: Optional[Decimal] = None
+    overdue: bool = False
+    obligation_type: Optional[str] = None
+    detail: Optional[str] = None
+
+
+@dataclass
+class SchedulePreviewText:
+    range: str
+    text: str
