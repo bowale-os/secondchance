@@ -21,8 +21,6 @@ export function toSearchParams(query: ResourceQuery, { explicit = false } = {}):
       params.set("origin_lat", String(lat));
       params.set("origin_lng", String(lng));
     } else if (Array.isArray(value)) {
-      // An empty list in overrides is sent as `key=` so the server clears the profile's value.
-      if (value.length === 0 && explicit) params.set(key, "");
       value.forEach((v) => params.append(key, String(v)));
     } else {
       params.set(key, String(value));
