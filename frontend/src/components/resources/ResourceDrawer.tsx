@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { helpTopic } from "../../lib/commonHelp";
 import { errorText } from "../../lib/errors";
 import { formatDate, humanize } from "../../lib/format";
 import type { OpeningHours, Resource } from "../../types";
@@ -19,6 +20,7 @@ import {
   triText,
   todayIndex,
 } from "./labels";
+import GuideLink from "../learn/GuideLink";
 import DocumentList from "./DocumentList";
 import ResourceMap from "./map/LazyResourceMap";
 import TransitBadge from "./TransitBadge";
@@ -189,6 +191,7 @@ function Details({ resource: r, mapGestures }: DetailProps) {
         ) : (
           <p>No transit stops on file.</p>
         )}
+        {r.nearest_stops.length > 0 && <GuideLink topic={helpTopic("marta")} />}
       </Section>
 
       <Section title="Can I trust this?">

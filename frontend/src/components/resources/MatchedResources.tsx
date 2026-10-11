@@ -32,6 +32,8 @@ interface Props {
   /** Staff can drag and scroll the map; clients use the buttons. */
   mapGestures: boolean;
   copy: MatchCopy;
+  /** Overrides to start with, e.g. from "Find SNAP help nearby" on the Learn tab. */
+  initialOverrides?: ResourceQuery;
 }
 
 /** Keys the profile can turn on that are yes/no, so turning one off must be sent as `false`. */
@@ -41,11 +43,11 @@ const BOOLEAN_KEYS = new Set<keyof ResourceQuery>(["near_transit", "open_now", "
  * Resources matched to one client's needs (Option C). Filters start from their profile;
  * every change is sent back as overrides so the server stays the one place the mapping lives.
  */
-export default function MatchedResources({ client, loadMatches, loadResource, mapGestures, copy }: Props) {
-  const [overrides, setOverrides] = useState<ResourceQuery>({});
+export default function MatchedResources({ client, loadMatches, loadResource, mapGestures, copy, initialOverrides }: Props) {
+  const [overrides, setOverrides] = useState<ResourceQuery>(initialOverrides ?? {});
   const [match, setMatch] = useState<ClientResourceMatch | null>(null);
   // What the chips show: the change right away, then the server's answer.
-  const [shown, setShown] = useState<ResourceQuery>({});
+  const [shown, setShown] = useState<ResourceQuery>(initialOverrides ?? {});
   const [items, setItems] = useState<ResourceSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);

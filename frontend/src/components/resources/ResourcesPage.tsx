@@ -13,6 +13,8 @@ import "./resources.css";
 interface Props {
   staff: StaffRead;
   nav: AppNav;
+  /** Filters to start with, e.g. from "Find SNAP help nearby" on the Learn tab. */
+  initialFilters?: ResourceQuery;
   onLogout: () => void;
 }
 
@@ -23,9 +25,9 @@ interface Results {
 }
 
 /** Top-level Resources page (Option A): search, filter chips, slim result list. */
-export default function ResourcesPage({ staff, nav, onLogout }: Props) {
+export default function ResourcesPage({ staff, nav, initialFilters, onLogout }: Props) {
   const api = useApi();
-  const [filters, setFilters] = useState<ResourceQuery>({});
+  const [filters, setFilters] = useState<ResourceQuery>(initialFilters ?? {});
   // Distance is measured from here. Null until staff can enter an address, so rows show no distance yet.
   const [origin] = useState<LatLng | null>(null);
   const [results, setResults] = useState<Results | null>(null);

@@ -1,8 +1,9 @@
 import { formatDate, formatMoney, humanize } from "../../lib/format";
-import type { ClientRead } from "../../types";
+import type { ClientDetail, ClientRead } from "../../types";
+import SuggestedGuides from "../learn/SuggestedGuides";
 import TextingCard from "./TextingCard";
 
-export default function OverviewTab({ client }: { client: ClientRead }) {
+export default function OverviewTab({ client }: { client: ClientRead | ClientDetail }) {
   const facts: [string, string | null][] = [
     ["Phone", client.phone],
     ["Email", client.email],
@@ -18,6 +19,7 @@ export default function OverviewTab({ client }: { client: ClientRead }) {
 
   return (
     <div className="panel-body">
+      <SuggestedGuides client={client} role="staff" />
       <dl className="facts">
         {facts.map(([label, value]) => (
           <div key={label} className="fact">
