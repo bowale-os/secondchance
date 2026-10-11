@@ -24,6 +24,7 @@ export function createApi(getToken: GetToken) {
     resources: { ...createResourcesApi(http), ...createClientResourcesApi(http) },
     texting: createTextingApi(http),
     appointments: createAppointmentsApi(http),
+    reader: createReaderApi(http, getToken),
   };
 }
 

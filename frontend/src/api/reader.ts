@@ -1,4 +1,4 @@
-import type { KeepResult, PaperListItem, ProgressEvent, ReadingView, UpcomingItem } from "../types/reader";
+import type { KeepResult, PaperListItem, ProgressEvent, ReadingView, ScheduleBody, UpcomingItem } from "../types/reader";
 import type { GetToken, Http } from "./http";
 
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
@@ -28,6 +28,8 @@ export async function* ndjsonLines(stream: ReadableStream<Uint8Array>): AsyncGen
   if (buffer.trim()) yield buffer.trim();
 }
 
+type StreamOpts = { signal?: AbortSignal; fetchImpl?: FetchLike; baseUrl?: string };
+
 /**
  * POST /reader/process: sends the pages and hands back each progress event as it streams in.
  * Always ends with a "done" or an "error" event, including when the network fails.
@@ -37,16 +39,26 @@ export async function processPaper(
   getToken: GetToken,
   files: File[],
   onEvent: (e: ProgressEvent) => void,
-  opts: { signal?: AbortSignal; clientId?: string; fetchImpl?: FetchLike; baseUrl?: string } = {},
+  opts: StreamOpts & { clientId?: string } = {},
 ): Promise<void> {
   const form = new FormData();
   for (const f of files) form.append("files", f, f.name);
   if (opts.clientId) form.append("client_id", opts.clientId);
+  return streamEvents(getToken, "/reader/process", form, onEvent, opts);
+}
 
+/** POSTs and reads the NDJSON progress stream back, one event at a time. */
+async function streamEvents(
+  getToken: GetToken,
+  path: string,
+  form: FormData | undefined,
+  onEvent: (e: ProgressEvent) => void,
+  opts: StreamOpts,
+): Promise<void> {
   let res: Awaited<ReturnType<FetchLike>>;
   try {
     const token = await getToken();
-    res = await (opts.fetchImpl ?? fetch)(`${opts.baseUrl ?? BASE_URL}/reader/process`, {
+    res = await (opts.fetchImpl ?? fetch)(`${opts.baseUrl ?? BASE_URL}${path}`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: form,
@@ -108,6 +120,22 @@ export function createReaderApi(http: Http, getToken: GetToken) {
 
     /** DELETE /auth/client/papers/{readingId}: only papers the client kept themselves. */
     remove: (readingId: string): Promise<void> => http.delete(`/auth/client/papers/${readingId}`),
+
+    // ---------- case workers ----------
+
+    /** POST /reader/documents/{id}/read: reads a paper already on file and saves it; streams. */
+    readStored: (documentId: string, onEvent: (e: ProgressEvent) => void, opts: { signal?: AbortSignal } = {}) =>
+      streamEvents(getToken, `/reader/documents/${documentId}/read`, undefined, onEvent, opts),
+
+    /** GET /clients/{id}/papers: an assigned client's papers that have a reading. */
+    clientPapers: (clientId: string): Promise<PaperListItem[]> => http.get<PaperListItem[]>(`/clients/${clientId}/papers`),
+
+    /** POST /papers/actions/{id}/schedule: adds the to-do to the client's schedule. */
+    schedule: (actionId: string, body: ScheduleBody) =>
+      http.post<{ obligationId: string }, ScheduleBody>(`/papers/actions/${actionId}/schedule`, body),
+
+    /** POST /documents/{id}/reviewed: marks a paper on file as reviewed. */
+    markReviewed: (documentId: string) => http.post<{ id: string; status: string }>(`/documents/${documentId}/reviewed`),
   };
 }
 

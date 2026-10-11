@@ -121,7 +121,13 @@ async def save_kept(
     )
     session.add(doc)
     await session.flush()
+    return await save_reading(session, body, doc, client, staff)
 
+
+async def save_reading(
+    session: AsyncSession, body: ReceiptBody, doc: Document, client: Client, staff: Optional[Staff],
+) -> DocumentReading:
+    """The reading and to-dos for a Document that is already stored."""
     reading = DocumentReading(
         document_id=doc.id,
         client_id=client.id,

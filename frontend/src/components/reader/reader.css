@@ -69,3 +69,17 @@
 .papers-search input { min-height: 3rem; padding: 0 1rem; border: 2px solid var(--line); border-radius: .75rem; font: inherit; font-weight: 400; }
 
 .today-from { font-size: .9rem; color: var(--muted); }
+
+/* Case-worker side */
+.schedule-form { display: grid; gap: .4rem; margin-top: .5rem; padding: .75rem; border: 2px solid var(--brand); border-radius: .75rem; background: var(--brand-tint); }
+.schedule-form label { font-weight: 600; }
+.schedule-form input, .schedule-form select, .schedule-form textarea { min-height: 3rem; padding: .4rem .75rem; border: 2px solid var(--line); border-radius: .5rem; font: inherit; background: var(--surface); box-sizing: border-box; width: 100%; }
+.schedule-form textarea { min-height: 4rem; }
+.schedule-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.schedule-row > span { display: grid; gap: .25rem; flex: 1 1 10rem; }
+.on-schedule { margin: .25rem 0 0; font-weight: 600; color: var(--brand); }
+.doc-reading { margin-top: .75rem; }
+.doc-reading .reader-results { border: 1px solid var(--line); }
+.doc-status { padding: .1rem .6rem; border-radius: 999px; background: var(--attn-bg); color: var(--attn-ink); font-weight: 600; font-size: .85rem; }
+.docs-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+.docs-head p { margin: 0; }

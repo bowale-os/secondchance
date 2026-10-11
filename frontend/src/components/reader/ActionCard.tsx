@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ASK_RELEASE_DATE, CHECKED, NOT_CHECKED, dueLine, needsReleaseDate } from "../../lib/reader";
 import type { ActionItem, Flag } from "../../types/reader";
 import FlagNote from "./FlagNote";
@@ -10,11 +10,13 @@ interface Props {
   onToggle?: (done: boolean) => Promise<void>;
   /** Shown in Upcoming, where to-dos from several papers are mixed. */
   paperTitle?: string;
+  /** Case-worker controls (Add to schedule). */
+  extra?: ReactNode;
 }
 
 /** One step from a paper: what to do, when, where, what to bring, who to call, and the
  * sentence on the paper it came from. */
-export default function ActionCard({ action: a, flags, onToggle, paperTitle }: Props) {
+export default function ActionCard({ action: a, flags, onToggle, paperTitle, extra }: Props) {
   const [busy, setBusy] = useState(false);
   const urgent = a.priority === "urgent" && !a.completed;
 
@@ -64,6 +66,7 @@ export default function ActionCard({ action: a, flags, onToggle, paperTitle }: P
       <blockquote className="action-source">
         <span>From your paper, page {a.sourcePage}:</span> “{a.sourceQuote}”
       </blockquote>
+      {extra}
     </li>
   );
 }

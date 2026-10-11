@@ -6,15 +6,22 @@ GET    /auth/client/papers/upcoming   client: open to-dos from every paper, soon
 DELETE /auth/client/papers/{id}       client: remove a paper they kept themselves
 GET    /papers/{reading_id}           client (own) or case worker (assigned): one paper
 PATCH  /papers/actions/{action_id}    client (own) or case worker (assigned): done / not done
+GET    /clients/{client_id}/papers    case worker (assigned): the client's papers with readings
+POST   /papers/actions/{action_id}/schedule
+                                      case worker: adds the to-do to the schedule as a
+                                      verified obligation (TODAY/WEEK texts, morning nudges)
+POST   /documents/{document_id}/reviewed
+                                      case worker: marks any paper on file as reviewed
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
+from decimal import Decimal
 from typing import Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -24,7 +31,18 @@ from app.db import get_session
 from app.reader.schemas import ActionItem, CamelModel, Flag
 from app.reader.store import ReadingView, load_reading
 from app.services.timeutil import local_tz
-from app.tables import Assignment, Client, Document, DocumentAction, DocumentReading, Staff
+from app.tables import (
+    Assignment,
+    Client,
+    ClientObligation,
+    Document,
+    DocumentAction,
+    DocumentReading,
+    DocumentStatus,
+    ObligationStatus,
+    ObligationType,
+    Staff,
+)
 
 router = APIRouter(tags=["papers"])
 
@@ -54,6 +72,16 @@ class UpcomingItem(CamelModel):
 
 class ActionDone(BaseModel):
     done: bool
+
+
+class ScheduleIn(BaseModel):
+    """What the case worker confirmed in the Add to schedule form."""
+    obligation_type: ObligationType
+    description: str = Field(min_length=1, max_length=2000)
+    due_date: date
+    due_time: Optional[time] = None
+    amount: Optional[Decimal] = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+    location: Optional[str] = Field(default=None, max_length=300)
 
 
 def _today() -> str:
@@ -93,9 +121,13 @@ async def list_papers(
     client: Client = Depends(get_current_client),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
+    return _json(_paper_items(await _client_readings(session, client.id, q), client))
+
+
+def _paper_items(readings: list[DocumentReading], client: Client) -> list[dict]:
     today = _today()
     items = []
-    for r in await _client_readings(session, client.id, q):
+    for r in readings:
         view = load_reading(r, client, today)
         open_ = [a for a in view.actions if not a.completed]
         dated = sorted(a.due.resolved_date for a in open_ if a.due.resolved_date)
@@ -105,7 +137,7 @@ async def list_papers(
             kept_by_case_worker=r.created_by_staff_id is not None, open_count=len(open_),
             next_due=dated[0] if dated else None,
         ).wire())
-    return _json(items)
+    return items
 
 
 @router.get("/auth/client/papers/upcoming")
@@ -182,9 +214,87 @@ async def set_done(
     else:
         action.completed_at = None
         action.completed_by_staff_id = None
+    if action.obligation_id:   # keep the scheduled copy in step, so texts stop reminding
+        obligation = await session.get(ClientObligation, action.obligation_id)
+        if obligation is not None:
+            obligation.status = ObligationStatus.DONE if body.done else ObligationStatus.OPEN
     await session.commit()
     return _json({
         "id": str(action.id),
         "completed": action.completed_at is not None,
         "completedAt": action.completed_at.isoformat() if action.completed_at else None,
     })
+
+
+def _staff(who: Union[Staff, Client]) -> Staff:
+    if not isinstance(who, Staff):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Case workers only")
+    return who
+
+
+@router.get("/clients/{client_id}/papers")
+async def client_papers(
+    client_id: uuid.UUID,
+    who: Union[Staff, Client] = Depends(get_staff_or_client),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    staff = _staff(who)
+    client = await session.get(Client, client_id)
+    if client is None or not await _can_reach(session, staff, client_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Client not found")
+    return _json(_paper_items(await _client_readings(session, client_id), client))
+
+
+@router.post("/papers/actions/{action_id}/schedule", status_code=status.HTTP_201_CREATED)
+async def schedule_action(
+    action_id: uuid.UUID,
+    body: ScheduleIn,
+    who: Union[Staff, Client] = Depends(get_staff_or_client),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    """Creates a verified obligation from the to-do and links them. From then on the client
+    sees "Checked by your case worker" and it shows in their texts and nudges."""
+    staff = _staff(who)
+    action = await session.get(DocumentAction, action_id)
+    if action is None or not await _can_reach(session, staff, action.client_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "To-do not found")
+    if action.obligation_id is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This to-do is already on the schedule")
+    reading = await session.get(DocumentReading, action.reading_id)
+    now = datetime.now(timezone.utc)
+    obligation = ClientObligation(
+        client_id=action.client_id,
+        obligation_type=body.obligation_type,
+        description=body.description.strip(),
+        amount=body.amount,
+        due_date=body.due_date,
+        due_time=body.due_time,
+        location=(body.location or "").strip() or None,
+        status=ObligationStatus.DONE if action.completed_at else ObligationStatus.OPEN,
+        source_document_id=reading.document_id,
+        verified=True,
+        verified_by_staff_id=staff.id,
+        verified_at=now,
+    )
+    session.add(obligation)
+    await session.flush()
+    action.obligation_id = obligation.id
+    await session.commit()
+    return JSONResponse({"obligationId": str(obligation.id)}, status_code=status.HTTP_201_CREATED, headers=NO_STORE)
+
+
+@router.post("/documents/{document_id}/reviewed")
+async def mark_reviewed(
+    document_id: uuid.UUID,
+    who: Union[Staff, Client] = Depends(get_staff_or_client),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    staff = _staff(who)
+    doc = await session.get(Document, document_id)
+    if doc is None or doc.client_id is None or not await _can_reach(session, staff, doc.client_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    doc.status = DocumentStatus.CONFIRMED
+    doc.reviewed_by_staff_id = staff.id
+    doc.reviewed_at = datetime.now(timezone.utc)
+    await session.commit()
+    return _json({"id": str(doc.id), "status": doc.status.value})

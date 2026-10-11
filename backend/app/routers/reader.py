@@ -4,6 +4,9 @@ POST /reader/process  pages in, NDJSON progress events out, signed receipt at th
                       Stores nothing about the paper.
 POST /reader/keep     the same pages plus the receipt; checks both and saves the paper,
                       its reading and its to-dos without calling the AI again.
+POST /reader/documents/{id}/read
+                      case worker: reads a paper already on file (e.g. from New Client)
+                      and saves the reading straight away, since the paper is stored.
 
 Both take a client's own token, or a case worker's token plus `client_id` for an assigned
 client. Messages a person sees follow the client's language. Responses are never cached,
@@ -16,15 +19,16 @@ import logging
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import AsyncIterator, Callable, Optional, Union
+from typing import AsyncIterator, Awaitable, Callable, Optional, Union
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import undefer
 
 from app.auth import get_staff_or_client
-from app.db import get_session
+from app.db import SessionLocal, get_session
 from app.reader import receipt
 from app.reader.ai import get_ai_client
 from app.reader.messages import UserFacingError, say
@@ -32,9 +36,9 @@ from app.reader.pipeline import ProcessInput, ProcessResult, process_document
 from app.reader.preprocess import MAX_PAGES
 from app.reader.preprocess import UploadFile as ReaderFile
 from app.reader.schemas import ErrorEvent
-from app.reader.store import save_kept
+from app.reader.store import save_kept, save_reading
 from app.services.timeutil import local_tz
-from app.tables import Assignment, Client, ReaderUsage, Staff
+from app.tables import Assignment, Client, Document, DocumentReading, DocumentStatus, ReaderUsage, Staff
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reader", tags=["reader"])
@@ -92,14 +96,19 @@ def _today() -> str:
     return datetime.now(local_tz()).date().isoformat()
 
 
-async def _stream(inp: ProcessInput, sign: Callable[[ProcessResult], str]) -> AsyncIterator[str]:
+def get_session_factory() -> async_sessionmaker:
+    """Sessions opened while streaming: the request's own session is closed by then."""
+    return SessionLocal
+
+
+async def _stream(inp: ProcessInput, finish: Callable[[ProcessResult], Awaitable[dict]]) -> AsyncIterator[str]:
     """Runs the pipeline and yields one JSON line per event. If the browser goes away,
     the generator is closed and the pipeline task is cancelled with it."""
     queue: asyncio.Queue = asyncio.Queue()
 
     async def run() -> None:
         try:
-            await process_document(get_ai_client(), inp, queue.put_nowait, sign)
+            await process_document(get_ai_client(), inp, queue.put_nowait, finish)
         except UserFacingError as exc:
             queue.put_nowait(ErrorEvent(message=exc.text(inp.language)))
         except Exception as exc:
@@ -138,13 +147,13 @@ async def process(
         received_date=today,
     )
 
-    def sign(result: ProcessResult) -> str:
+    async def finish(result: ProcessResult) -> dict:
         body = receipt.receipt_body(
             result, client_id=cid, language=language, received_date=today, files=[u.data for u in uploads],
         )
-        return receipt.sign(body)
+        return {"receipt": receipt.sign(body)}
 
-    return StreamingResponse(_stream(inp, sign), media_type="application/x-ndjson", headers=NO_STORE)
+    return StreamingResponse(_stream(inp, finish), media_type="application/x-ndjson", headers=NO_STORE)
 
 
 @router.post("/keep", status_code=status.HTTP_201_CREATED)
@@ -169,3 +178,52 @@ async def keep(
         {"documentId": str(reading.document_id), "readingId": str(reading.id)},
         status_code=status.HTTP_201_CREATED, headers=NO_STORE,
     )
+
+
+@router.post("/documents/{document_id}/read")
+async def read_stored(
+    document_id: uuid.UUID,
+    who: Union[Staff, Client] = Depends(get_staff_or_client),
+    session: AsyncSession = Depends(get_session),
+    sessions: async_sessionmaker = Depends(get_session_factory),
+) -> StreamingResponse:
+    """Case workers only, for a paper on file that has no reading yet. Streams the same
+    events as /reader/process; the last one carries the saved reading's id."""
+    if not isinstance(who, Staff):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Case workers only")
+    doc = await session.scalar(select(Document).options(undefer(Document.content)).where(Document.id == document_id))
+    if doc is None or doc.client_id is None or doc.content is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    client, staff = await _resolve_client(session, who, doc.client_id)
+    if await session.scalar(select(DocumentReading.id).where(DocumentReading.document_id == doc.id)):
+        raise HTTPException(status.HTTP_409_CONFLICT, "This paper has already been read")
+    language = client.language or "en"
+    await _rate_limit(session, f"staff:{who.id}", language)
+
+    today = _today()
+    upload = ReaderFile(name=doc.original_filename or "document", mime_type=doc.mime_type or "", data=doc.content)
+    inp = ProcessInput(
+        files=[upload], language=language, today=today,
+        release_date=client.release_date.isoformat() if client.release_date else None,
+        received_date=doc.created_at.astimezone(local_tz()).date().isoformat() if doc.created_at else today,
+    )
+    client_id, staff_id, doc_id = client.id, staff.id, doc.id
+
+    async def finish(result: ProcessResult) -> dict:
+        body = receipt.receipt_body(
+            result, client_id=str(client_id), language=language, received_date=inp.received_date or today,
+            files=[upload.data],
+        )
+        async with sessions() as s:
+            stored = await s.get(Document, doc_id)
+            owner = await s.get(Client, client_id)
+            worker = await s.get(Staff, staff_id)
+            reading = await save_reading(s, body, stored, owner, worker)
+            if stored.status in (DocumentStatus.UPLOADED, DocumentStatus.PROCESSING, DocumentStatus.FAILED):
+                stored.status = DocumentStatus.READ
+            stored.ai_summary = stored.ai_summary or body.meta.title
+            stored.processed_at = datetime.now(timezone.utc)
+            await s.commit()
+            return {"reading_id": str(reading.id)}
+
+    return StreamingResponse(_stream(inp, finish), media_type="application/x-ndjson", headers=NO_STORE)

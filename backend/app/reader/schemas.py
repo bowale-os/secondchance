@@ -255,7 +255,8 @@ class ActionsEvent(CamelModel):
 
 class DoneEvent(CamelModel):
     stage: Literal["done"] = "done"
-    receipt: Optional[str] = None   # signed result for /reader/keep
+    receipt: Optional[str] = None      # signed result for /reader/keep
+    reading_id: Optional[str] = None   # a stored paper read by a case worker: saved already
 
 
 class ErrorEvent(CamelModel):

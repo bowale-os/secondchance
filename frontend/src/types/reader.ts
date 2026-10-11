@@ -69,7 +69,7 @@ export type ProgressEvent =
   | { stage: "simplified"; simplified: SimplifiedDocument }
   | { stage: "finding_actions" }
   | { stage: "actions"; actions: ActionItem[]; flags: Flag[] }
-  | { stage: "done"; receipt?: string }
+  | { stage: "done"; receipt?: string; readingId?: string }
   | { stage: "error"; message: string };
 
 /** A finished reading, kept or not. */
@@ -109,3 +109,15 @@ export interface UpcomingItem {
 }
 
 export interface KeepResult { documentId: string; readingId: string }
+
+export type ObligationTypeValue = "fee" | "court_date" | "check_in" | "report" | "other";
+
+/** POST /papers/actions/{id}/schedule: what the case worker confirmed in the form. */
+export interface ScheduleBody {
+  obligation_type: ObligationTypeValue;
+  description: string;
+  due_date: string;
+  due_time?: string | null;
+  amount?: string | null;
+  location?: string | null;
+}

@@ -65,6 +65,7 @@ async def env(monkeypatch):
     app.dependency_overrides[get_session] = session_override
     app.dependency_overrides[get_staff_or_client] = lambda: who["user"]
     app.dependency_overrides[get_current_client] = lambda: who["user"]
+    app.dependency_overrides[reader_router.get_session_factory] = lambda: Session
     ai = {"client": FakeAiClient()}
     monkeypatch.setattr(reader_router, "get_ai_client", lambda: ai["client"])
     monkeypatch.setattr(reader_router, "_today", lambda: "2026-10-09")

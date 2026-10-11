@@ -2,13 +2,14 @@
 calculate dates -> verify. Results stream back through `emit` as each stage finishes.
 
 Nothing is stored or logged here: no document text, no images. Saving happens only when
-the client chooses to keep the paper: `sign` turns the result into a signed receipt that
-rides on the final event, and /reader/keep checks it (see receipt.py).
+the client chooses to keep the paper: `finish` turns the result into a signed receipt that
+rides on the final event, and /reader/keep checks it (see receipt.py). For a paper that is
+already on file, `finish` saves the reading instead and returns its id.
 """
 
 import asyncio
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Awaitable, Callable, Optional
 
 from app.reader.ai import AiClient
 from app.reader.dates import DateAnchors, finalize_actions
@@ -55,7 +56,7 @@ class ProcessResult:
 
 async def process_document(
     ai: AiClient, inp: ProcessInput, emit: Callable[[ProgressEvent], None],
-    sign: Optional[Callable[["ProcessResult"], str]] = None,
+    finish: Optional[Callable[["ProcessResult"], Awaitable[dict]]] = None,
 ) -> ProcessResult:
     pages = await preprocess(inp.files)
 
@@ -116,5 +117,5 @@ async def process_document(
     ]
     emit(ActionsEvent(actions=actions, flags=flags))
     result = ProcessResult(extracted=extracted, meta=meta, simplified=simplified, actions=actions, flags=flags)
-    emit(DoneEvent(receipt=sign(result) if sign else None))
+    emit(DoneEvent(**(await finish(result) if finish else {})))
     return result
